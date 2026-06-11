@@ -89,11 +89,11 @@ export default function StoryReader({ set, storySetId }: Props) {
     }
   }
 
-  async function flyOff(dir: 1 | -1) {
+  async function flyOff(dir: 1 | -1, dest = "/") {
     if (flying.current) return;
     flying.current = true;
     await animate(x, dir * 1400, { duration: 0.32, ease: [0.32, 0, 0.67, 0] });
-    window.location.href = "/";
+    window.location.href = dest;
   }
 
   function recordInteraction(action: "like" | "dislike") {
@@ -104,8 +104,20 @@ export default function StoryReader({ set, storySetId }: Props) {
     }).catch(() => {});
   }
 
-  function handleLike() { addToCurate(set); recordInteraction("like"); flyOff(1); }
-  function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1); }
+  function handleLike() {
+    addToCurate(set);
+    recordInteraction("like");
+    // Persist to DB for logged-in users (only if not already a DB story)
+    if (isLoggedIn && !storySetId) {
+      fetch("/api/space", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(set),
+      }).catch(() => {});
+    }
+    flyOff(1, isLoggedIn ? "/space" : "/");
+  }
+  function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1, "/"); }
   function onDragStart() { dragged.current = false; }
   function onDrag(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     if (Math.abs(info.offset.x) > 6) dragged.current = true;
@@ -132,7 +144,7 @@ export default function StoryReader({ set, storySetId }: Props) {
       {/* Top bar */}
       <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 18px 10px", position: "relative", zIndex: 30 }}>
         <button
-          onClick={() => { window.location.href = storySetId ? "/inbox" : "/"; }}
+          onClick={() => { window.location.href = storySetId ? "/space" : (isLoggedIn ? "/space" : "/"); }}
           style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, backdropFilter: "blur(8px)" }}
         >
           ✕

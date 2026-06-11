@@ -165,7 +165,7 @@ function HomeInner() {
           </div>
           <div className="lp-nav-links">
             {isLoaded && isSignedIn
-              ? <a href="/inbox" style={{ color: "inherit", textDecoration: "none" }}>Inbox</a>
+              ? <a href="/space" style={{ color: "inherit", textDecoration: "none" }}>Inbox</a>
               : <a href="/curate" style={{ color: "inherit", textDecoration: "none" }}>Library</a>
             }
             <a href="/install" style={{ color: "inherit", textDecoration: "none" }}>Bookmarklet</a>
@@ -176,8 +176,8 @@ function HomeInner() {
             </button>
             {isLoaded && (
               isSignedIn
-                ? <a href="/inbox" style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 13.5, cursor: "pointer", boxShadow: "0 6px 18px -8px var(--lp-glow)", whiteSpace: "nowrap", textDecoration: "none", display: "inline-block" }}>
-                    My inbox
+                ? <a href="/space" style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 13.5, cursor: "pointer", boxShadow: "0 6px 18px -8px var(--lp-glow)", whiteSpace: "nowrap", textDecoration: "none", display: "inline-block" }}>
+                    My space
                   </a>
                 : <SignInButton>
                     <button style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 13.5, cursor: "pointer", boxShadow: "0 6px 18px -8px var(--lp-glow)", whiteSpace: "nowrap" }}>

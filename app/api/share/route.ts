@@ -16,5 +16,5 @@ export async function GET(request: Request) {
 
   await createInboxItem(userId, sharedUrl.trim(), "url").catch(() => {});
 
-  redirect("/inbox");
+  redirect("/space");
 }

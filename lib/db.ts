@@ -207,6 +207,17 @@ export async function loadStorySet(id: string, clerkUserId: string): Promise<Sto
   };
 }
 
+export async function listStorySets(clerkUserId: string) {
+  const sql = getDb();
+  if (!sql) return [];
+  return sql<{ id: string; title: string; source: string; source_url: string | null; saved_at: string }[]>`
+    SELECT id, title, source, source_url, saved_at
+    FROM story_sets
+    WHERE clerk_user_id = ${clerkUserId}
+    ORDER BY saved_at DESC
+  `;
+}
+
 // ─── Notes helpers ────────────────────────────────────────────────────────────
 
 export async function addNote(
