@@ -207,6 +207,12 @@ export async function loadStorySet(id: string, clerkUserId: string): Promise<Sto
   };
 }
 
+export async function deleteStorySet(id: string, clerkUserId: string) {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  await sql`DELETE FROM story_sets WHERE id = ${id} AND clerk_user_id = ${clerkUserId}`;
+}
+
 export async function listStorySets(clerkUserId: string) {
   const sql = getDb();
   if (!sql) return [];

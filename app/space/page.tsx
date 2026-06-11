@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useTheme } from "@/components/ThemeProvider";
-import type { InboxItem } from "@/lib/types";
 
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
@@ -18,19 +17,12 @@ const IconMoon = () => (
   </svg>
 );
 
-function StatusChip({ status }: { status: InboxItem["status"] }) {
-  const map = {
-    processing: { label: "Processing…", color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-    pending:    { label: "Pending",      color: "#6B7280", bg: "rgba(107,114,128,0.12)" },
-    done:       { label: "Done",         color: "#34D399", bg: "rgba(52,211,153,0.12)" },
-    error:      { label: "Error",        color: "#FF6B81", bg: "rgba(255,107,129,0.12)" },
-  };
-  const s = map[status] ?? map.pending;
-  return (
-    <span style={{ ...SG, fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: s.color, background: s.bg, padding: "3px 9px", borderRadius: 999 }}>
-      {s.label}
-    </span>
-  );
+interface SpaceItem {
+  id: string;
+  title: string;
+  source: string;
+  source_url: string | null;
+  saved_at: string;
 }
 
 function timeAgo(iso: string) {
@@ -46,14 +38,14 @@ function timeAgo(iso: string) {
 export default function SpacePage() {
   const { user } = useUser();
   const { theme, toggle } = useTheme();
-  const [items, setItems] = useState<InboxItem[]>([]);
+  const [items, setItems] = useState<SpaceItem[]>([]);
   const [urlInput, setUrlInput] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function loadItems() {
-    const data = await fetch("/api/inbox").then((r) => r.json()).catch(() => []);
+    const data = await fetch("/api/space").then((r) => r.json()).catch(() => []);
     setItems(Array.isArray(data) ? data : []);
   }
 
@@ -84,7 +76,7 @@ export default function SpacePage() {
 
   async function handleDelete(id: string) {
     setItems((prev) => prev.filter((i) => i.id !== id));
-    await fetch("/api/inbox", {
+    await fetch("/api/space", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
@@ -123,11 +115,7 @@ export default function SpacePage() {
                 </span>
               </div>
             )}
-            <button
-              onClick={toggle}
-              aria-label="Toggle theme"
-              style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${border}`, background: surface, color: text, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-            >
+            <button onClick={toggle} aria-label="Toggle theme" style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${border}`, background: surface, color: text, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
             <SignOutButton>
@@ -176,7 +164,6 @@ export default function SpacePage() {
           </p>
         )}
 
-        {/* Items */}
         {items.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
             <p style={{ fontSize: 15, margin: 0 }}>Your space is empty — add the first link above.</p>
@@ -184,31 +171,20 @@ export default function SpacePage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {items.map((item) => (
-              <div
-                key={item.id}
-                style={{ background: surface, border: `1px solid ${border}`, borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}
-              >
+              <div key={item.id} style={{ background: surface, border: `1px solid ${border}`, borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                    <StatusChip status={item.status} />
-                  </div>
-                  <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {item.title || item.url || "Pasted text"}
+                  <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.title}
                   </p>
                   <p style={{ fontSize: 12, color: text3, margin: 0 }}>
-                    {item.url ? (() => { try { return new URL(item.url).hostname; } catch { return item.url; } })() : "text"} · {timeAgo(item.created_at)}
+                    {item.source_url ? (() => { try { return new URL(item.source_url).hostname; } catch { return item.source; } })() : item.source}
+                    {" · "}{timeAgo(item.saved_at)}
                   </p>
                 </div>
-
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  {item.status === "done" && item.story_set_id && (
-                    <a
-                      href={`/stories/${item.story_set_id}`}
-                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16 }}
-                    >
-                      →
-                    </a>
-                  )}
+                  <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16 }}>
+                    →
+                  </a>
                   <button
                     onClick={() => handleDelete(item.id)}
                     style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, transition: "color .15s" }}

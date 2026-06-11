@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { auth } from "@clerk/nextjs/server";
-import { listStorySets, saveStorySet, createInboxItem, markInboxItemDone } from "@/lib/db";
+import { listStorySets, deleteStorySet, saveStorySet, createInboxItem, markInboxItemDone } from "@/lib/db";
 import type { StorySet } from "@/lib/types";
 
 export async function GET() {
@@ -21,10 +21,23 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid story set" }, { status: 400 });
   }
 
-  // Create a synthetic inbox item so it appears in the space list
+  // Skip if this story set already exists in the user's space
+  const existing = await listStorySets(userId);
+  if (existing.some((s) => s.id === set.id)) {
+    return Response.json({ ok: true, id: set.id });
+  }
+
   const item = await createInboxItem(userId, set.sourceUrl ?? null, set.source);
   await saveStorySet(userId, item.id, set, set.cards);
   await markInboxItemDone(item.id, set.title);
 
   return Response.json({ ok: true, id: set.id });
+}
+
+export async function DELETE(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await request.json();
+  await deleteStorySet(id as string, userId);
+  return Response.json({ ok: true });
 }
