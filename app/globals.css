@@ -1,27 +1,54 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Landing page design tokens — light mode */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --lp-bg: #F5F4FB;
+  --lp-bg2: #ECEBF6;
+  --lp-surface: #FFFFFF;
+  --lp-surface2: #F8F7FD;
+  --lp-text: #15131F;
+  --lp-text2: #54506B;
+  --lp-text3: #938EAB;
+  --lp-border: #E7E4F2;
+  --lp-accent: #7C5CFF;
+  --lp-accent2: #A892FF;
+  --lp-on-accent: #FFFFFF;
+  --lp-glow: rgba(124,92,255,0.18);
+  --lp-save: #22c55e;
+  --lp-skip: #FF6B81;
+  --lp-shadow: 0 26px 54px -24px rgba(40,30,90,.24);
+  --lp-radius: 16px;
+  --lp-radius-lg: 26px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Landing page design tokens — dark mode */
+html.dark {
+  --lp-bg: #0B0A12;
+  --lp-bg2: #110F1A;
+  --lp-surface: #161320;
+  --lp-surface2: #100E18;
+  --lp-text: #F2F0FA;
+  --lp-text2: #ADA7C4;
+  --lp-text3: #7B7493;
+  --lp-border: #262134;
+  --lp-glow: rgba(124,92,255,0.45);
+  --lp-save: #34D399;
+  --lp-shadow: 0 34px 70px -24px rgba(0,0,0,.66);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
