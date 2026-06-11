@@ -10,7 +10,7 @@ import type { StorySet } from "@/lib/types";
 
 // ─── Loading screen ───────────────────────────────────────────────────────────
 
-const STATUS = ["Reading the source…", "Identifying key ideas…", "Crafting your story cards…", "Almost there…"];
+const STATUS = ["Reading the article…", "Finding the key ideas…", "Crafting your story cards…", "Almost there…"];
 
 function LoadingScreen() {
   const [mi, setMi] = useState(0);
@@ -40,7 +40,7 @@ function LoadingScreen() {
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-const IconSun = () => <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2} /><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" /></svg>;
+const IconSun  = () => <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2} /><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" /></svg>;
 const IconMoon = () => <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>;
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
@@ -49,19 +49,21 @@ const STYLES = `
   *{box-sizing:border-box}
   .lp-nav{max-width:1100px;margin:0 auto;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
   .lp-nav-links{display:flex;align-items:center;gap:28px;font-size:14px;font-weight:500;color:var(--lp-text2)}
-  .lp-hero{max-width:1100px;margin:0 auto;padding:96px 32px 80px;display:flex;flex-direction:column;align-items:center;text-align:center}
-  .lp-h1{font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.0;letter-spacing:-0.035em;font-size:clamp(40px,7vw,86px);margin:0;color:var(--lp-text)}
-  .lp-sub{font-size:clamp(16px,1.8vw,20px);line-height:1.65;color:var(--lp-text2);max-width:46ch;margin:24px auto 0}
-  .lp-card-wrap{width:min(360px,88vw);height:min(580px,72vh);position:relative}
+  .lp-hero{max-width:1100px;margin:0 auto;padding:100px 32px 80px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .lp-h1{font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.05;letter-spacing:-0.03em;font-size:clamp(38px,6vw,78px);margin:0;color:var(--lp-text)}
+  .lp-sub{font-size:clamp(16px,1.7vw,19px);line-height:1.7;color:var(--lp-text2);max-width:44ch;margin:20px auto 0}
+  .lp-card-wrap{width:min(360px,88vw);height:min(560px,70vh);position:relative}
+  .lp-steps{max-width:900px;margin:0 auto;padding:72px 32px 80px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;align-items:start}
   .lp-vaul{max-width:1100px;margin:0 auto;padding:80px 32px 96px;display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
-  .lp-vaul-h2{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(28px,3.6vw,48px);line-height:1.05;letter-spacing:-0.025em;margin:0 0 18px;color:var(--lp-text)}
-  .lp-vaul-p{font-size:clamp(15px,1.4vw,18px);line-height:1.7;color:var(--lp-text2);margin:0}
+  .lp-vaul-h2{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(26px,3.2vw,42px);line-height:1.1;letter-spacing:-0.02em;margin:0 0 16px;color:var(--lp-text)}
+  .lp-vaul-p{font-size:clamp(15px,1.3vw,17px);line-height:1.75;color:var(--lp-text2);margin:0}
   .lp-footer{max-width:1100px;margin:0 auto;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   @media(max-width:800px){
     .lp-nav{padding:14px 20px}
     .lp-nav-links{display:none}
-    .lp-hero{padding:72px 20px 64px}
+    .lp-hero{padding:72px 20px 60px}
+    .lp-steps{grid-template-columns:1fr;gap:28px;padding:56px 20px 64px}
     .lp-vaul{grid-template-columns:1fr;gap:40px;padding:64px 20px 80px;text-align:center}
     .lp-vaul-visual{display:flex;justify-content:center}
     .lp-footer{padding:24px 20px;flex-direction:column;align-items:flex-start;gap:12px}
@@ -69,34 +71,51 @@ const STYLES = `
   @media(max-width:480px){
     .lp-nav{padding:12px 16px}
     .lp-hero{padding:56px 16px 48px}
-    .lp-card-wrap{height:420px}
-    .lp-vaul{padding:48px 16px 64px;gap:28px}
+    .lp-card-wrap{height:400px}
+    .lp-steps{padding:40px 16px 52px;gap:24px}
+    .lp-vaul{padding:48px 16px 64px}
     .lp-footer{padding:20px 16px}
   }
 `;
+
+// ─── Step card ────────────────────────────────────────────────────────────────
+
+function Step({ n, title, body }: { n: string; title: string; body: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: "color-mix(in srgb, var(--lp-accent) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--lp-accent) 22%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 14, color: "var(--lp-accent)" }}>
+        {n}
+      </div>
+      <div>
+        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--lp-text)", marginBottom: 6 }}>{title}</div>
+        <div style={{ fontSize: 14.5, color: "var(--lp-text2)", lineHeight: 1.65 }}>{body}</div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Saved library mockup ─────────────────────────────────────────────────────
 
 function SavedVisual() {
   const rows = [
-    { tag: "AI",       title: "The Model That Changed Everything",  src: "wired.com" },
-    { tag: "Science",  title: "Why Your Brain Forgets on Purpose",  src: "nautilus.co" },
-    { tag: "Ideas",    title: "The Attention Economy Is Broken",    src: "aeon.co" },
-    { tag: "Business", title: "How Figma Killed the Design Stack",  src: "stratechery.com" },
+    { title: "The Model That Changed Everything",  src: "wired.com",        n: 7 },
+    { title: "Why Your Brain Forgets on Purpose",  src: "nautilus.co",      n: 6 },
+    { title: "The Attention Economy Is Broken",    src: "aeon.co",          n: 7 },
+    { title: "How Figma Killed the Design Stack",  src: "stratechery.com",  n: 5 },
   ];
   return (
     <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius-lg)", overflow: "hidden", boxShadow: "var(--lp-shadow)", width: "100%", maxWidth: 420 }}>
-      <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--lp-border)", fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--lp-text3)" }}>
-        Your library · 4 saved
+      <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--lp-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--lp-text3)" }}>My space</span>
+        <span style={{ fontSize: 11, color: "var(--lp-text3)" }}>4 saved</span>
       </div>
-      {rows.map(({ tag, title, src }, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: i < rows.length - 1 ? "1px solid var(--lp-border)" : "none" }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--lp-accent)", background: "color-mix(in srgb, var(--lp-accent) 12%, transparent)", padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap", flexShrink: 0 }}>{tag}</span>
+      {rows.map(({ title, src, n }, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px", borderBottom: i < rows.length - 1 ? "1px solid var(--lp-border)" : "none" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--lp-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
-            <div style={{ fontSize: 11.5, color: "var(--lp-text3)", marginTop: 2 }}>{src}</div>
+            <div style={{ fontSize: 11.5, color: "var(--lp-text3)", marginTop: 3 }}>{src}</div>
           </div>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="var(--lp-save)" style={{ flexShrink: 0 }}><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z" /></svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--lp-text3)", background: "var(--lp-surface2)", padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap", flexShrink: 0 }}>{n} cards</span>
         </div>
       ))}
     </div>
@@ -155,7 +174,7 @@ function HomeInner() {
       <style>{STYLES}</style>
 
       {/* Nav */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", background: "color-mix(in srgb, var(--lp-bg) 78%, transparent)", borderBottom: "1px solid var(--lp-border)" }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", background: "color-mix(in srgb, var(--lp-bg) 80%, transparent)", borderBottom: "1px solid var(--lp-border)" }}>
         <div className="lp-nav">
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <span style={{ display: "inline-flex", width: 30, height: 30, borderRadius: 8, background: "var(--lp-accent)", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px -6px var(--lp-glow)", flexShrink: 0 }}>
@@ -165,7 +184,7 @@ function HomeInner() {
           </div>
           <div className="lp-nav-links">
             {isLoaded && isSignedIn
-              ? <a href="/space" style={{ color: "inherit", textDecoration: "none" }}>Inbox</a>
+              ? <a href="/space" style={{ color: "inherit", textDecoration: "none" }}>My space</a>
               : <a href="/curate" style={{ color: "inherit", textDecoration: "none" }}>Library</a>
             }
             <a href="/install" style={{ color: "inherit", textDecoration: "none" }}>Bookmarklet</a>
@@ -192,22 +211,21 @@ function HomeInner() {
       {/* Hero */}
       <header>
         <div className="lp-hero">
-          <h1 className="lp-h1">
-            You consume everything.<br />You remember nothing.
-          </h1>
-          <p className="lp-sub">
-            The internet is chaos — more articles, threads, and newsletters than any mind can hold. Storis turns any of it into story cards. The signal, not the scroll.
-          </p>
-
-          <div style={{ margin: "52px 0 0", width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div className="lp-card-wrap">
-              <LandingCardStack onProgress={() => {}} />
-            </div>
+          {/* Eyebrow */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 13px", borderRadius: 999, border: "1px solid var(--lp-border)", background: "var(--lp-surface)", marginBottom: 28 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--lp-accent)", display: "inline-block" }} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--lp-text2)", letterSpacing: ".02em" }}>Any article → story cards</span>
           </div>
 
-          <div style={{ marginTop: 40 }} />
+          <h1 className="lp-h1">
+            The story inside<br />every link.
+          </h1>
+          <p className="lp-sub">
+            Paste any article and get the key ideas as swipeable cards in seconds. Save what's worth keeping, annotate as you go.
+          </p>
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, width: "100%", maxWidth: 460, flexWrap: "wrap", justifyContent: "center" }}>
+          {/* URL input */}
+          <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, width: "100%", maxWidth: 480, marginTop: 36, flexWrap: "wrap", justifyContent: "center" }}>
             <input
               id="hero-input"
               type="url"
@@ -215,43 +233,75 @@ function HomeInner() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
-              style={{ flex: 1, minWidth: 220, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", transition: "border-color .2s" }}
+              style={{ flex: 1, minWidth: 220, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", transition: "border-color .2s", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)" }}
             />
             <button type="submit" style={{ padding: "13px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "var(--lp-on-accent)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 10px 26px -8px var(--lp-glow)", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-              Get the story
+              Get the story →
             </button>
           </form>
 
           {error && (
-            <p style={{ marginTop: 12, fontSize: 13.5, color: "var(--lp-skip)", background: "color-mix(in srgb, var(--lp-skip) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--lp-skip) 25%, transparent)", borderRadius: "var(--lp-radius)", padding: "10px 14px", maxWidth: 460, width: "100%", margin: "12px auto 0" }}>
+            <p style={{ marginTop: 12, fontSize: 13.5, color: "var(--lp-skip)", background: "color-mix(in srgb, var(--lp-skip) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--lp-skip) 25%, transparent)", borderRadius: "var(--lp-radius)", padding: "10px 14px", maxWidth: 480, width: "100%", margin: "12px auto 0" }}>
               {error}
             </p>
           )}
 
-          <p style={{ marginTop: 18, fontSize: 12.5, color: "var(--lp-text3)" }}>
-            Web · <a href="/install" style={{ color: "inherit", textDecoration: "none" }}>Bookmarklet</a> · Mobile coming soon
+          <p style={{ marginTop: 16, fontSize: 12.5, color: "var(--lp-text3)" }}>
+            Free to try · No sign-up needed
           </p>
+
+          {/* Card demo */}
+          <div style={{ margin: "52px 0 0", width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div className="lp-card-wrap">
+              <LandingCardStack onProgress={() => {}} />
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Divider */}
-      <div style={{ borderTop: "1px solid var(--lp-border)" }} />
+      {/* How it works */}
+      <div style={{ borderTop: "1px solid var(--lp-border)", background: "var(--lp-bg2)" }}>
+        <div className="lp-steps">
+          <Step
+            n="1"
+            title="Paste any link"
+            body="Articles, threads, newsletters, essays — any URL works. Storis fetches and reads it for you."
+          />
+          <Step
+            n="2"
+            title="Get story cards"
+            body="The key ideas become 7 swipeable cards. Signal without the scroll. Done in under 10 seconds."
+          />
+          <Step
+            n="3"
+            title="Save and annotate"
+            body="Like a card to save it to your space. Add notes as you read. Pick up exactly where you left off."
+          />
+        </div>
+      </div>
 
       {/* Value prop */}
-      <section style={{ background: "var(--lp-bg2)" }}>
+      <div style={{ borderTop: "1px solid var(--lp-border)" }}>
         <div className="lp-vaul">
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--lp-accent)", marginBottom: 16 }}>Your reading, distilled.</div>
-            <h2 className="lp-vaul-h2">A story for everything you meant to read.</h2>
+            <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--lp-accent)", marginBottom: 16 }}>Your space</div>
+            <h2 className="lp-vaul-h2">Everything worth reading, in one place.</h2>
             <p className="lp-vaul-p">
-              You open the link. You get two paragraphs in. Something else pulls you away. Storis reads it for you, pulls out what actually matters, and hands it back as seven cards you can swipe through in under a minute — saved to your library, forever.
+              Every story you save lives in My Space — organised, searchable, and always ready to revisit. Add notes on individual cards, edit them anytime, and never lose a good idea again.
             </p>
+            {isLoaded && !isSignedIn && (
+              <SignInButton>
+                <button style={{ marginTop: 28, padding: "11px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 8px 20px -8px var(--lp-glow)", fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Start your space — it's free
+                </button>
+              </SignInButton>
+            )}
           </div>
           <div className="lp-vaul-visual">
             <SavedVisual />
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Footer */}
       <footer style={{ borderTop: "1px solid var(--lp-border)" }}>
