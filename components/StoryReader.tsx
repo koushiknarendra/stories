@@ -280,17 +280,19 @@ export default function StoryReader({ set, storySetId }: Props) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28, padding: "22px 0 44px" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <button
-                  onClick={handleNope}
-                  style={{ width: 62, height: 62, borderRadius: "50%", border: "2px solid rgba(255,107,129,0.5)", background: btnBg, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 20px -4px rgba(255,107,129,0.4)", transition: "transform .15s" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                >
-                  <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                </button>
-                <span style={{ ...SG, fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: ".06em" }}>Skip</span>
-              </div>
+              {cardNotes.length === 0 && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={handleNope}
+                    style={{ width: 62, height: 62, borderRadius: "50%", border: "2px solid rgba(255,107,129,0.5)", background: btnBg, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 20px -4px rgba(255,107,129,0.4)", transition: "transform .15s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                  >
+                    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </button>
+                  <span style={{ ...SG, fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: ".06em" }}>Skip</span>
+                </div>
+              )}
 
               {isLoggedIn && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
