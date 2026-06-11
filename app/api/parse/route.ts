@@ -18,37 +18,66 @@ export async function POST(request: Request) {
   return Response.json({ error: "Provide url, text, or a PDF file" }, { status: 400 });
 }
 
-async function handleUrl(url: string) {
-  let raw: string;
+async function fetchViaJina(url: string): Promise<{ title: string; text: string } | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
       headers: { "X-Return-Format": "markdown" },
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(20_000),
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      return Response.json({ error: `Fetch failed (${res.status}): ${body.slice(0, 200)}` }, { status: 422 });
-    }
-    raw = await res.text();
-  } catch (e) {
-    return Response.json({ error: `Could not fetch: ${(e as Error).message}` }, { status: 422 });
+    if (!res.ok) return null;
+    const raw = await res.text();
+    const titleMatch = raw.match(/^Title:\s*(.+)/m);
+    const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
+    const text = raw
+      .replace(/^(Title|URL Source|Published Time|Description|Warning|Markdown Content):.*\n?/gm, "")
+      .replace(/!\[Image[^\]]*\]\([^)]*\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 12_000);
+    return text.length >= 100 ? { title, text } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchDirect(url: string): Promise<{ title: string; text: string } | null> {
+  try {
+    const { load } = await import("cheerio");
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = load(html);
+    $("script, style, nav, header, footer, aside, .ad, iframe, noscript").remove();
+    const title =
+      $("meta[property='og:title']").attr("content") ||
+      $("title").text().trim() ||
+      new URL(url).hostname;
+    const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
+    const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
+    return text.length >= 100 ? { title, text } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function handleUrl(url: string) {
+  const result = (await fetchViaJina(url)) ?? (await fetchDirect(url));
+
+  if (!result) {
+    return Response.json(
+      { error: "Could not fetch this page. Try pasting the article text directly." },
+      { status: 422 }
+    );
   }
 
-  const titleMatch = raw.match(/^Title:\s*(.+)/m);
-  const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
-
-  const text = raw
-    .replace(/^(Title|URL Source|Published Time|Description|Warning|Markdown Content):.*\n?/gm, "")
-    .replace(/!\[Image[^\]]*\]\([^)]*\)/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 12_000);
-
-  if (text.length < 100) {
-    return Response.json({ error: "Not enough readable text on this page" }, { status: 422 });
-  }
-
-  return Response.json({ text, title, source: "url", sourceUrl: url });
+  return Response.json({ text: result.text, title: result.title, source: "url", sourceUrl: url });
 }
 
 async function handlePdf(request: Request) {
