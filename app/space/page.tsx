@@ -42,7 +42,19 @@ export default function SpacePage() {
   const [urlInput, setUrlInput] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleShare(id: string, title: string) {
+    const url = `${window.location.origin}/stories/${id}`;
+    if (navigator.share) {
+      navigator.share({ title, url }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url).catch(() => {});
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  }
 
   async function loadItems() {
     const data = await fetch("/api/space").then((r) => r.json()).catch(() => []);
@@ -181,7 +193,17 @@ export default function SpacePage() {
                     {" · "}{timeAgo(item.saved_at)}
                   </p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  <button
+                    onClick={() => handleShare(item.id, item.title)}
+                    aria-label="Share"
+                    style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: copiedId === item.id ? "#34D399" : text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "color .2s" }}
+                  >
+                    {copiedId === item.id
+                      ? <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
+                      : <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    }
+                  </button>
                   <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16 }}>
                     →
                   </a>

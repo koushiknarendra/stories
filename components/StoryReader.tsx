@@ -195,6 +195,18 @@ export default function StoryReader({ set, storySetId }: Props) {
 
   const btnBg = theme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.18)";
 
+  const [copied, setCopied] = useState(false);
+  async function shareStory() {
+    const url = `${window.location.origin}/stories/${sid}`;
+    if (navigator.share) {
+      navigator.share({ title: set.title, url }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
+
   return (
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", userSelect: "none", background: "#000" }}>
 
@@ -209,7 +221,19 @@ export default function StoryReader({ set, storySetId }: Props) {
         <span style={{ ...SG, color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
           {set.title}
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {storySetId && (
+            <button
+              onClick={shareStory}
+              aria-label="Share"
+              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: copied ? "rgba(52,211,153,0.9)" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(8px)", transition: "color .2s" }}
+            >
+              {copied
+                ? <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
+                : <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              }
+            </button>
+          )}
           <button
             onClick={toggle}
             aria-label="Toggle theme"
