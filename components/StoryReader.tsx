@@ -84,15 +84,14 @@ export default function StoryReader({ set }: { set: StorySet }) {
     if (tappedLeft) {
       if (!isFirst) setCardIndex((i) => i - 1);
     } else {
-      if (isLast) router.push("/");
-      else setCardIndex((i) => i + 1);
+      setCardIndex(isLast ? 0 : (i) => i + 1);
     }
   }
 
   const footerHint = isFirst
     ? "tap right · swipe right to save"
     : isLast
-    ? "tap right to finish"
+    ? "tap right to restart"
     : `${cardIndex + 1} / ${total} · tap sides to navigate`;
 
   return (
