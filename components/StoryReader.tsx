@@ -240,7 +240,7 @@ export default function StoryReader({ set, storySetId }: Props) {
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="Add a note for this card…"
                   rows={2}
-                  style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, color: "white", fontSize: 13, padding: "10px 12px", resize: "none", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, color: "white", fontSize: 16, padding: "10px 12px", resize: "none", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(); } if (e.key === "Escape") { setShowNoteInput(false); setNoteText(""); } }}
                 />
                 <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
