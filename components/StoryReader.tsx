@@ -44,6 +44,7 @@ export default function StoryReader({ set, storySetId }: Props) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 300], [-14, 14]);
@@ -69,10 +70,32 @@ export default function StoryReader({ set, storySetId }: Props) {
 
   const cardNotes = notes.filter((n) => n.card_index === cardIndex);
 
+  function openEditNote(note: Note) {
+    setEditingNoteId(note.id);
+    setNoteText(note.content);
+    setShowNoteInput(true);
+  }
+
+  function cancelNote() {
+    setShowNoteInput(false);
+    setNoteText("");
+    setEditingNoteId(null);
+  }
+
   async function saveNote() {
     if (!noteText.trim() || !isLoggedIn || savingNote) return;
     setSavingNote(true);
     try {
+      // If editing, delete the old note first then re-create
+      if (editingNoteId) {
+        await fetch("/api/notes", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingNoteId }),
+        });
+        setNotes((prev) => prev.filter((n) => n.id !== editingNoteId));
+        setEditingNoteId(null);
+      }
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -129,7 +152,7 @@ export default function StoryReader({ set, storySetId }: Props) {
   }
   function handleCardClick(e: React.MouseEvent<HTMLDivElement>) {
     if (dragged.current || flying.current) return;
-    if (showNoteInput) { setShowNoteInput(false); return; }
+    if (showNoteInput) { cancelNote(); return; }
     x.set(0);
     const rect = e.currentTarget.getBoundingClientRect();
     const tappedLeft = e.clientX - rect.left < rect.width / 2;
@@ -225,8 +248,13 @@ export default function StoryReader({ set, storySetId }: Props) {
             {cardNotes.length > 0 && !showNoteInput && (
               <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 6 }} onClick={(e) => e.stopPropagation()}>
                 {cardNotes.map((note) => (
-                  <div key={note.id} style={{ background: "rgba(255,220,80,0.12)", border: "1px solid rgba(255,220,80,0.25)", borderRadius: 10, padding: "8px 12px" }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5 }}>✎ {note.content}</p>
+                  <div
+                    key={note.id}
+                    onClick={() => openEditNote(note)}
+                    style={{ background: "rgba(255,220,80,0.12)", border: "1px solid rgba(255,220,80,0.25)", borderRadius: 10, padding: "8px 12px", cursor: "text", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}
+                  >
+                    <p style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1 }}>✎ {note.content}</p>
+                    <span style={{ fontSize: 10, color: "rgba(255,220,80,0.45)", flexShrink: 0, paddingTop: 1 }}>tap to edit</span>
                   </div>
                 ))}
               </div>
@@ -242,13 +270,13 @@ export default function StoryReader({ set, storySetId }: Props) {
                   placeholder="Add a note for this card…"
                   rows={2}
                   style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, color: "white", fontSize: 16, padding: "10px 12px", resize: "none", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(); } if (e.key === "Escape") { setShowNoteInput(false); setNoteText(""); } }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(); } if (e.key === "Escape") cancelNote(); }}
                 />
                 <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                   <button onClick={saveNote} disabled={savingNote || !noteText.trim()} style={{ ...SG, flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "rgba(255,220,80,0.85)", color: "#000", fontWeight: 700, fontSize: 12, cursor: "pointer", opacity: savingNote ? 0.6 : 1 }}>
-                    {savingNote ? "Saving…" : "Save note"}
+                    {savingNote ? "Saving…" : editingNoteId ? "Update note" : "Save note"}
                   </button>
-                  <button onClick={() => { setShowNoteInput(false); setNoteText(""); }} style={{ ...SG, padding: "8px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
+                  <button onClick={cancelNote} style={{ ...SG, padding: "8px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
                     Cancel
                   </button>
                 </div>
