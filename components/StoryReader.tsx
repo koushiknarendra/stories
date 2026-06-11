@@ -36,6 +36,7 @@ export default function StoryReader({ set, storySetId }: Props) {
   const { theme, toggle } = useTheme();
   const { user, isLoaded } = useUser();
   const [cardIndex, setCardIndex] = useState(0);
+  const [resumed, setResumed] = useState(false);
   const dragged = useRef(false);
   const flying = useRef(false);
 
@@ -67,6 +68,29 @@ export default function StoryReader({ set, storySetId }: Props) {
       .then((data) => setNotes(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, [isLoggedIn, sid]);
+
+  // Restore reading progress for saved stories
+  useEffect(() => {
+    if (!storySetId) return;
+    try {
+      const saved = localStorage.getItem(`storis_progress_${storySetId}`);
+      if (saved) {
+        const idx = parseInt(saved, 10);
+        if (!isNaN(idx) && idx > 0 && idx < total) {
+          setCardIndex(idx);
+          setResumed(true);
+          setTimeout(() => setResumed(false), 2500);
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storySetId]);
+
+  // Persist progress on every card change
+  useEffect(() => {
+    if (!storySetId) return;
+    try { localStorage.setItem(`storis_progress_${storySetId}`, String(cardIndex)); } catch {}
+  }, [storySetId, cardIndex]);
 
   const cardNotes = notes.filter((n) => n.card_index === cardIndex);
 
@@ -218,10 +242,19 @@ export default function StoryReader({ set, storySetId }: Props) {
           <div style={{ position: "absolute", inset: 0, background: gradient }} />
 
           {/* Progress bars */}
-          <div style={{ position: "absolute", top: 14, left: 14, right: 14, display: "flex", gap: 4, zIndex: 10 }}>
-            {set.cards.map((_, i) => (
-              <div key={i} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= cardIndex ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)", transition: "background .3s" }} />
-            ))}
+          <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>
+            <div style={{ display: "flex", gap: 4 }}>
+              {set.cards.map((_, i) => (
+                <div key={i} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= cardIndex ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)", transition: "background .3s" }} />
+              ))}
+            </div>
+            {resumed && (
+              <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
+                <span style={{ ...SG, fontSize: 10, fontWeight: 700, letterSpacing: ".08em", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.12)", padding: "3px 10px", borderRadius: 999, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+                  ↩ Resumed from card {cardIndex + 1}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Source tag */}
