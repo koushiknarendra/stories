@@ -3,13 +3,69 @@
 import { useState, useRef } from "react";
 
 const CARDS = [
-  { kind: "cover",  tag: "DEEP WORK",       lines: ["Reclaim", "your focus"],           meta: "WIRED · 9 min read",   sub: "7 cards · about 50 seconds" },
-  { kind: "stat",   tag: "BY THE NUMBERS",   stat: "144×",    label: "a day the average person unlocks their phone",  source: "WIRED" },
-  { kind: "point",  tag: "THE MECHANISM",    title: "The slot-machine effect",           body: "Pull-to-refresh delivers unpredictable rewards — the same loop that keeps a gambler at the machine.", source: "WIRED" },
-  { kind: "point",  tag: "WHY IT COSTS YOU", title: "Attention residue",                 body: "Every switch leaves part of your mind stuck on the last thing. Focus never fully arrives.",           source: "WIRED" },
-  { kind: "stat",   tag: "BY THE NUMBERS",   stat: "23 min",  label: "to fully refocus after a single interruption",  source: "WIRED" },
-  { kind: "point",  tag: "THE FIX",          title: "Protect the first hour",            body: "Your morning sets the day's dopamine baseline. Guard it before the feed gets to it.",               source: "WIRED" },
-  { kind: "final",  title: "You just read a 9-minute piece.", sub: "In about 50 seconds." },
+  {
+    id: "cover",
+    gradient: "linear-gradient(155deg, #9B7BFF 0%, #3B1A8F 100%)",
+    tag: "DEEP WORK · WIRED",
+    headline: "Reclaim\nyour focus",
+    body: "Cal Newport on why distraction is the real crisis of our time.",
+    source: "9 min → 7 cards",
+    layout: "cover" as const,
+  },
+  {
+    id: "stat1",
+    gradient: "linear-gradient(155deg, #FF8FA3 0%, #9B1C2E 100%)",
+    tag: "BY THE NUMBERS",
+    headline: "144×",
+    body: "a day the average person unlocks their phone",
+    source: "WIRED",
+    layout: "stat" as const,
+  },
+  {
+    id: "point1",
+    gradient: "linear-gradient(155deg, #38BDF8 0%, #075985 100%)",
+    tag: "THE MECHANISM",
+    headline: "The slot-machine effect",
+    body: "Pull-to-refresh delivers unpredictable rewards — the same loop that keeps a gambler at the machine.",
+    source: "WIRED",
+    layout: "point" as const,
+  },
+  {
+    id: "point2",
+    gradient: "linear-gradient(155deg, #FB923C 0%, #7C2D12 100%)",
+    tag: "WHY IT COSTS YOU",
+    headline: "Attention residue",
+    body: "Every switch leaves part of your mind stuck on the last thing. Focus never fully arrives.",
+    source: "WIRED",
+    layout: "point" as const,
+  },
+  {
+    id: "stat2",
+    gradient: "linear-gradient(155deg, #A78BFA 0%, #3B0764 100%)",
+    tag: "BY THE NUMBERS",
+    headline: "23 min",
+    body: "to fully refocus after a single interruption",
+    source: "WIRED",
+    layout: "stat" as const,
+  },
+  {
+    id: "point3",
+    gradient: "linear-gradient(155deg, #34D399 0%, #064E3B 100%)",
+    tag: "THE FIX",
+    headline: "Protect the first hour",
+    body: "Your morning sets the day's dopamine baseline. Guard it before the feed gets to it.",
+    source: "WIRED",
+    layout: "point" as const,
+  },
+  {
+    id: "final",
+    gradient: "linear-gradient(155deg, #7C5CFF 0%, #2D1B8E 100%)",
+    tag: "COMPLETE",
+    headline: "9 minutes in 50 seconds.",
+    body: "That's the whole story, distilled.",
+    source: "WIRED · Deep Work",
+    layout: "final" as const,
+  },
 ];
 
 interface Props { onProgress: (idx: number, saved: number) => void; }
@@ -18,17 +74,78 @@ function Dots({ active }: { active: number }) {
   return (
     <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
       {CARDS.map((_, i) => (
-        <span key={i} style={{ width: i === active ? 16 : 5, height: 5, borderRadius: 999, background: i === active ? "var(--lp-accent)" : "var(--lp-border)", transition: "all .3s" }} />
+        <span key={i} style={{ width: i === active ? 14 : 4, height: 4, borderRadius: 999, background: i === active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)", transition: "all .3s" }} />
       ))}
     </div>
   );
 }
 
-function CardFooter({ source, active }: { source: string; active: number }) {
+function CardFace({ card, cardIdx }: { card: typeof CARDS[0]; cardIdx: number }) {
+  const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
+
+  const tag = (
+    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.8)", background: "rgba(255,255,255,0.18)", padding: "5px 11px", borderRadius: 999, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>
+      {card.tag}
+    </span>
+  );
+
+  if (card.layout === "stat") return (
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "22px 20px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        {tag}
+        <Dots active={cardIdx} />
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px", textAlign: "center" }}>
+        <div style={{ ...SG, fontSize: "clamp(72px,18vw,96px)", fontWeight: 800, lineHeight: 1, color: "white", letterSpacing: "-0.04em" }}>{card.headline}</div>
+        <div style={{ color: "rgba(255,255,255,0.78)", fontSize: "clamp(14px,3.5vw,17px)", lineHeight: 1.5, marginTop: 18, maxWidth: "22ch" }}>{card.body}</div>
+      </div>
+      <div style={{ padding: "0 22px 24px" }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: ".04em" }}>{card.source}</span>
+      </div>
+    </div>
+  );
+
+  if (card.layout === "cover") return (
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "22px 20px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        {tag}
+        <Dots active={cardIdx} />
+      </div>
+      <div style={{ flex: 1 }} />
+      {/* Bottom gradient overlay */}
+      <div style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.55))", padding: "48px 22px 24px" }}>
+        <div style={{ ...SG, fontSize: "clamp(36px,9vw,48px)", fontWeight: 700, color: "white", lineHeight: 1.05, letterSpacing: "-0.03em", whiteSpace: "pre-line" }}>{card.headline}</div>
+        <div style={{ color: "rgba(255,255,255,0.72)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.55, marginTop: 11 }}>{card.body}</div>
+        <div style={{ marginTop: 14, fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 600, letterSpacing: ".04em" }}>{card.source}</div>
+      </div>
+    </div>
+  );
+
+  if (card.layout === "final") return (
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", textAlign: "center" }}>
+      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22, backdropFilter: "blur(8px)" }}>
+        <svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-11" /></svg>
+      </div>
+      <div style={{ ...SG, fontSize: "clamp(26px,6.5vw,32px)", fontWeight: 700, color: "white", letterSpacing: "-0.025em", lineHeight: 1.1 }}>{card.headline}</div>
+      <div style={{ color: "rgba(255,255,255,0.7)", fontSize: "clamp(14px,3.5vw,16px)", marginTop: 12, lineHeight: 1.5 }}>{card.body}</div>
+      <div style={{ marginTop: 8, fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: ".04em" }}>{card.source}</div>
+      <Dots active={cardIdx} />
+    </div>
+  );
+
+  // point
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 14, borderTop: "1px solid var(--lp-border)" }}>
-      <span style={{ fontSize: 12, color: "var(--lp-text3)", fontWeight: 600, letterSpacing: ".04em" }}>{source}</span>
-      <Dots active={active} />
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "22px 20px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        {tag}
+        <Dots active={cardIdx} />
+      </div>
+      <div style={{ flex: 1 }} />
+      <div style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.5))", padding: "48px 22px 24px" }}>
+        <div style={{ ...SG, fontSize: "clamp(24px,6vw,30px)", fontWeight: 700, color: "white", letterSpacing: "-0.02em", lineHeight: 1.15 }}>{card.headline}</div>
+        <div style={{ color: "rgba(255,255,255,0.78)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.6, marginTop: 13 }}>{card.body}</div>
+        <div style={{ marginTop: 16, fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: ".04em" }}>{card.source}</div>
+      </div>
     </div>
   );
 }
@@ -53,7 +170,7 @@ export default function LandingCardStack({ onProgress }: Props) {
 
   const fly = (dir: "left" | "right") => {
     setDragging(false); setFlyOff(dir);
-    setTimeout(() => next(dir === "right"), 270);
+    setTimeout(() => next(dir === "right"), 280);
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -79,92 +196,13 @@ export default function LandingCardStack({ onProgress }: Props) {
     else { setDragging(false); setDx(0); setDy(0); }
   };
 
-  const T: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif", color: "var(--lp-text)", letterSpacing: "-0.02em", margin: 0 };
-  const so = Math.max(0, Math.min(1, dx / 80));
-  const sk = Math.max(0, Math.min(1, -dx / 80));
-
-  function cardContent(card: typeof CARDS[0], cardIdx: number) {
-    if (card.kind === "cover") return (
-      <>
-        <span className="card-tag">{card.tag}</span>
-        <div className="card-cover-title" style={T}>{card.lines![0]}<br />{card.lines![1]}</div>
-        <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 13, color: "var(--lp-text2)", fontWeight: 600 }}>{card.meta}</div>
-        <div style={{ fontSize: 12, color: "var(--lp-text3)", marginTop: 4, marginBottom: 14 }}>{card.sub}</div>
-        <Dots active={cardIdx} />
-      </>
-    );
-
-    if (card.kind === "stat") return (
-      <>
-        <span className="card-tag">{card.tag}</span>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div className="card-stat-value" style={T}>{card.stat}</div>
-          <div className="card-stat-label" style={{ color: "var(--lp-text2)", lineHeight: 1.4, marginTop: 12 }}>{card.label}</div>
-        </div>
-        <CardFooter source={card.source!} active={cardIdx} />
-      </>
-    );
-
-    if (card.kind === "final") return (
-      <>
-        <div style={{ flex: 1 }} />
-        <div style={{ width: 48, height: 48, borderRadius: 16, background: "var(--lp-accent)", color: "var(--lp-on-accent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 24px -8px var(--lp-glow)" }}>
-          <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-11" /></svg>
-        </div>
-        <div className="card-final-title" style={T}>{card.title}</div>
-        <div style={{ fontSize: 15, color: "var(--lp-text2)", marginTop: 6 }}>{card.sub}</div>
-        <div className="card-final-btns">
-          <button onClick={() => next(true)} className="card-btn-primary">Save to library</button>
-          <button onClick={() => next()} className="card-btn-secondary">Read another</button>
-        </div>
-        <div style={{ fontSize: 12, color: "var(--lp-text3)", marginTop: 14, fontWeight: 600 }}>WIRED · 9 min → 50 sec</div>
-        <div style={{ flex: 1 }} />
-      </>
-    );
-
-    return (
-      <>
-        <span className="card-pill-tag">{card.tag}</span>
-        <div className="card-point-title" style={T}>{card.title}</div>
-        <div className="card-body-text" style={{ color: "var(--lp-text2)", lineHeight: 1.5, marginTop: 12 }}>{card.body}</div>
-        <div style={{ flex: 1 }} />
-        <CardFooter source={card.source!} active={cardIdx} />
-      </>
-    );
-  }
+  const saveOpacity = Math.max(0, Math.min(1, dx / 80));
+  const skipOpacity = Math.max(0, Math.min(1, -dx / 80));
 
   return (
-    <>
-      <style>{`
-        .card-base { padding: 24px; }
-        .card-tag { font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--lp-accent); }
-        .card-cover-title { font-weight: 600; font-size: 40px; line-height: 1.02; margin-top: 14px; }
-        .card-stat-value { font-weight: 700; font-size: 64px; line-height: 0.9; }
-        .card-stat-label { font-size: 16px; }
-        .card-point-title { font-weight: 600; font-size: 26px; line-height: 1.1; margin-top: 16px; }
-        .card-body-text { font-size: 15px; }
-        .card-final-title { font-weight: 700; font-size: 24px; line-height: 1.1; margin-top: 18px; max-width: 16ch; }
-        .card-final-btns { display: flex; gap: 8px; margin-top: 20px; width: 100%; }
-        .card-btn-primary { flex: 1; padding: 11px 8px; border-radius: var(--lp-radius); border: none; background: var(--lp-accent); color: var(--lp-on-accent); font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
-        .card-btn-secondary { flex: 1; padding: 11px 8px; border-radius: var(--lp-radius); border: 1px solid var(--lp-border); background: transparent; color: var(--lp-text); font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; }
-        .card-pill-tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: var(--lp-accent); padding: 4px 10px; border: 1px solid var(--lp-border); border-radius: 999px; align-self: flex-start; }
-        .card-save-badge { position: absolute; top: 18px; left: 18px; padding: 5px 10px; border: 2px solid var(--lp-save); color: var(--lp-save); border-radius: 8px; font-weight: 800; font-size: 12px; letter-spacing: .12em; transform: rotate(-12deg); background: color-mix(in srgb, var(--lp-surface) 80%, transparent); pointer-events: none; }
-        .card-less-badge { position: absolute; top: 18px; right: 18px; padding: 5px 10px; border: 2px solid var(--lp-skip); color: var(--lp-skip); border-radius: 8px; font-weight: 800; font-size: 12px; letter-spacing: .12em; transform: rotate(12deg); background: color-mix(in srgb, var(--lp-surface) 80%, transparent); pointer-events: none; }
-        @media (max-width: 380px) {
-          .card-base { padding: 18px; }
-          .card-cover-title { font-size: 32px; }
-          .card-stat-value { font-size: 48px; }
-          .card-stat-label { font-size: 14px; }
-          .card-point-title { font-size: 22px; margin-top: 12px; }
-          .card-body-text { font-size: 14px; }
-          .card-final-title { font-size: 20px; margin-top: 14px; }
-          .card-save-badge, .card-less-badge { font-size: 10px; padding: 3px 7px; top: 12px; }
-          .card-save-badge { left: 12px; }
-          .card-less-badge { right: 12px; }
-        }
-      `}</style>
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", height: "100%" }}>
+      {/* Stack */}
+      <div style={{ position: "relative", width: "100%", flex: 1 }}>
         {[2, 1, 0].map((p) => {
           const cardIdx = (idx + p) % CARDS.length;
           const card = CARDS[cardIdx];
@@ -174,51 +212,93 @@ export default function LandingCardStack({ onProgress }: Props) {
           if (isTop) {
             if (flyOff) {
               const s = flyOff === "right" ? 1 : -1;
-              transform = `translate(${s * 560}px,-30px) rotate(${s * 22}deg)`;
-              transition = "transform .27s cubic-bezier(.4,0,.2,1), opacity .27s";
+              transform = `translate(${s * 600}px, -20px) rotate(${s * 24}deg)`;
+              transition = "transform .28s cubic-bezier(.4,0,.2,1), opacity .28s";
               opacity = 0;
             } else if (dragging) {
-              transform = `translate(${dx}px,${dy}px) rotate(${dx * 0.04}deg)`;
+              transform = `translate(${dx}px,${dy * 0.4}px) rotate(${dx * 0.035}deg)`;
               transition = "none";
             } else {
               transform = "translate(0,0) rotate(0)";
-              transition = "transform .45s cubic-bezier(.2,.8,.2,1)";
+              transition = "transform .4s cubic-bezier(.2,.8,.2,1)";
             }
           } else {
-            transform = `translateY(${p * 14}px) scale(${1 - p * 0.045})`;
-            transition = "transform .35s ease";
-            opacity = p === 2 ? 0.5 : 1;
+            transform = `translateY(${p * 12}px) scale(${1 - p * 0.04})`;
+            transition = "transform .32s ease";
+            opacity = p === 2 ? 0.55 : 1;
           }
 
           return (
             <div
-              key={`${card.kind}-${p}`}
-              className="card-base"
+              key={card.id + p}
               style={{
                 position: "absolute", inset: 0,
-                background: "var(--lp-surface)", border: "1px solid var(--lp-border)",
-                borderRadius: "calc(var(--lp-radius) + 8px)",
-                boxShadow: "var(--lp-shadow)", display: "flex", flexDirection: "column",
-                userSelect: "none", overflow: "hidden",
-                transform, transition, opacity, zIndex: 10 - p,
-                cursor: isTop ? (dragging ? "grabbing" : "grab") : "default", touchAction: "none",
+                background: card.gradient,
+                borderRadius: 24,
+                overflow: "hidden",
+                boxShadow: isTop ? "0 28px 60px -16px rgba(0,0,0,0.45)" : "0 10px 30px -10px rgba(0,0,0,0.25)",
+                transform, transition, opacity,
+                zIndex: 10 - p,
+                cursor: isTop ? (dragging ? "grabbing" : "grab") : "default",
+                touchAction: "none",
+                userSelect: "none",
               }}
               onPointerDown={isTop && !flyOff ? onPointerDown : undefined}
               onPointerMove={isTop ? onPointerMove : undefined}
               onPointerUp={isTop ? onPointerUp : undefined}
               onPointerCancel={isTop ? onPointerUp : undefined}
             >
-              {cardContent(card, cardIdx)}
+              <CardFace card={card} cardIdx={cardIdx} />
+
+              {/* NOPE stamp */}
               {isTop && !flyOff && (
-                <>
-                  <div className="card-save-badge" style={{ opacity: so }}>SAVE</div>
-                  <div className="card-less-badge" style={{ opacity: sk }}>LESS</div>
-                </>
+                <div style={{ position: "absolute", top: 28, left: 22, padding: "6px 14px", border: "3px solid #FF6B81", borderRadius: 10, color: "#FF6B81", fontFamily: "'Space Grotesk',sans-serif", fontWeight: 900, fontSize: 22, letterSpacing: ".1em", transform: "rotate(-18deg)", opacity: skipOpacity, pointerEvents: "none", background: "rgba(0,0,0,0.15)", backdropFilter: "blur(4px)" }}>
+                  NOPE
+                </div>
+              )}
+              {/* LIKE stamp */}
+              {isTop && !flyOff && (
+                <div style={{ position: "absolute", top: 28, right: 22, padding: "6px 14px", border: "3px solid #34D399", borderRadius: 10, color: "#34D399", fontFamily: "'Space Grotesk',sans-serif", fontWeight: 900, fontSize: 22, letterSpacing: ".1em", transform: "rotate(18deg)", opacity: saveOpacity, pointerEvents: "none", background: "rgba(0,0,0,0.15)", backdropFilter: "blur(4px)" }}>
+                  LIKE
+                </div>
               )}
             </div>
           );
         })}
       </div>
-    </>
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 24, flexShrink: 0 }}>
+        <button
+          onClick={() => !flyOff && fly("left")}
+          aria-label="Skip"
+          style={{ width: 58, height: 58, borderRadius: "50%", border: "2px solid rgba(255,107,129,0.6)", background: "transparent", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "border-color .2s, transform .15s", boxShadow: "0 4px 16px -6px rgba(255,107,129,0.35)" }}
+          onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
+          onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+
+        <button
+          onClick={() => !flyOff && next()}
+          aria-label="Next"
+          style={{ width: 44, height: 44, borderRadius: "50%", border: "2px solid rgba(124,92,255,0.4)", background: "transparent", color: "var(--lp-accent)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s" }}
+          onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
+          onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </button>
+
+        <button
+          onClick={() => !flyOff && fly("right")}
+          aria-label="Save"
+          style={{ width: 58, height: 58, borderRadius: "50%", border: "2px solid rgba(52,211,153,0.6)", background: "transparent", color: "#34D399", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "border-color .2s, transform .15s", boxShadow: "0 4px 16px -6px rgba(52,211,153,0.35)" }}
+          onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
+          onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z" /></svg>
+        </button>
+      </div>
+    </div>
   );
 }

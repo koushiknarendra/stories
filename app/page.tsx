@@ -51,7 +51,7 @@ const STYLES = `
   .lp-hero{max-width:1100px;margin:0 auto;padding:96px 32px 80px;display:flex;flex-direction:column;align-items:center;text-align:center}
   .lp-h1{font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.0;letter-spacing:-0.035em;font-size:clamp(40px,7vw,86px);margin:0;color:var(--lp-text)}
   .lp-sub{font-size:clamp(16px,1.8vw,20px);line-height:1.65;color:var(--lp-text2);max-width:46ch;margin:24px auto 0}
-  .lp-card-wrap{width:min(360px,88vw);height:460px;position:relative;animation:floatY 7s ease-in-out infinite}
+  .lp-card-wrap{width:min(360px,88vw);height:min(580px,72vh);position:relative}
   .lp-vaul{max-width:1100px;margin:0 auto;padding:80px 32px 96px;display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
   .lp-vaul-h2{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(28px,3.6vw,48px);line-height:1.05;letter-spacing:-0.025em;margin:0 0 18px;color:var(--lp-text)}
   .lp-vaul-p{font-size:clamp(15px,1.4vw,18px);line-height:1.7;color:var(--lp-text2);margin:0}
@@ -186,19 +186,13 @@ function HomeInner() {
             The internet is chaos — more articles, threads, and newsletters than any mind can hold. Storis turns any of it into story cards. The signal, not the scroll.
           </p>
 
-          <div style={{ margin: "56px 0 28px" }}>
+          <div style={{ margin: "52px 0 0", width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div className="lp-card-wrap">
               <LandingCardStack onProgress={() => {}} />
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, color: "var(--lp-text3)", fontWeight: 500, marginBottom: 40 }}>
-            <span><span style={{ color: "var(--lp-skip)" }}>←</span> less</span>
-            <span style={{ width: 1, height: 10, background: "var(--lp-border)" }} />
-            <span>tap to advance</span>
-            <span style={{ width: 1, height: 10, background: "var(--lp-border)" }} />
-            <span>save <span style={{ color: "var(--lp-save)" }}>→</span></span>
-          </div>
+          <div style={{ marginTop: 40 }} />
 
           <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, width: "100%", maxWidth: 460, flexWrap: "wrap", justifyContent: "center" }}>
             <input
