@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 300px;
+      background: #0f0f10;
+      color: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      padding: 18px 16px 16px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: #7C5CFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px -4px rgba(124,92,255,0.6);
+    }
+    .wordmark {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      color: #f0f0f0;
+    }
+
+    /* ── Page preview ── */
+    .page-info {
+      background: #1a1a1d;
+      border: 1px solid #2a2a2e;
+      border-radius: 10px;
+      padding: 12px 13px;
+      margin-bottom: 14px;
+    }
+    .page-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e8e8e8;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .page-domain {
+      font-size: 11px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%;
+      padding: 12px 0;
+      border-radius: 10px;
+      border: none;
+      background: #7C5CFF;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      box-shadow: 0 8px 20px -6px rgba(124,92,255,0.55);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled {
+      background: #2a2a2e;
+      color: #555;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* ── Invalid state ── */
+    .invalid-msg {
+      font-size: 12px;
+      color: #555;
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 11px;
+      color: #444;
+    }
+    .footer a { color: #7C5CFF; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+        <rect x="6.5" y="4.5" width="11" height="15" rx="2.6" transform="rotate(-9 12 12)" fill="white" opacity="0.5"/>
+        <rect x="6.5" y="4.5" width="11" height="15" rx="2.6" transform="rotate(7 12 12)" fill="white"/>
+      </svg>
+    </div>
+    <span class="wordmark">Storis</span>
+  </div>
+
+  <div class="page-info" id="page-info">
+    <div class="page-title" id="page-title">Loading…</div>
+    <div class="page-domain" id="page-domain"></div>
+  </div>
+
+  <button class="btn" id="btn" disabled>Get the story →</button>
+  <p class="invalid-msg" id="invalid-msg" style="display:none"></p>
+
+  <div class="footer">
+    <a href="https://storis.in" target="_blank">storis.in</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
