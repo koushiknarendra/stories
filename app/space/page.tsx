@@ -43,7 +43,18 @@ export default function SpacePage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = query.trim()
+    ? items.filter((item) => {
+        const q = query.toLowerCase();
+        return (
+          item.title.toLowerCase().includes(q) ||
+          (item.source_url ?? "").toLowerCase().includes(q)
+        );
+      })
+    : items;
 
   async function handleShare(id: string, title: string) {
     const url = `${window.location.origin}/stories/${id}`;
@@ -176,13 +187,37 @@ export default function SpacePage() {
           </p>
         )}
 
+        {items.length > 0 && (
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: text3, pointerEvents: "none" }}>
+              <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search your space…"
+              style={{ width: "100%", padding: "11px 16px 11px 36px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, color: text, outline: "none", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box", transition: "border-color .15s" }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = border)}
+            />
+            {query && (
+              <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 4 }}>✕</button>
+            )}
+          </div>
+        )}
+
         {items.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
             <p style={{ fontSize: 15, margin: 0 }}>Your space is empty — add the first link above.</p>
           </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: text3 }}>
+            <p style={{ fontSize: 15, margin: 0 }}>No stories match &ldquo;{query}&rdquo;.</p>
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {items.map((item) => (
+            {filtered.map((item) => (
               <div key={item.id} style={{ background: surface, border: `1px solid ${border}`, borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
