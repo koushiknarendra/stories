@@ -22,14 +22,14 @@ export default function StoryReader({ set }: { set: StorySet }) {
   const flying = useRef(false);
 
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-260, 260], [-18, 18]);
+  const rotate = useTransform(x, [-260, 260], [-12, 12]);
   const likeOpacity = useTransform(x, [30, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -30], [1, 0]);
-  const cardScale = useTransform(x, [-260, 0, 260], [0.97, 1, 0.97]);
 
   const card = set.cards[cardIndex];
   const total = set.cards.length;
   const isLast = cardIndex === total - 1;
+  const isFirst = cardIndex === 0;
 
   async function flyOff(dir: 1 | -1) {
     if (flying.current) return;
@@ -72,22 +72,28 @@ export default function StoryReader({ set }: { set: StorySet }) {
   }
 
   function onDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
-    if (info.offset.x > SWIPE_THRESHOLD) {
-      handleLike();
-    } else if (info.offset.x < -SWIPE_THRESHOLD) {
-      handleNope();
+    if (info.offset.x > SWIPE_THRESHOLD) handleLike();
+    else if (info.offset.x < -SWIPE_THRESHOLD) handleNope();
+  }
+
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (dragged.current || flying.current) return;
+    x.set(0);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const tappedLeft = e.clientX - rect.left < rect.width / 2;
+    if (tappedLeft) {
+      if (!isFirst) setCardIndex((i) => i - 1);
+    } else {
+      if (isLast) router.push("/");
+      else setCardIndex((i) => i + 1);
     }
   }
 
-  function handleClick() {
-    if (dragged.current || flying.current) return;
-    x.set(0);
-    if (isLast) {
-      router.push("/");
-    } else {
-      setCardIndex((i) => i + 1);
-    }
-  }
+  const footerHint = isFirst
+    ? "tap right · swipe right to save"
+    : isLast
+    ? "tap right to finish"
+    : `${cardIndex + 1} / ${total} · tap sides to navigate`;
 
   return (
     <div className="h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col overflow-hidden select-none">
@@ -99,7 +105,7 @@ export default function StoryReader({ set }: { set: StorySet }) {
         >
           ✕
         </button>
-        <span className="text-zinc-500 dark:text-zinc-400 text-xs font-medium tracking-wider uppercase truncate max-w-[180px]">
+        <span className="text-zinc-500 dark:text-zinc-400 text-xs font-medium tracking-wider uppercase truncate max-w-[200px]">
           {set.title}
         </span>
         <div className="flex items-center gap-3">
@@ -118,34 +124,31 @@ export default function StoryReader({ set }: { set: StorySet }) {
       </div>
 
       {/* Progress bars */}
-      <div className="flex gap-1 px-5 py-3 shrink-0">
+      <div className="flex gap-1 px-4 py-2 shrink-0">
         {set.cards.map((_, i) => (
           <div
             key={i}
             className={`h-[3px] flex-1 rounded-full transition-all duration-300 ${
-              i <= cardIndex ? "bg-zinc-900 dark:bg-white" : "bg-zinc-300 dark:bg-zinc-700"
+              i <= cardIndex
+                ? "bg-zinc-900 dark:bg-white"
+                : "bg-zinc-300 dark:bg-zinc-700"
             }`}
           />
         ))}
       </div>
 
-      {/* Card */}
-      <div className="flex-1 flex items-center justify-center px-5 relative">
-        {/* Background stack hint */}
-        {!isLast && (
-          <div className="absolute inset-x-9 top-3 bottom-0 bg-zinc-200/70 dark:bg-zinc-800/60 rounded-3xl -z-10 scale-[0.95]" />
-        )}
-
+      {/* Card — full width, fills remaining height */}
+      <div className="flex-1 min-h-0 px-3 py-2">
         <motion.div
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.18}
-          style={{ x, rotate, scale: cardScale }}
+          style={{ x, rotate }}
           onDragStart={onDragStart}
           onDrag={onDrag}
           onDragEnd={onDragEnd}
           onClick={handleClick}
-          className="w-full max-w-sm relative cursor-pointer touch-none"
+          className="w-full h-full relative cursor-pointer touch-none"
         >
           {/* LIKE badge */}
           <motion.div
@@ -164,23 +167,20 @@ export default function StoryReader({ set }: { set: StorySet }) {
           </motion.div>
 
           {/* Card body */}
-          <div
-            className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-2xl overflow-hidden"
-            style={{ minHeight: "62vh" }}
-          >
-            <div className="p-7 flex flex-col" style={{ minHeight: "62vh" }}>
-              <div className="flex-1">
+          <div className="w-full h-full bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-0 p-7 flex flex-col overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-hidden">
                 <p className="text-zinc-400 dark:text-zinc-500 text-[10px] font-bold tracking-[0.18em] uppercase mb-5">
                   {set.source}
                 </p>
-                <h2 className="text-[1.65rem] font-bold text-zinc-900 dark:text-white leading-tight mb-7">
+                <h2 className="text-[1.75rem] font-bold text-zinc-900 dark:text-white leading-tight mb-6">
                   {card.headline}
                 </h2>
                 <ul className="space-y-4">
                   {card.bullets.map((b, i) => (
                     <li
                       key={i}
-                      className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-[0.875rem] leading-relaxed"
+                      className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-[0.9rem] leading-relaxed"
                     >
                       <span className="text-zinc-300 dark:text-zinc-600 mt-0.5 shrink-0">—</span>
                       <span>{b}</span>
@@ -189,11 +189,9 @@ export default function StoryReader({ set }: { set: StorySet }) {
                 </ul>
               </div>
 
-              <div className="flex items-center justify-between mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800/80">
+              <div className="flex items-center justify-between pt-5 mt-4 border-t border-zinc-100 dark:border-zinc-800/80 shrink-0">
                 <span className="text-zinc-400 dark:text-zinc-600 text-xs">{card.readTime} read</span>
-                <span className="text-zinc-300 dark:text-zinc-700 text-xs">
-                  {isLast ? "Last card · tap to finish" : `${cardIndex + 1} of ${total} · tap for next`}
-                </span>
+                <span className="text-zinc-300 dark:text-zinc-700 text-xs">{footerHint}</span>
               </div>
             </div>
           </div>
@@ -201,7 +199,7 @@ export default function StoryReader({ set }: { set: StorySet }) {
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-center gap-14 pb-10 pt-5 shrink-0">
+      <div className="flex items-center justify-center gap-14 pb-10 pt-4 shrink-0">
         <div className="flex flex-col items-center gap-2">
           <button
             onClick={handleNope}
