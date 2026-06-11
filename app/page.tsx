@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { saveCurrent } from "@/lib/storage";
 import { ThemeToggle } from "@/components/ThemeProvider";
 import type { StorySet } from "@/lib/types";
@@ -62,8 +62,9 @@ function LoadingScreen() {
   );
 }
 
-export default function Home() {
+function HomeInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
   const [pastedText, setPastedText] = useState("");
@@ -71,32 +72,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const autoTriggered = useRef(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const generate = useCallback(async (targetUrl: string) => {
     setError("");
     setLoading(true);
-
     try {
-      let parseRes: Response;
-      if (mode === "pdf" && file) {
-        const fd = new FormData();
-        fd.append("file", file);
-        parseRes = await fetch("/api/parse", { method: "POST", body: fd });
-      } else if (mode === "text") {
-        parseRes = await fetch("/api/parse", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: pastedText }),
-        });
-      } else {
-        parseRes = await fetch("/api/parse", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
-        });
-      }
-
+      const parseRes = await fetch("/api/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: targetUrl }),
+      });
       const parseData = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseData.error ?? "Parse failed");
 
@@ -105,14 +91,9 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parseData),
       });
-
       const storiesText = await storiesRes.text();
       let storiesData: Record<string, unknown>;
-      try {
-        storiesData = JSON.parse(storiesText);
-      } catch {
-        throw new Error(`Server error (${storiesRes.status})`);
-      }
+      try { storiesData = JSON.parse(storiesText); } catch { throw new Error(`Server error (${storiesRes.status})`); }
       if (!storiesRes.ok) throw new Error((storiesData.error as string) ?? "Generation failed");
 
       const storySet: StorySet = {
@@ -123,7 +104,62 @@ export default function Home() {
         cards: storiesData.cards as StorySet["cards"],
         savedAt: new Date().toISOString(),
       };
+      saveCurrent(storySet);
+      router.push("/stories");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setLoading(false);
+    }
+  }, [router]);
 
+  useEffect(() => {
+    const incomingUrl = searchParams.get("url");
+    if (incomingUrl && !autoTriggered.current) {
+      autoTriggered.current = true;
+      setUrl(incomingUrl);
+      generate(incomingUrl);
+    }
+  }, [searchParams, generate]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (mode === "url") { generate(url); return; }
+    setError("");
+    setLoading(true);
+    try {
+      let parseRes: Response;
+      if (mode === "pdf" && file) {
+        const fd = new FormData();
+        fd.append("file", file);
+        parseRes = await fetch("/api/parse", { method: "POST", body: fd });
+      } else {
+        parseRes = await fetch("/api/parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: pastedText }),
+        });
+      }
+      const parseData = await parseRes.json();
+      if (!parseRes.ok) throw new Error(parseData.error ?? "Parse failed");
+
+      const storiesRes = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parseData),
+      });
+      const storiesText = await storiesRes.text();
+      let storiesData: Record<string, unknown>;
+      try { storiesData = JSON.parse(storiesText); } catch { throw new Error(`Server error (${storiesRes.status})`); }
+      if (!storiesRes.ok) throw new Error((storiesData.error as string) ?? "Generation failed");
+
+      const storySet: StorySet = {
+        id: crypto.randomUUID(),
+        title: storiesData.title as string,
+        source: storiesData.source as string,
+        sourceUrl: storiesData.sourceUrl as string | undefined,
+        cards: storiesData.cards as StorySet["cards"],
+        savedAt: new Date().toISOString(),
+      };
       saveCurrent(storySet);
       router.push("/stories");
     } catch (err: unknown) {
@@ -238,12 +274,23 @@ export default function Home() {
           </form>
         </div>
 
-        <p className="text-center mt-6 text-zinc-400 dark:text-zinc-500 text-sm">
+        <div className="flex justify-center gap-6 mt-6 text-zinc-400 dark:text-zinc-500 text-sm">
           <a href="/curate" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
             Saved stories →
           </a>
-        </p>
+          <a href="/install" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
+            Get bookmarklet →
+          </a>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
   );
 }
