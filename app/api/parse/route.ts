@@ -1,5 +1,3 @@
-import { load } from "cheerio";
-
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
@@ -21,35 +19,24 @@ export async function POST(request: Request) {
 }
 
 async function handleUrl(url: string) {
-  let html: string;
+  let raw: string;
   try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; StoriesBot/1.0)" },
-      signal: AbortSignal.timeout(10_000),
+    const res = await fetch(`https://r.jina.ai/${url}`, {
+      headers: { Accept: "text/plain", "X-Return-Format": "text" },
+      signal: AbortSignal.timeout(30_000),
     });
-    html = await res.text();
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    raw = await res.text();
   } catch {
     return Response.json({ error: "Could not fetch URL" }, { status: 422 });
   }
 
-  const $ = load(html);
+  const titleMatch = raw.match(/^Title:\s*(.+)/m);
+  const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
 
-  // remove noise
-  $("script, style, nav, header, footer, aside, .ad, .sidebar, iframe, noscript").remove();
-
-  const title =
-    $("meta[property='og:title']").attr("content") ||
-    $("title").text().trim() ||
-    new URL(url).hostname;
-
-  // try article body first, fall back to body
-  const container =
-    $("article").length ? $("article") :
-    $("main").length ? $("main") :
-    $("body");
-
-  const text = container
-    .text()
+  const text = raw
+    .replace(/^(Title|URL|Published Time|Description|Warning):.*\n?/gm, "")
+    .replace(/\[Image[^\]]*\]\([^)]*\)/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 12_000);
