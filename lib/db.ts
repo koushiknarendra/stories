@@ -169,7 +169,7 @@ export async function saveStorySet(
   for (const [i, card] of cards.entries()) {
     await sql`
       INSERT INTO story_cards (story_set_id, card_index, headline, bullets, read_time)
-      VALUES (${set.id}, ${i}, ${card.headline}, ${JSON.stringify(card.bullets)}, ${card.readTime})
+      VALUES (${set.id}, ${i}, ${card.headline}, ${JSON.stringify(card.bullets ?? [])}::jsonb, ${card.readTime})
     `;
   }
 }
@@ -200,11 +200,16 @@ export async function loadStorySet(id: string): Promise<StorySet | null> {
     source: set.source,
     sourceUrl: set.source_url ?? undefined,
     savedAt: set.saved_at,
-    cards: cards.map((c) => ({
-      headline: c.headline,
-      bullets: c.bullets as string[],
-      readTime: c.read_time,
-    })),
+    cards: cards.map((c) => {
+      // bullets stored as JSONB — might come back as array, string, or null
+      let bullets: string[] = [];
+      if (Array.isArray(c.bullets)) {
+        bullets = c.bullets as string[];
+      } else if (typeof c.bullets === "string") {
+        try { bullets = JSON.parse(c.bullets); } catch { bullets = [c.bullets]; }
+      }
+      return { headline: c.headline, bullets, readTime: c.read_time };
+    }),
   };
 }
 

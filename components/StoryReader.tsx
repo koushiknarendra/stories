@@ -260,7 +260,7 @@ export default function StoryReader({ set, storySetId }: Props) {
               {card.headline}
             </h2>
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 9 }}>
-              {card.bullets.map((b, i) => (
+              {(card.bullets ?? []).map((b, i) => (
                 <li key={i} style={{ display: "flex", gap: 10, color: "rgba(255,255,255,0.8)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.55 }}>
                   <span style={{ color: "rgba(255,255,255,0.32)", flexShrink: 0, marginTop: 2 }}>—</span>
                   <span>{b}</span>
