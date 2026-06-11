@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
 import { loadStorySet } from "@/lib/db";
 import StoryReader from "@/components/StoryReader";
 
@@ -9,14 +8,7 @@ interface Props {
 
 export default async function StoriesIdPage({ params }: Props) {
   const { id } = await params;
-  const { userId } = await auth();
-
-  if (!userId) {
-    notFound();
-  }
-
-  const set = await loadStorySet(id, userId);
+  const set = await loadStorySet(id);
   if (!set) notFound();
-
   return <StoryReader set={set} storySetId={id} />;
 }

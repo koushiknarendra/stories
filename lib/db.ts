@@ -174,14 +174,15 @@ export async function saveStorySet(
   }
 }
 
-export async function loadStorySet(id: string, clerkUserId: string): Promise<StorySet | null> {
+export async function loadStorySet(id: string): Promise<StorySet | null> {
   const sql = getDb();
   if (!sql) return null;
 
+  // Load by ID only — UUID is 122 bits of entropy, effectively unguessable.
   const rows = await sql<{ id: string; title: string; source: string; source_url: string | null; saved_at: string }[]>`
     SELECT id, title, source, source_url, saved_at
     FROM story_sets
-    WHERE id = ${id} AND clerk_user_id = ${clerkUserId}
+    WHERE id = ${id}
   `;
   if (!rows.length) return null;
   const set = rows[0];

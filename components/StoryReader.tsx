@@ -104,12 +104,13 @@ export default function StoryReader({ set, storySetId }: Props) {
     }).catch(() => {});
   }
 
-  function handleLike() {
+  async function handleLike() {
     addToCurate(set);
     recordInteraction("like");
-    // Persist to DB for logged-in users (only if not already a DB story)
+    // Persist to DB before navigating — do not fire-and-forget; navigation
+    // cancels in-flight fetches, so the story would never reach the DB.
     if (isLoggedIn && !storySetId) {
-      fetch("/api/space", {
+      await fetch("/api/space", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(set),
