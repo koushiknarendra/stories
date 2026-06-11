@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useUser, SignInButton } from "@clerk/nextjs";
 import { saveCurrent } from "@/lib/storage";
 import { useTheme } from "@/components/ThemeProvider";
 import LandingCardStack from "@/components/LandingCardStack";
@@ -108,6 +109,7 @@ function HomeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { theme, toggle } = useTheme();
+  const { isLoaded, isSignedIn } = useUser();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -162,16 +164,27 @@ function HomeInner() {
             <span style={{ ...SG, fontWeight: 700, fontSize: 19, letterSpacing: "-0.01em" }}>Storis</span>
           </div>
           <div className="lp-nav-links">
-            <a href="/curate" style={{ color: "inherit", textDecoration: "none" }}>Library</a>
+            {isLoaded && isSignedIn
+              ? <a href="/inbox" style={{ color: "inherit", textDecoration: "none" }}>Inbox</a>
+              : <a href="/curate" style={{ color: "inherit", textDecoration: "none" }}>Library</a>
+            }
             <a href="/install" style={{ color: "inherit", textDecoration: "none" }}>Bookmarklet</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={toggle} aria-label="Toggle theme" style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-text)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
-            <button onClick={() => document.getElementById("hero-input")?.focus()} style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--lp-accent)", color: "var(--lp-on-accent)", fontWeight: 700, fontSize: 13.5, cursor: "pointer", boxShadow: "0 6px 18px -8px var(--lp-glow)", whiteSpace: "nowrap" }}>
-              Get started
-            </button>
+            {isLoaded && (
+              isSignedIn
+                ? <a href="/inbox" style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 13.5, cursor: "pointer", boxShadow: "0 6px 18px -8px var(--lp-glow)", whiteSpace: "nowrap", textDecoration: "none", display: "inline-block" }}>
+                    My inbox
+                  </a>
+                : <SignInButton>
+                    <button style={{ padding: "8px 16px", borderRadius: 9, border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 13.5, cursor: "pointer", boxShadow: "0 6px 18px -8px var(--lp-glow)", whiteSpace: "nowrap" }}>
+                      Sign in
+                    </button>
+                  </SignInButton>
+            )}
           </div>
         </div>
       </nav>

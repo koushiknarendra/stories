@@ -1,0 +1,27 @@
+{
+  "name": "Storis",
+  "short_name": "Storis",
+  "description": "The whole story, in seven swipes.",
+  "start_url": "/inbox",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#7C5CFF",
+  "background_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/api/share",
+    "method": "GET",
+    "params": {
+      "url": "url",
+      "text": "text",
+      "title": "title"
+    }
+  }
+}

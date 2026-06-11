@@ -1,20 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
-  const response = NextResponse.next();
+const isProtected = createRouteMatcher(["/inbox(.*)"]);
 
-  if (!request.cookies.get("device_id")) {
-    response.cookies.set("device_id", crypto.randomUUID(), {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365 * 10, // 10 years
-    });
+export const proxy = clerkMiddleware(async (auth, request) => {
+  if (isProtected(request as NextRequest)) {
+    await auth.protect();
   }
-
-  return response;
-}
+});
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
