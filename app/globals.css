@@ -43,6 +43,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Prevent iOS Safari auto-zoom on focus */
+input, textarea, select {
+  font-size: 16px;
+}
+
 @keyframes floatY {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
