@@ -15,6 +15,36 @@ import type { StorySet } from "@/lib/types";
 
 const SWIPE_THRESHOLD = 80;
 
+const GRADIENTS = [
+  "linear-gradient(155deg, #9B7BFF 0%, #3B1A8F 100%)",
+  "linear-gradient(155deg, #FF8FA3 0%, #9B1C2E 100%)",
+  "linear-gradient(155deg, #38BDF8 0%, #075985 100%)",
+  "linear-gradient(155deg, #FB923C 0%, #7C2D12 100%)",
+  "linear-gradient(155deg, #A78BFA 0%, #3B0764 100%)",
+  "linear-gradient(155deg, #34D399 0%, #064E3B 100%)",
+  "linear-gradient(155deg, #F472B6 0%, #831843 100%)",
+];
+
+function Dots({ total, active }: { total: number; active: number }) {
+  return (
+    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            width: i === active ? 14 : 4,
+            height: 4,
+            borderRadius: 999,
+            background: i === active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)",
+            transition: "all .3s",
+            flexShrink: 0,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function StoryReader({ set }: { set: StorySet }) {
   const router = useRouter();
   const [cardIndex, setCardIndex] = useState(0);
@@ -30,6 +60,7 @@ export default function StoryReader({ set }: { set: StorySet }) {
   const total = set.cards.length;
   const isLast = cardIndex === total - 1;
   const isFirst = cardIndex === 0;
+  const gradient = GRADIENTS[cardIndex % GRADIENTS.length];
 
   async function flyOff(dir: 1 | -1) {
     if (flying.current) return;
@@ -63,9 +94,7 @@ export default function StoryReader({ set }: { set: StorySet }) {
     flyOff(-1);
   }
 
-  function onDragStart() {
-    dragged.current = false;
-  }
+  function onDragStart() { dragged.current = false; }
 
   function onDrag(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     if (Math.abs(info.offset.x) > 6) dragged.current = true;
@@ -88,109 +117,95 @@ export default function StoryReader({ set }: { set: StorySet }) {
     }
   }
 
-  const footerHint = isFirst
-    ? "tap right · swipe right to save"
-    : isLast
-    ? "tap right to restart"
-    : `${cardIndex + 1} / ${total} · tap sides to navigate`;
+  const SG = { fontFamily: "'Space Grotesk', sans-serif" } as React.CSSProperties;
 
   return (
-    <div className="h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col overflow-hidden select-none">
+    <div
+      style={{ height: "100dvh", background: "var(--lp-bg)", display: "flex", flexDirection: "column", overflow: "hidden", userSelect: "none" }}
+    >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-2 shrink-0">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "48px 20px 8px", flexShrink: 0 }}>
         <button
           onClick={() => router.push("/")}
-          className="w-8 h-8 flex items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+          style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "var(--lp-text3)", cursor: "pointer", fontSize: 18 }}
         >
           ✕
         </button>
-        <span className="text-zinc-500 dark:text-zinc-400 text-xs font-medium tracking-wider uppercase truncate max-w-[200px]">
+        <span style={{ ...SG, color: "var(--lp-text2)", fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
           {set.title}
         </span>
-        <div className="flex items-center gap-3">
-          <ThemeToggle className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-sm transition-colors" />
-          {set.sourceUrl ? (
-            <a
-              href={set.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-zinc-400 dark:text-zinc-500 text-xs hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"
-            >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <ThemeToggle className="text-sm" />
+          {set.sourceUrl && (
+            <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
+              style={{ color: "var(--lp-text3)", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>
               Source ↗
             </a>
-          ) : null}
+          )}
         </div>
       </div>
 
       {/* Progress bars */}
-      <div className="flex gap-1 px-4 py-2 shrink-0">
+      <div style={{ display: "flex", gap: 4, padding: "6px 16px 6px", flexShrink: 0 }}>
         {set.cards.map((_, i) => (
-          <div
-            key={i}
-            className={`h-[3px] flex-1 rounded-full transition-all duration-300 ${
-              i <= cardIndex
-                ? "bg-zinc-900 dark:bg-white"
-                : "bg-zinc-300 dark:bg-zinc-700"
-            }`}
-          />
+          <div key={i} style={{ height: 3, flex: 1, borderRadius: 999, background: i <= cardIndex ? "var(--lp-accent)" : "var(--lp-border)", transition: "background .3s" }} />
         ))}
       </div>
 
-      {/* Card — full width, fills remaining height */}
-      <div className="flex-1 min-h-0 px-3 py-2">
+      {/* Card */}
+      <div style={{ flex: 1, minHeight: 0, padding: "8px 12px" }}>
         <motion.div
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.18}
-          style={{ x, rotate }}
+          style={{ x, rotate, width: "100%", height: "100%", position: "relative", cursor: "pointer", touchAction: "none" }}
           onDragStart={onDragStart}
           onDrag={onDrag}
           onDragEnd={onDragEnd}
           onClick={handleClick}
-          className="w-full h-full relative cursor-pointer touch-none"
         >
           {/* LIKE badge */}
-          <motion.div
-            style={{ opacity: likeOpacity }}
-            className="absolute top-7 left-6 z-10 border-[3px] border-green-500 rounded-xl px-3 py-1 -rotate-12 pointer-events-none"
-          >
-            <span className="text-green-500 font-black text-xl tracking-widest">LIKE</span>
+          <motion.div style={{ opacity: likeOpacity, position: "absolute", top: 28, left: 22, zIndex: 10, border: "3px solid #34D399", borderRadius: 10, padding: "5px 14px", transform: "rotate(-18deg)", pointerEvents: "none", background: "rgba(0,0,0,0.15)", backdropFilter: "blur(4px)" }}>
+            <span style={{ ...SG, color: "#34D399", fontWeight: 900, fontSize: 22, letterSpacing: ".1em" }}>LIKE</span>
           </motion.div>
 
           {/* NOPE badge */}
-          <motion.div
-            style={{ opacity: nopeOpacity }}
-            className="absolute top-7 right-6 z-10 border-[3px] border-red-500 rounded-xl px-3 py-1 rotate-12 pointer-events-none"
-          >
-            <span className="text-red-500 font-black text-xl tracking-widest">NOPE</span>
+          <motion.div style={{ opacity: nopeOpacity, position: "absolute", top: 28, right: 22, zIndex: 10, border: "3px solid #FF6B81", borderRadius: 10, padding: "5px 14px", transform: "rotate(18deg)", pointerEvents: "none", background: "rgba(0,0,0,0.15)", backdropFilter: "blur(4px)" }}>
+            <span style={{ ...SG, color: "#FF6B81", fontWeight: 900, fontSize: 22, letterSpacing: ".1em" }}>NOPE</span>
           </motion.div>
 
-          {/* Card body */}
-          <div className="w-full h-full bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex-1 min-h-0 p-7 flex flex-col overflow-hidden">
-              <div className="flex-1 min-h-0 overflow-hidden">
-                <p className="text-zinc-400 dark:text-zinc-500 text-[10px] font-bold tracking-[0.18em] uppercase mb-5">
-                  {set.source}
-                </p>
-                <h2 className="text-[1.75rem] font-bold text-zinc-900 dark:text-white leading-tight mb-6">
-                  {card.headline}
-                </h2>
-                <ul className="space-y-4">
-                  {card.bullets.map((b, i) => (
-                    <li
-                      key={i}
-                      className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-[0.9rem] leading-relaxed"
-                    >
-                      <span className="text-zinc-300 dark:text-zinc-600 mt-0.5 shrink-0">—</span>
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {/* Card face */}
+          <div style={{ width: "100%", height: "100%", background: gradient, borderRadius: 28, overflow: "hidden", boxShadow: "0 28px 60px -16px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column" }}>
 
-              <div className="flex items-center justify-between pt-5 mt-4 border-t border-zinc-100 dark:border-zinc-800/80 shrink-0">
-                <span className="text-zinc-400 dark:text-zinc-600 text-xs">{card.readTime} read</span>
-                <span className="text-zinc-300 dark:text-zinc-700 text-xs">{footerHint}</span>
+            {/* Top: source tag + position */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "22px 22px 0" }}>
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.8)", background: "rgba(255,255,255,0.18)", padding: "5px 11px", borderRadius: 999, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", whiteSpace: "nowrap" }}>
+                {set.source}
+              </span>
+              <Dots total={total} active={cardIndex} />
+            </div>
+
+            {/* Spacer */}
+            <div style={{ flex: 1 }} />
+
+            {/* Bottom content with gradient overlay */}
+            <div style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.62))", padding: "48px 22px 26px" }}>
+              <h2 style={{ ...SG, fontSize: "clamp(22px,5.5vw,30px)", fontWeight: 700, color: "white", lineHeight: 1.15, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
+                {card.headline}
+              </h2>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
+                {card.bullets.map((b, i) => (
+                  <li key={i} style={{ display: "flex", gap: 10, color: "rgba(255,255,255,0.82)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.55 }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0, marginTop: 2 }}>—</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 20, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: ".04em" }}>{card.readTime} read</span>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>
+                  {isFirst ? "tap right · swipe right to save" : isLast ? "tap right to restart" : `${cardIndex + 1} / ${total}`}
+                </span>
               </div>
             </div>
           </div>
@@ -198,25 +213,29 @@ export default function StoryReader({ set }: { set: StorySet }) {
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-center gap-14 pb-10 pt-4 shrink-0">
-        <div className="flex flex-col items-center gap-2">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 56, padding: "16px 0 40px", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           <button
             onClick={handleNope}
-            className="w-[60px] h-[60px] rounded-full border-2 border-red-400/30 dark:border-red-500/30 bg-white dark:bg-zinc-900 flex items-center justify-center hover:border-red-500/70 hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-90 transition-all shadow-lg"
+            style={{ width: 58, height: 58, borderRadius: "50%", border: "2px solid rgba(255,107,129,0.5)", background: "var(--lp-surface)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px -6px rgba(255,107,129,0.3)", transition: "transform .15s" }}
+            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
           >
-            <span className="text-red-500 text-[22px] leading-none">✕</span>
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
-          <span className="text-zinc-400 dark:text-zinc-600 text-[10px] tracking-wide">Less of this</span>
+          <span style={{ fontSize: 10, color: "var(--lp-text3)", fontWeight: 600, letterSpacing: ".06em" }}>Less of this</span>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           <button
             onClick={handleLike}
-            className="w-[60px] h-[60px] rounded-full border-2 border-green-400/30 dark:border-green-500/30 bg-white dark:bg-zinc-900 flex items-center justify-center hover:border-green-500/70 hover:bg-green-50 dark:hover:bg-green-500/10 active:scale-90 transition-all shadow-lg"
+            style={{ width: 58, height: 58, borderRadius: "50%", border: "2px solid rgba(52,211,153,0.5)", background: "var(--lp-surface)", color: "#34D399", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px -6px rgba(52,211,153,0.3)", transition: "transform .15s" }}
+            onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
           >
-            <span className="text-green-500 text-[22px] leading-none">♥</span>
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z" /></svg>
           </button>
-          <span className="text-zinc-400 dark:text-zinc-600 text-[10px] tracking-wide">Like</span>
+          <span style={{ fontSize: 10, color: "var(--lp-text3)", fontWeight: 600, letterSpacing: ".06em" }}>Save</span>
         </div>
       </div>
     </div>
