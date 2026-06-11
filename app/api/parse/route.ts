@@ -22,21 +22,24 @@ async function handleUrl(url: string) {
   let raw: string;
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
-      headers: { Accept: "text/plain", "X-Return-Format": "text" },
+      headers: { "X-Return-Format": "markdown" },
       signal: AbortSignal.timeout(30_000),
     });
-    if (!res.ok) throw new Error(`status ${res.status}`);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return Response.json({ error: `Fetch failed (${res.status}): ${body.slice(0, 200)}` }, { status: 422 });
+    }
     raw = await res.text();
-  } catch {
-    return Response.json({ error: "Could not fetch URL" }, { status: 422 });
+  } catch (e) {
+    return Response.json({ error: `Could not fetch: ${(e as Error).message}` }, { status: 422 });
   }
 
   const titleMatch = raw.match(/^Title:\s*(.+)/m);
   const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
 
   const text = raw
-    .replace(/^(Title|URL|Published Time|Description|Warning):.*\n?/gm, "")
-    .replace(/\[Image[^\]]*\]\([^)]*\)/g, "")
+    .replace(/^(Title|URL Source|Published Time|Description|Warning|Markdown Content):.*\n?/gm, "")
+    .replace(/!\[Image[^\]]*\]\([^)]*\)/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 12_000);
