@@ -70,6 +70,15 @@ export default function StoryReader({ set, storySetId }: Props) {
 
   const cardNotes = notes.filter((n) => n.card_index === cardIndex);
 
+  async function deleteNote(id: string) {
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+    await fetch("/api/notes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+  }
+
   function openEditNote(note: Note) {
     setEditingNoteId(note.id);
     setNoteText(note.content);
@@ -250,11 +259,14 @@ export default function StoryReader({ set, storySetId }: Props) {
                 {cardNotes.map((note) => (
                   <div
                     key={note.id}
-                    onClick={() => openEditNote(note)}
-                    style={{ background: "rgba(255,220,80,0.12)", border: "1px solid rgba(255,220,80,0.25)", borderRadius: 10, padding: "8px 12px", cursor: "text", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}
+                    style={{ background: "rgba(255,220,80,0.12)", border: "1px solid rgba(255,220,80,0.25)", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}
                   >
-                    <p style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1 }}>✎ {note.content}</p>
-                    <span style={{ fontSize: 10, color: "rgba(255,220,80,0.45)", flexShrink: 0, paddingTop: 1 }}>tap to edit</span>
+                    <p onClick={() => openEditNote(note)} style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1, cursor: "text" }}>✎ {note.content}</p>
+                    <button
+                      onClick={() => deleteNote(note.id)}
+                      style={{ background: "none", border: "none", color: "rgba(255,220,80,0.35)", cursor: "pointer", padding: "1px 0 0", fontSize: 14, lineHeight: 1, flexShrink: 0 }}
+                      aria-label="Delete note"
+                    >✕</button>
                   </div>
                 ))}
               </div>
