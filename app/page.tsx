@@ -274,18 +274,14 @@ function HomeInner() {
           </form>
         </div>
 
-        <div className="mt-6 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-4 py-3 text-center">
-          <p className="text-zinc-500 dark:text-zinc-400 text-xs font-semibold tracking-wider uppercase mb-1">Shortcut</p>
-          <p className="text-zinc-700 dark:text-zinc-300 text-sm">
-            On any article, replace <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded">https://</code> with <code className="bg-zinc-200 dark:bg-zinc-800 px-1 rounded">storis.in/</code>
-          </p>
-        </div>
-
-        <p className="text-center mt-4 text-zinc-400 dark:text-zinc-500 text-sm">
+        <div className="flex justify-center gap-6 mt-6 text-zinc-400 dark:text-zinc-500 text-sm">
           <a href="/curate" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
             Saved stories →
           </a>
-        </p>
+          <a href="/install" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">
+            One-click install →
+          </a>
+        </div>
       </div>
     </div>
   );
