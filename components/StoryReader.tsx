@@ -13,6 +13,9 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useUser } from "@clerk/nextjs";
 import type { StorySet, Note } from "@/lib/types";
 
+interface StarredKey { cardIndex: number; bulletIndex: number; }
+function starKey(cardIndex: number, bulletIndex: number) { return `${cardIndex}_${bulletIndex}`; }
+
 const SWIPE_THRESHOLD = 80;
 
 const GRADIENTS = [
@@ -47,6 +50,10 @@ export default function StoryReader({ set, storySetId }: Props) {
   const [savingNote, setSavingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
+  // Starred bullets state — Set of "cardIndex_bulletIndex" strings
+  const [starred, setStarred] = useState<Set<string>>(new Set());
+  const [togglingBullet, setTogglingBullet] = useState<string | null>(null);
+
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 300], [-14, 14]);
   const likeOpacity = useTransform(x, [30, 100], [0, 1]);
@@ -68,6 +75,19 @@ export default function StoryReader({ set, storySetId }: Props) {
       .then((data) => setNotes(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, [isLoggedIn, sid]);
+
+  // Load starred bullets for this story set
+  useEffect(() => {
+    if (!isLoggedIn || !storySetId) return;
+    fetch(`/api/stars?storySetId=${encodeURIComponent(storySetId)}`)
+      .then((r) => r.json())
+      .then((data: StarredKey[]) => {
+        if (Array.isArray(data)) {
+          setStarred(new Set(data.map((s) => starKey(s.cardIndex, s.bulletIndex))));
+        }
+      })
+      .catch(() => {});
+  }, [isLoggedIn, storySetId]);
 
   // Restore reading progress for saved stories
   useEffect(() => {
@@ -142,6 +162,33 @@ export default function StoryReader({ set, storySetId }: Props) {
       // silent
     } finally {
       setSavingNote(false);
+    }
+  }
+
+  async function toggleStar(bulletIndex: number) {
+    if (!isLoggedIn || !storySetId) return;
+    const key = starKey(cardIndex, bulletIndex);
+    if (togglingBullet === key) return;
+    setTogglingBullet(key);
+    const isStarred = starred.has(key);
+    try {
+      if (isStarred) {
+        await fetch("/api/stars", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ storySetId, cardIndex, bulletIndex }),
+        });
+        setStarred((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      } else {
+        await fetch("/api/stars", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ storySetId, storyTitle: set.title, cardIndex, bulletIndex, bulletText: card.bullets[bulletIndex] }),
+        });
+        setStarred((prev) => new Set([...prev, key]));
+      }
+    } catch { /* silent */ } finally {
+      setTogglingBullet(null);
     }
   }
 
@@ -357,12 +404,25 @@ export default function StoryReader({ set, storySetId }: Props) {
               {card.headline}
             </h2>
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 9 }}>
-              {(card.bullets ?? []).map((b, i) => (
-                <li key={i} style={{ display: "flex", gap: 10, color: "rgba(255,255,255,0.8)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.55 }}>
-                  <span style={{ color: "rgba(255,255,255,0.32)", flexShrink: 0, marginTop: 2 }}>—</span>
-                  <span>{b}</span>
-                </li>
-              ))}
+              {(card.bullets ?? []).map((b, i) => {
+                const key = starKey(cardIndex, i);
+                const isStarred = starred.has(key);
+                return (
+                  <li key={i} style={{ display: "flex", gap: 10, color: "rgba(255,255,255,0.8)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.55, alignItems: "flex-start" }}>
+                    <span style={{ color: "rgba(255,255,255,0.32)", flexShrink: 0, marginTop: 2 }}>—</span>
+                    <span style={{ flex: 1 }}>{b}</span>
+                    {isLoggedIn && storySetId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleStar(i); }}
+                        aria-label={isStarred ? "Unstar" : "Star this insight"}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0 0", flexShrink: 0, fontSize: 15, color: isStarred ? "#FBBF24" : "rgba(255,255,255,0.2)", transition: "color .15s", opacity: togglingBullet === key ? 0.5 : 1 }}
+                      >
+                        {isStarred ? "★" : "☆"}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
 
             {/* Progress + read time */}

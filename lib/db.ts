@@ -92,6 +92,22 @@ export async function runMigration() {
   `;
 
   await sql`CREATE INDEX IF NOT EXISTS notes_set_idx ON notes(story_set_id)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS starred_bullets (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      clerk_user_id TEXT        NOT NULL,
+      story_set_id  TEXT        REFERENCES story_sets(id) ON DELETE CASCADE,
+      story_title   TEXT        NOT NULL,
+      card_index    INT         NOT NULL,
+      bullet_index  INT         NOT NULL,
+      bullet_text   TEXT        NOT NULL,
+      created_at    TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(clerk_user_id, story_set_id, card_index, bullet_index)
+    )
+  `;
+
+  await sql`CREATE INDEX IF NOT EXISTS starred_bullets_user_idx ON starred_bullets(clerk_user_id)`;
 }
 
 // ─── Inbox helpers ────────────────────────────────────────────────────────────
@@ -263,4 +279,139 @@ export async function deleteNote(id: string, clerkUserId: string) {
   const sql = getDb();
   if (!sql) throw new Error("DB not configured");
   await sql`DELETE FROM notes WHERE id = ${id} AND clerk_user_id = ${clerkUserId}`;
+}
+
+// ─── Starred bullets helpers ──────────────────────────────────────────────────
+
+export interface StarredBullet {
+  id: string;
+  story_set_id: string;
+  story_title: string;
+  card_index: number;
+  bullet_index: number;
+  bullet_text: string;
+  created_at: string;
+}
+
+export async function starBullet(
+  clerkUserId: string,
+  storySetId: string,
+  storyTitle: string,
+  cardIndex: number,
+  bulletIndex: number,
+  bulletText: string
+): Promise<StarredBullet> {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  const [row] = await sql<[StarredBullet]>`
+    INSERT INTO starred_bullets (clerk_user_id, story_set_id, story_title, card_index, bullet_index, bullet_text)
+    VALUES (${clerkUserId}, ${storySetId}, ${storyTitle}, ${cardIndex}, ${bulletIndex}, ${bulletText})
+    ON CONFLICT (clerk_user_id, story_set_id, card_index, bullet_index) DO NOTHING
+    RETURNING id, story_set_id, story_title, card_index, bullet_index, bullet_text, created_at
+  `;
+  return row;
+}
+
+export async function unstarBullet(
+  clerkUserId: string,
+  storySetId: string,
+  cardIndex: number,
+  bulletIndex: number
+) {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  await sql`
+    DELETE FROM starred_bullets
+    WHERE clerk_user_id = ${clerkUserId}
+      AND story_set_id  = ${storySetId}
+      AND card_index    = ${cardIndex}
+      AND bullet_index  = ${bulletIndex}
+  `;
+}
+
+export async function listStarredBullets(clerkUserId: string): Promise<StarredBullet[]> {
+  const sql = getDb();
+  if (!sql) return [];
+  return sql<StarredBullet[]>`
+    SELECT id, story_set_id, story_title, card_index, bullet_index, bullet_text, created_at
+    FROM starred_bullets
+    WHERE clerk_user_id = ${clerkUserId}
+    ORDER BY created_at DESC
+  `;
+}
+
+export async function listStarredForStory(clerkUserId: string, storySetId: string): Promise<StarredBullet[]> {
+  const sql = getDb();
+  if (!sql) return [];
+  return sql<StarredBullet[]>`
+    SELECT id, story_set_id, story_title, card_index, bullet_index, bullet_text, created_at
+    FROM starred_bullets
+    WHERE clerk_user_id = ${clerkUserId} AND story_set_id = ${storySetId}
+  `;
+}
+
+// ─── Daily card helper ────────────────────────────────────────────────────────
+
+export async function getDailyCard(clerkUserId: string): Promise<{
+  storySetId: string;
+  storyTitle: string;
+  cardIndex: number;
+  headline: string;
+  bullet: string;
+} | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  // Pick a card seeded by today's date so it's consistent within the day
+  const rows = await sql<{ story_set_id: string; title: string; card_index: number; headline: string; bullets: unknown }[]>`
+    SELECT sc.story_set_id, ss.title, sc.card_index, sc.headline, sc.bullets
+    FROM story_cards sc
+    JOIN story_sets ss ON ss.id = sc.story_set_id
+    WHERE ss.clerk_user_id = ${clerkUserId}
+    ORDER BY md5(ss.id || sc.card_index::text || current_date::text)
+    LIMIT 1
+  `;
+  if (!rows.length) return null;
+
+  const row = rows[0];
+  let bullets: string[] = [];
+  if (Array.isArray(row.bullets)) bullets = row.bullets as string[];
+  else if (typeof row.bullets === "string") { try { bullets = JSON.parse(row.bullets); } catch { bullets = []; } }
+
+  return {
+    storySetId: row.story_set_id,
+    storyTitle: row.title,
+    cardIndex: row.card_index,
+    headline: row.headline,
+    bullet: bullets[0] ?? "",
+  };
+}
+
+// ─── Library cards for Ask ────────────────────────────────────────────────────
+
+export async function getAllCardsForUser(clerkUserId: string): Promise<{
+  storyTitle: string;
+  storySetId: string;
+  sourceUrl: string | null;
+  headline: string;
+  bullets: string[];
+}[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  const rows = await sql<{ story_set_id: string; title: string; source_url: string | null; headline: string; bullets: unknown }[]>`
+    SELECT sc.story_set_id, ss.title, ss.source_url, sc.headline, sc.bullets
+    FROM story_cards sc
+    JOIN story_sets ss ON ss.id = sc.story_set_id
+    WHERE ss.clerk_user_id = ${clerkUserId}
+    ORDER BY ss.saved_at DESC, sc.card_index
+    LIMIT 300
+  `;
+
+  return rows.map((r) => {
+    let bullets: string[] = [];
+    if (Array.isArray(r.bullets)) bullets = r.bullets as string[];
+    else if (typeof r.bullets === "string") { try { bullets = JSON.parse(r.bullets); } catch { bullets = []; } }
+    return { storySetId: r.story_set_id, storyTitle: r.title, sourceUrl: r.source_url, headline: r.headline, bullets };
+  });
 }
