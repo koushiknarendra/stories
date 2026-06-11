@@ -129,15 +129,17 @@ function HomeInner() {
   const searchParams = useSearchParams();
   const { theme, toggle } = useTheme();
   const { isLoaded, isSignedIn } = useUser();
+  const [tab, setTab] = useState<"url" | "text">("url");
   const [url, setUrl] = useState("");
+  const [pastedText, setPastedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const autoTriggered = useRef(false);
 
-  const generate = useCallback(async (targetUrl: string) => {
+  const generate = useCallback(async (body: { url: string } | { text: string }) => {
     setError(""); setLoading(true);
     try {
-      const parseRes = await fetch("/api/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: targetUrl }) });
+      const parseRes = await fetch("/api/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const parseData = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseData.error ?? "Parse failed");
       const storiesRes = await fetch("/api/stories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parseData) });
@@ -160,10 +162,14 @@ function HomeInner() {
 
   useEffect(() => {
     const u = searchParams.get("url");
-    if (u && !autoTriggered.current) { autoTriggered.current = true; setUrl(u); generate(u); }
+    if (u && !autoTriggered.current) { autoTriggered.current = true; setUrl(u); generate({ url: u }); }
   }, [searchParams, generate]);
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (url.trim()) generate(url.trim()); };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tab === "url" && url.trim()) generate({ url: url.trim() });
+    if (tab === "text" && pastedText.trim()) generate({ text: pastedText.trim() });
+  };
 
   if (loading) return <LoadingScreen />;
 
@@ -224,29 +230,59 @@ function HomeInner() {
             Paste any article and get the key ideas as swipeable cards in seconds. Save what's worth keeping, annotate as you go.
           </p>
 
-          {/* URL input */}
-          <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, width: "100%", maxWidth: 480, marginTop: 36, flexWrap: "wrap", justifyContent: "center" }}>
-            <input
-              id="hero-input"
-              type="url"
-              placeholder="Paste a link to any article…"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              required
-              style={{ flex: 1, minWidth: 220, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", transition: "border-color .2s", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)" }}
-            />
-            <button type="submit" style={{ padding: "13px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "var(--lp-on-accent)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 10px 26px -8px var(--lp-glow)", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-              Get the story →
-            </button>
+          {/* Tab + input */}
+          <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 520, marginTop: 36 }}>
+            {/* Tabs */}
+            <div style={{ display: "inline-flex", background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: 10, padding: 3, marginBottom: 10 }}>
+              {(["url", "text"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTab(t); setError(""); }}
+                  style={{ padding: "6px 18px", borderRadius: 7, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s", fontFamily: "inherit", background: tab === t ? "var(--lp-accent)" : "transparent", color: tab === t ? "#fff" : "var(--lp-text2)" }}
+                >
+                  {t === "url" ? "Link" : "Text"}
+                </button>
+              ))}
+            </div>
+
+            {tab === "url" ? (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  type="url"
+                  placeholder="Paste a link to any article…"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  style={{ flex: 1, minWidth: 220, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)" }}
+                />
+                <button type="submit" disabled={!url.trim()} style={{ padding: "13px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 10px 26px -8px var(--lp-glow)", fontFamily: "inherit", whiteSpace: "nowrap", opacity: url.trim() ? 1 : 0.5 }}>
+                  Get the story →
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <textarea
+                  autoFocus
+                  placeholder="Paste anything — transcript, essay, newsletter, email, notes…"
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  rows={5}
+                  style={{ width: "100%", background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)", lineHeight: 1.6 }}
+                />
+                <button type="submit" disabled={pastedText.trim().length < 30} style={{ padding: "13px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 10px 26px -8px var(--lp-glow)", fontFamily: "inherit", opacity: pastedText.trim().length >= 30 ? 1 : 0.5 }}>
+                  Turn into cards →
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <p style={{ marginTop: 10, fontSize: 13.5, color: "var(--lp-skip)", background: "color-mix(in srgb, var(--lp-skip) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--lp-skip) 25%, transparent)", borderRadius: "var(--lp-radius)", padding: "10px 14px" }}>
+                {error}
+              </p>
+            )}
           </form>
 
-          {error && (
-            <p style={{ marginTop: 12, fontSize: 13.5, color: "var(--lp-skip)", background: "color-mix(in srgb, var(--lp-skip) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--lp-skip) 25%, transparent)", borderRadius: "var(--lp-radius)", padding: "10px 14px", maxWidth: 480, width: "100%", margin: "12px auto 0" }}>
-              {error}
-            </p>
-          )}
-
-          <p style={{ marginTop: 16, fontSize: 12.5, color: "var(--lp-text3)" }}>
+          <p style={{ marginTop: 14, fontSize: 12.5, color: "var(--lp-text3)" }}>
             Free to try · No sign-up needed
           </p>
 
@@ -264,8 +300,8 @@ function HomeInner() {
         <div className="lp-steps">
           <Step
             n="1"
-            title="Paste any link"
-            body="Articles, threads, newsletters, essays — any URL works. Storis fetches and reads it for you."
+            title="Drop a link or paste text"
+            body="Any URL, or paste raw text directly — transcripts, essays, newsletters, emails, notes."
           />
           <Step
             n="2"
