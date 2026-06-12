@@ -88,7 +88,7 @@ export default function ForYouPage() {
   void theme; // used via CSS vars
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", color: "var(--lp-text)", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Header */}
       <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 24px) 20px 0" }}>

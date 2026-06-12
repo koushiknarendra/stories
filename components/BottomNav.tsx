@@ -51,44 +51,45 @@ export default function BottomNav() {
   return (
     <nav style={{
       position: "fixed",
-      bottom: 0,
-      left: 0,
-      right: 0,
+      bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
+      left: 12,
+      right: 12,
       zIndex: 50,
-      background: "color-mix(in srgb, var(--lp-bg) 88%, transparent)",
-      backdropFilter: "blur(20px)",
-      WebkitBackdropFilter: "blur(20px)",
-      borderTop: "1px solid var(--lp-border)",
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      borderRadius: 999,
+      background: "rgba(14, 11, 26, 0.94)",
+      backdropFilter: "blur(24px)",
+      WebkitBackdropFilter: "blur(24px)",
+      boxShadow: "0 8px 32px -8px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)",
+      height: 60,
+      display: "flex",
+      alignItems: "center",
     }}>
-      <div style={{ display: "flex", alignItems: "stretch" }}>
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
-          const active = pathname === href;
-          return (
-            <a
-              key={href}
-              href={href}
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "10px 0 8px",
-                gap: 4,
-                color: active ? "var(--lp-accent)" : "var(--lp-text3)",
-                textDecoration: "none",
-                transition: "color .15s",
-              }}
-            >
-              <Icon active={active} />
-              <span style={{ ...SG, fontSize: 10, fontWeight: active ? 700 : 500, letterSpacing: ".04em" }}>
-                {label}
-              </span>
-            </a>
-          );
-        })}
-      </div>
+      {NAV_ITEMS.map(({ href, label, Icon }) => {
+        const active = pathname === href;
+        return (
+          <a
+            key={href}
+            href={href}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              gap: 3,
+              color: active ? "#7C5CFF" : "rgba(255,255,255,0.38)",
+              textDecoration: "none",
+              transition: "color .15s",
+            }}
+          >
+            <Icon active={active} />
+            <span style={{ ...SG, fontSize: 9.5, fontWeight: active ? 700 : 500, letterSpacing: ".04em" }}>
+              {label}
+            </span>
+          </a>
+        );
+      })}
     </nav>
   );
 }

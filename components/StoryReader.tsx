@@ -294,13 +294,9 @@ export default function StoryReader({ set, storySetId }: Props) {
       background: "var(--lp-bg)",
       userSelect: "none",
       paddingTop: "env(safe-area-inset-top, 0px)",
-      paddingBottom: isLoggedIn
-        ? "calc(72px + env(safe-area-inset-bottom, 0px))"
-        : "env(safe-area-inset-bottom, 0px)",
-      boxSizing: "border-box",
     }}>
 
-      {/* Card */}
+      {/* Card — fills everything above the pill nav */}
       <div style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
 
         <motion.div
@@ -317,9 +313,9 @@ export default function StoryReader({ set, storySetId }: Props) {
           {/* Cover image */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
           {/* Dark gradient */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.32) 42%, rgba(0,0,0,0.92) 100%)" }} />
-          {/* Subtle color tint per card */}
-          <div style={{ position: "absolute", inset: 0, background: gradient, opacity: 0.18 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.28) 38%, rgba(0,0,0,0.88) 100%)" }} />
+          {/* Color tint */}
+          <div style={{ position: "absolute", inset: 0, background: gradient, opacity: 0.16 }} />
 
           {/* Progress bars */}
           <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>
@@ -330,7 +326,7 @@ export default function StoryReader({ set, storySetId }: Props) {
             </div>
             {resumed && (
               <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
-                <span style={{ ...SG, fontSize: 10, fontWeight: 700, letterSpacing: ".08em", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.12)", padding: "3px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
+                <span style={{ ...SG, fontSize: 10, fontWeight: 700, letterSpacing: ".08em", color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.1)", padding: "3px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
                   ↩ Resumed from card {cardIndex + 1}
                 </span>
               </div>
@@ -346,105 +342,147 @@ export default function StoryReader({ set, storySetId }: Props) {
             <span style={{ ...SG, color: "#FF6B81", fontWeight: 900, fontSize: 26, letterSpacing: ".1em" }}>SKIP</span>
           </motion.div>
 
-          {/* Bottom content */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent 0%, rgba(0,0,0,0.52) 26%, rgba(0,0,0,0.92) 100%)", padding: "90px 20px 22px", zIndex: 10 }}>
+          {/* Bottom overlay — text content */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}>
 
-            {/* Notes list */}
-            {cardNotes.length > 0 && !showNoteInput && (
-              <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                {cardNotes.map((note) => (
-                  <div key={note.id} style={{ background: "rgba(255,220,80,0.1)", border: "1px solid rgba(255,220,80,0.22)", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <p onClick={() => openEditNote(note)} style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1, cursor: "text" }}>✎ {note.content}</p>
-                    <button onClick={() => deleteNote(note.id)} style={{ background: "none", border: "none", color: "rgba(255,220,80,0.3)", cursor: "pointer", padding: "1px 0 0", fontSize: 14, lineHeight: 1, flexShrink: 0 }} aria-label="Delete note">✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Gradient + text content */}
+            <div style={{ background: "linear-gradient(transparent 0%, rgba(0,0,0,0.55) 24%, rgba(0,0,0,0.9) 100%)", padding: "90px 20px 0" }}>
 
-            {/* Note input */}
-            {showNoteInput && (
-              <div style={{ marginBottom: 14 }} onClick={(e) => e.stopPropagation()}>
-                <textarea
-                  autoFocus
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Add a note for this card…"
-                  rows={2}
-                  style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 10, color: "white", fontSize: 16, padding: "10px 12px", resize: "none", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(); } if (e.key === "Escape") cancelNote(); }}
-                />
-                <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                  <button onClick={saveNote} disabled={savingNote || !noteText.trim()} style={{ ...SG, flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "rgba(255,220,80,0.85)", color: "#000", fontWeight: 700, fontSize: 12, cursor: "pointer", opacity: savingNote ? 0.6 : 1 }}>
-                    {savingNote ? "Saving…" : editingNoteId ? "Update note" : "Save note"}
-                  </button>
-                  <button onClick={cancelNote} style={{ ...SG, padding: "8px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Cancel</button>
+              {/* Notes list */}
+              {cardNotes.length > 0 && !showNoteInput && (
+                <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                  {cardNotes.map((note) => (
+                    <div key={note.id} style={{ background: "rgba(255,220,80,0.1)", border: "1px solid rgba(255,220,80,0.2)", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <p onClick={() => openEditNote(note)} style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1, cursor: "text" }}>✎ {note.content}</p>
+                      <button onClick={() => deleteNote(note.id)} style={{ background: "none", border: "none", color: "rgba(255,220,80,0.3)", cursor: "pointer", padding: "1px 0 0", fontSize: 14, lineHeight: 1, flexShrink: 0 }} aria-label="Delete note">✕</button>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Source + notes count */}
-            <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", background: "rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
-                {set.source}
-              </span>
-              {cardNotes.length > 0 && (
-                <span style={{ ...SG, fontSize: 10, fontWeight: 700, color: "rgba(255,220,80,0.85)", background: "rgba(255,220,80,0.12)", padding: "4px 8px", borderRadius: 999 }}>✎ {cardNotes.length}</span>
+              {/* Note input */}
+              {showNoteInput && (
+                <div style={{ marginBottom: 14 }} onClick={(e) => e.stopPropagation()}>
+                  <textarea
+                    autoFocus
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Add a note for this card…"
+                    rows={2}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 10, color: "white", fontSize: 16, padding: "10px 12px", resize: "none", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(); } if (e.key === "Escape") cancelNote(); }}
+                  />
+                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                    <button onClick={saveNote} disabled={savingNote || !noteText.trim()} style={{ ...SG, flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "rgba(255,220,80,0.85)", color: "#000", fontWeight: 700, fontSize: 12, cursor: "pointer", opacity: savingNote ? 0.6 : 1 }}>
+                      {savingNote ? "Saving…" : editingNoteId ? "Update note" : "Save note"}
+                    </button>
+                    <button onClick={cancelNote} style={{ ...SG, padding: "8px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Source + note count */}
+              <div style={{ marginBottom: 9, display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
+                  {set.source}
+                </span>
+                {cardNotes.length > 0 && (
+                  <span style={{ ...SG, fontSize: 10, fontWeight: 700, color: "rgba(255,220,80,0.85)", background: "rgba(255,220,80,0.12)", padding: "4px 8px", borderRadius: 999 }}>✎ {cardNotes.length}</span>
+                )}
+              </div>
+
+              {/* Headline */}
+              <h2 style={{ ...SG, fontSize: "clamp(20px,5.5vw,30px)", fontWeight: 800, color: "white", lineHeight: 1.08, letterSpacing: "-0.025em", margin: "0 0 12px" }}>
+                {card.headline}
+              </h2>
+
+              {/* Bullets */}
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                {(card.bullets ?? []).map((b, i) => {
+                  const key = starKey(cardIndex, i);
+                  const isStarred = starred.has(key);
+                  return (
+                    <li key={i} style={{ display: "flex", gap: 9, color: "rgba(255,255,255,0.75)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.5, alignItems: "flex-start" }}>
+                      <span style={{ color: "rgba(255,255,255,0.25)", flexShrink: 0, marginTop: 2 }}>—</span>
+                      <span style={{ flex: 1 }}>{b}</span>
+                      {isLoggedIn && storySetId && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleStar(i); }}
+                          aria-label={isStarred ? "Unstar" : "Star"}
+                          style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0 0", flexShrink: 0, fontSize: 15, color: isStarred ? "#FBBF24" : "rgba(255,255,255,0.16)", transition: "color .15s", opacity: togglingBullet === key ? 0.5 : 1 }}
+                        >
+                          {isStarred ? "★" : "☆"}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Read time + position */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 600 }}>{card.readTime} read</span>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)" }}>
+                  {isFirst ? "tap → to advance" : isLast ? "tap → to restart" : `${cardIndex + 1} / ${total}`}
+                </span>
+              </div>
+
+              {/* Guest sign-in nudge */}
+              {isLast && isLoaded && !isLoggedIn && (
+                <div
+                  style={{ margin: "12px 0 0", padding: "13px 16px", background: "rgba(124,92,255,0.16)", border: "1px solid rgba(124,92,255,0.3)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, backdropFilter: "blur(8px)" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div>
+                    <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.95)" }}>Save this story</p>
+                    <p style={{ margin: "3px 0 0", fontSize: 11.5, color: "rgba(255,255,255,0.45)" }}>Sign in to build your library — it&apos;s free</p>
+                  </div>
+                  <SignInButton mode="modal">
+                    <button style={{ ...SG, flexShrink: 0, padding: "9px 16px", borderRadius: 10, border: "none", background: "#7C5CFF", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 14px -4px rgba(124,92,255,0.7)" }}>
+                      Sign in
+                    </button>
+                  </SignInButton>
+                </div>
               )}
             </div>
 
-            {/* Headline */}
-            <h2 style={{ ...SG, fontSize: "clamp(20px,5.5vw,30px)", fontWeight: 800, color: "white", lineHeight: 1.08, letterSpacing: "-0.025em", margin: "0 0 13px" }}>
-              {card.headline}
-            </h2>
-
-            {/* Bullets */}
-            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-              {(card.bullets ?? []).map((b, i) => {
-                const key = starKey(cardIndex, i);
-                const isStarred = starred.has(key);
-                return (
-                  <li key={i} style={{ display: "flex", gap: 9, color: "rgba(255,255,255,0.76)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.5, alignItems: "flex-start" }}>
-                    <span style={{ color: "rgba(255,255,255,0.28)", flexShrink: 0, marginTop: 2 }}>—</span>
-                    <span style={{ flex: 1 }}>{b}</span>
-                    {isLoggedIn && storySetId && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleStar(i); }}
-                        aria-label={isStarred ? "Unstar" : "Star"}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0 0", flexShrink: 0, fontSize: 15, color: isStarred ? "#FBBF24" : "rgba(255,255,255,0.18)", transition: "color .15s", opacity: togglingBullet === key ? 0.5 : 1 }}
-                      >
-                        {isStarred ? "★" : "☆"}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-
-            {/* Read time + card count */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 13, paddingTop: 11, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>{card.readTime} read</span>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
-                {isFirst ? "tap → to advance" : isLast ? "tap → to restart" : `${cardIndex + 1} / ${total}`}
-              </span>
-            </div>
-
-            {/* Guest sign-in nudge on last card */}
-            {isLast && isLoaded && !isLoggedIn && (
-              <div
-                style={{ margin: "12px 0 0", padding: "13px 16px", background: "rgba(124,92,255,0.16)", border: "1px solid rgba(124,92,255,0.32)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, backdropFilter: "blur(8px)" }}
-                onClick={(e) => e.stopPropagation()}
+            {/* Action buttons — frosted strip on the image */}
+            <div
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "16px 28px 22px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Skip */}
+              <button
+                onClick={handleNope}
+                style={{ width: 56, height: 56, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s, background .15s", flexShrink: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.background = "rgba(255,107,129,0.22)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
               >
-                <div>
-                  <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.95)" }}>Save this story</p>
-                  <p style={{ margin: "3px 0 0", fontSize: 11.5, color: "rgba(255,255,255,0.45)" }}>Sign in to build your library — it&apos;s free</p>
-                </div>
-                <SignInButton mode="modal">
-                  <button style={{ ...SG, flexShrink: 0, padding: "9px 16px", borderRadius: 10, border: "none", background: "#7C5CFF", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 14px -4px rgba(124,92,255,0.7)" }}>
-                    Sign in
-                  </button>
-                </SignInButton>
-              </div>
-            )}
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+
+              {/* Note (logged-in only) */}
+              {isLoggedIn && (
+                <button
+                  onClick={() => setShowNoteInput((v) => !v)}
+                  style={{ width: 48, height: 48, borderRadius: "50%", border: "none", background: showNoteInput ? "rgba(255,220,80,0.2)" : "rgba(255,255,255,0.1)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+              )}
+
+              {/* Save — primary */}
+              <button
+                onClick={handleLike}
+                style={{ width: 68, height: 68, borderRadius: "50%", border: "none", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 24px -4px rgba(124,92,255,0.65)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 10px 30px -4px rgba(124,92,255,0.8)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 6px 24px -4px rgba(124,92,255,0.65)"; }}
+              >
+                <svg width={26} height={26} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
+              </button>
+            </div>
           </div>
         </motion.div>
 
@@ -475,41 +513,8 @@ export default function StoryReader({ set, storySetId }: Props) {
         </div>
       </div>
 
-      {/* Action buttons — outside the card, below it */}
-      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 18, padding: "14px 32px 16px", background: "var(--lp-bg)" }}>
-
-        {/* Skip */}
-        <button
-          onClick={handleNope}
-          style={{ width: 56, height: 56, borderRadius: "50%", border: "none", background: "var(--lp-surface)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 12px -2px rgba(0,0,0,0.15)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.boxShadow = "0 6px 20px -4px rgba(255,107,129,0.45)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 12px -2px rgba(0,0,0,0.15)"; }}
-        >
-          <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-
-        {/* Note (logged-in only) */}
-        {isLoggedIn && (
-          <button
-            onClick={() => setShowNoteInput((v) => !v)}
-            style={{ width: 48, height: 48, borderRadius: "50%", border: "none", background: showNoteInput ? "rgba(255,220,80,0.18)" : "var(--lp-surface)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 12px -2px rgba(0,0,0,0.15)", transition: "transform .15s", flexShrink: 0 }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          >
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-        )}
-
-        {/* Save — primary, larger */}
-        <button
-          onClick={handleLike}
-          style={{ width: 68, height: 68, borderRadius: "50%", border: "none", background: "var(--lp-accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 20px -4px var(--lp-glow)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 10px 28px -4px var(--lp-glow)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 6px 20px -4px var(--lp-glow)"; }}
-        >
-          <svg width={26} height={26} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
-        </button>
-      </div>
+      {/* Spacer for pill nav */}
+      <div style={{ flexShrink: 0, height: isLoggedIn ? "calc(68px + env(safe-area-inset-bottom, 0px) + 10px)" : "env(safe-area-inset-bottom, 0px)" }} />
 
       {isLoggedIn && <BottomNav />}
     </div>
