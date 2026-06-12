@@ -356,11 +356,10 @@ export default function StoryReader({ set, storySetId }: Props) {
             {/* Middle: text content — vertically centered in remaining space */}
             <div
               style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 20px 8px", overflowY: "hidden", pointerEvents: "auto" }}
-              onClick={(e) => e.stopPropagation()}
             >
               {/* Notes list */}
               {cardNotes.length > 0 && !showNoteInput && (
-                <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }} onClick={(e) => e.stopPropagation()}>
                   {cardNotes.map((note) => (
                     <div key={note.id} style={{ background: "rgba(255,220,80,0.1)", border: "1px solid rgba(255,220,80,0.2)", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
                       <p onClick={() => openEditNote(note)} style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1, cursor: "text" }}>✎ {note.content}</p>
@@ -372,7 +371,7 @@ export default function StoryReader({ set, storySetId }: Props) {
 
               {/* Note input */}
               {showNoteInput && (
-                <div style={{ marginBottom: 14 }}>
+                <div style={{ marginBottom: 14 }} onClick={(e) => e.stopPropagation()}>
                   <textarea
                     autoFocus
                     value={noteText}
