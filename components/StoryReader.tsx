@@ -316,7 +316,7 @@ export default function StoryReader({ set, storySetId }: Props) {
           {/* Cover image */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
           {/* Gradient: image clear at top, blends to near-black at bottom */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.78) 62%, rgba(0,0,0,0.96) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.84) 54%, rgba(0,0,0,0.97) 100%)" }} />
           {/* Top vignette for progress bars */}
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 90, background: "linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
 
@@ -353,7 +353,7 @@ export default function StoryReader({ set, storySetId }: Props) {
 
             {/* Middle: text content — pushed to bottom, just above buttons */}
             <div
-              style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 16px", overflowY: "hidden", pointerEvents: "auto" }}
+              style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 4px", overflowY: "hidden", pointerEvents: "auto" }}
             >
               {/* Notes list */}
               {cardNotes.length > 0 && !showNoteInput && (
@@ -399,7 +399,7 @@ export default function StoryReader({ set, storySetId }: Props) {
               </div>
 
               {/* Headline */}
-              <h2 style={{ ...SG, fontSize: "clamp(20px,5.5vw,30px)", fontWeight: 800, color: "white", lineHeight: 1.08, letterSpacing: "-0.025em", margin: "0 0 12px" }}>
+              <h2 style={{ ...SG, fontSize: "clamp(20px,5.5vw,30px)", fontWeight: 800, color: "white", lineHeight: 1.08, letterSpacing: "-0.025em", margin: "0 0 12px", textShadow: "0 1px 8px rgba(0,0,0,1), 0 2px 20px rgba(0,0,0,0.8)" }}>
                 {card.headline}
               </h2>
 
@@ -409,7 +409,7 @@ export default function StoryReader({ set, storySetId }: Props) {
                   const key = starKey(cardIndex, i);
                   const isStarred = starred.has(key);
                   return (
-                    <li key={i} style={{ display: "flex", gap: 9, color: "rgba(255,255,255,0.75)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.5, alignItems: "flex-start" }}>
+                    <li key={i} style={{ display: "flex", gap: 9, color: "rgba(255,255,255,0.75)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.5, alignItems: "flex-start", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
                       <span style={{ color: "rgba(255,255,255,0.25)", flexShrink: 0, marginTop: 2 }}>—</span>
                       <span style={{ flex: 1 }}>{b}</span>
                       {isLoggedIn && storySetId && (
@@ -455,7 +455,7 @@ export default function StoryReader({ set, storySetId }: Props) {
 
             {/* Action buttons — float directly on image, no separator line */}
             <div
-              style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "14px 28px 22px", pointerEvents: "auto" }}
+              style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "8px 28px 20px", pointerEvents: "auto" }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Skip */}
