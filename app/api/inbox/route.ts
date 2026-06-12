@@ -38,7 +38,32 @@ async function fetchViaJina(url: string): Promise<{ title: string; text: string 
   }
 }
 
-async function fetchDirect(url: string): Promise<{ title: string; text: string } | null> {
+function toAbsoluteUrl(base: string, href: string | undefined): string | null {
+  if (!href) return null;
+  try { return new URL(href, base).href; } catch { return null; }
+}
+
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const { load } = await import("cheerio");
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = load(html);
+    const raw =
+      $("meta[property='og:image']").attr("content") ||
+      $("meta[name='twitter:image:src']").attr("content") ||
+      $("meta[name='twitter:image']").attr("content");
+    return toAbsoluteUrl(url, raw);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchDirect(url: string): Promise<{ title: string; text: string; imageUrl: string | null } | null> {
   try {
     const { load } = await import("cheerio");
     const res = await fetch(url, {
@@ -57,9 +82,14 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string }
       $("meta[property='og:title']").attr("content") ||
       $("title").text().trim() ||
       new URL(url).hostname;
+    const rawImg =
+      $("meta[property='og:image']").attr("content") ||
+      $("meta[name='twitter:image:src']").attr("content") ||
+      $("meta[name='twitter:image']").attr("content");
+    const imageUrl = toAbsoluteUrl(url, rawImg);
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
-    return text.length >= 100 ? { title, text } : null;
+    return text.length >= 100 ? { title, text, imageUrl } : null;
   } catch {
     return null;
   }
@@ -142,11 +172,21 @@ export async function POST(request: Request) {
   try {
     let parseResult: { title: string; text: string } | null = null;
 
+    let coverImageUrl: string | null = null;
+
     if (url) {
-      parseResult = (await fetchViaJina(url)) ?? (await fetchDirect(url));
-      if (!parseResult) {
-        await markInboxItemError(item.id, "Could not fetch this URL");
-        return Response.json({ error: "Could not fetch this URL. Try pasting the text directly." }, { status: 422 });
+      const [jinaResult, ogImage] = await Promise.all([fetchViaJina(url), fetchOgImage(url)]);
+      if (jinaResult) {
+        parseResult = jinaResult;
+        coverImageUrl = ogImage;
+      } else {
+        const direct = await fetchDirect(url);
+        if (!direct) {
+          await markInboxItemError(item.id, "Could not fetch this URL");
+          return Response.json({ error: "Could not fetch this URL. Try pasting the text directly." }, { status: 422 });
+        }
+        parseResult = direct;
+        coverImageUrl = direct.imageUrl;
       }
     } else {
       parseResult = { text: text!, title: "Pasted text" };
@@ -163,6 +203,7 @@ export async function POST(request: Request) {
       title: parseResult.title,
       source: url ? "url" : "text",
       sourceUrl: url ?? undefined,
+      coverImageUrl: coverImageUrl ?? undefined,
       cards,
       savedAt: new Date().toISOString(),
     };

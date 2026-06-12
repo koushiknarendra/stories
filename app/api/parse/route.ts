@@ -18,6 +18,33 @@ export async function POST(request: Request) {
   return Response.json({ error: "Provide url, text, or a PDF file" }, { status: 400 });
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function toAbsoluteUrl(base: string, href: string | undefined): string | null {
+  if (!href) return null;
+  try { return new URL(href, base).href; } catch { return null; }
+}
+
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const { load } = await import("cheerio");
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = load(html);
+    const raw =
+      $("meta[property='og:image']").attr("content") ||
+      $("meta[name='twitter:image:src']").attr("content") ||
+      $("meta[name='twitter:image']").attr("content");
+    return toAbsoluteUrl(url, raw);
+  } catch {
+    return null;
+  }
+}
+
 async function fetchViaJina(url: string): Promise<{ title: string; text: string } | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
@@ -40,7 +67,7 @@ async function fetchViaJina(url: string): Promise<{ title: string; text: string 
   }
 }
 
-async function fetchDirect(url: string): Promise<{ title: string; text: string } | null> {
+async function fetchDirect(url: string): Promise<{ title: string; text: string; imageUrl: string | null } | null> {
   try {
     const { load } = await import("cheerio");
     const res = await fetch(url, {
@@ -59,25 +86,39 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string }
       $("meta[property='og:title']").attr("content") ||
       $("title").text().trim() ||
       new URL(url).hostname;
+    const rawImg =
+      $("meta[property='og:image']").attr("content") ||
+      $("meta[name='twitter:image:src']").attr("content") ||
+      $("meta[name='twitter:image']").attr("content");
+    const imageUrl = toAbsoluteUrl(url, rawImg);
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
-    return text.length >= 100 ? { title, text } : null;
+    return text.length >= 100 ? { title, text, imageUrl } : null;
   } catch {
     return null;
   }
 }
 
 async function handleUrl(url: string) {
-  const result = (await fetchViaJina(url)) ?? (await fetchDirect(url));
+  // Run Jina text fetch and OG image fetch in parallel
+  const [jinaResult, ogImage] = await Promise.all([
+    fetchViaJina(url),
+    fetchOgImage(url),
+  ]);
 
-  if (!result) {
+  if (jinaResult) {
+    return Response.json({ text: jinaResult.text, title: jinaResult.title, source: "url", sourceUrl: url, imageUrl: ogImage });
+  }
+
+  const direct = await fetchDirect(url);
+  if (!direct) {
     return Response.json(
       { error: "Could not fetch this page. Try pasting the article text directly." },
       { status: 422 }
     );
   }
 
-  return Response.json({ text: result.text, title: result.title, source: "url", sourceUrl: url });
+  return Response.json({ text: direct.text, title: direct.title, source: "url", sourceUrl: url, imageUrl: direct.imageUrl });
 }
 
 async function handlePdf(request: Request) {
@@ -96,7 +137,6 @@ async function handlePdf(request: Request) {
 
   let text: string;
   try {
-    // dynamic import avoids pdf-parse reading a test file at module eval time
     const pdfParse = (await import("pdf-parse")).default;
     const parsed = await pdfParse(buffer);
     text = parsed.text.replace(/\s+/g, " ").trim().slice(0, 12_000);

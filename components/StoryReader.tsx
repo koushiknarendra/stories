@@ -65,6 +65,8 @@ export default function StoryReader({ set, storySetId }: Props) {
   const isFirst = cardIndex === 0;
   const gradient = GRADIENTS[cardIndex % GRADIENTS.length];
   const sid = storySetId || set.id;
+  // Cover image: OG image from article, or deterministic Picsum fallback keyed by story ID
+  const coverImg = set.coverImageUrl || `https://picsum.photos/seed/${set.id}/800/500`;
   const isLoggedIn = isLoaded && !!user;
 
   // Load notes for this story set when logged in
@@ -310,7 +312,11 @@ export default function StoryReader({ set, storySetId }: Props) {
           onDragEnd={onDragEnd}
           onClick={handleCardClick}
         >
-          <div style={{ position: "absolute", inset: 0, background: gradient }} />
+          {/* Background: article hero image with dark overlay, or solid gradient */}
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.88) 100%)" }} />
+          {/* Subtle gradient color tint for visual variety across cards */}
+          <div style={{ position: "absolute", inset: 0, background: gradient, opacity: 0.22 }} />
 
           {/* Progress bars */}
           <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>

@@ -108,6 +108,9 @@ export async function runMigration() {
   `;
 
   await sql`CREATE INDEX IF NOT EXISTS starred_bullets_user_idx ON starred_bullets(clerk_user_id)`;
+
+  // Add cover_image_url to existing story_sets tables (idempotent)
+  await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS cover_image_url TEXT`;
 }
 
 // ─── Inbox helpers ────────────────────────────────────────────────────────────
@@ -177,8 +180,8 @@ export async function saveStorySet(
   if (!sql) throw new Error("DB not configured");
 
   await sql`
-    INSERT INTO story_sets (id, clerk_user_id, inbox_item_id, title, source, source_url)
-    VALUES (${set.id}, ${clerkUserId}, ${inboxItemId}, ${set.title}, ${set.source}, ${set.sourceUrl ?? null})
+    INSERT INTO story_sets (id, clerk_user_id, inbox_item_id, title, source, source_url, cover_image_url)
+    VALUES (${set.id}, ${clerkUserId}, ${inboxItemId}, ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null})
     ON CONFLICT (id) DO NOTHING
   `;
 
@@ -195,8 +198,8 @@ export async function loadStorySet(id: string): Promise<StorySet | null> {
   if (!sql) return null;
 
   // Load by ID only — UUID is 122 bits of entropy, effectively unguessable.
-  const rows = await sql<{ id: string; title: string; source: string; source_url: string | null; saved_at: string }[]>`
-    SELECT id, title, source, source_url, saved_at
+  const rows = await sql<{ id: string; title: string; source: string; source_url: string | null; cover_image_url: string | null; saved_at: string }[]>`
+    SELECT id, title, source, source_url, cover_image_url, saved_at
     FROM story_sets
     WHERE id = ${id}
   `;
@@ -215,6 +218,7 @@ export async function loadStorySet(id: string): Promise<StorySet | null> {
     title: set.title,
     source: set.source,
     sourceUrl: set.source_url ?? undefined,
+    coverImageUrl: set.cover_image_url ?? undefined,
     savedAt: set.saved_at,
     cards: cards.map((c) => {
       // bullets stored as JSONB — might come back as array, string, or null

@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 const client = new Anthropic();
 
 export async function POST(request: Request) {
-  const { text, title, source, sourceUrl } = await request.json();
+  const { text, title, source, sourceUrl, imageUrl } = await request.json();
 
   if (!text) {
     return Response.json({ error: "text is required" }, { status: 400 });
@@ -66,5 +66,5 @@ ${text.slice(0, 8000)}`;
     return Response.json({ error: "Failed to generate story cards" }, { status: 500 });
   }
 
-  return Response.json({ cards, title, source, sourceUrl });
+  return Response.json({ cards, title, source, sourceUrl, imageUrl: imageUrl ?? null });
 }
