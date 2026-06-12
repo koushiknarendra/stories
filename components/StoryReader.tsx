@@ -295,7 +295,7 @@ export default function StoryReader({ set, storySetId }: Props) {
       userSelect: "none",
       boxSizing: "border-box",
       paddingTop: "env(safe-area-inset-top, 0px)",
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
       gap: isLoggedIn ? 8 : 0,
     }}>
 
@@ -315,12 +315,10 @@ export default function StoryReader({ set, storySetId }: Props) {
         >
           {/* Cover image */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
-          {/* Dark gradient — covers center-to-bottom for text readability */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 22%, rgba(0,0,0,0.65) 50%, rgba(0,0,0,0.94) 100%)" }} />
-          {/* Color tint */}
-          <div style={{ position: "absolute", inset: 0, background: gradient, opacity: 0.16 }} />
+          {/* Gradient: image clear at top, blends to near-black at bottom */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.78) 62%, rgba(0,0,0,0.96) 100%)" }} />
           {/* Top vignette for progress bars */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 110, background: "linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 90, background: "linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
 
           {/* Progress bars */}
           <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>
@@ -353,9 +351,9 @@ export default function StoryReader({ set, storySetId }: Props) {
             {/* Spacer — clears progress bars + SAVE/SKIP stamp area */}
             <div style={{ height: 90, flexShrink: 0 }} />
 
-            {/* Middle: text content — vertically centered in remaining space */}
+            {/* Middle: text content — pushed to bottom, just above buttons */}
             <div
-              style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 20px 8px", overflowY: "hidden", pointerEvents: "auto" }}
+              style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 16px", overflowY: "hidden", pointerEvents: "auto" }}
             >
               {/* Notes list */}
               {cardNotes.length > 0 && !showNoteInput && (
