@@ -10,7 +10,7 @@ import {
 } from "framer-motion";
 import { addToCurate, recordDislike } from "@/lib/storage";
 import { useTheme } from "@/components/ThemeProvider";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignInButton } from "@clerk/nextjs";
 import type { StorySet, Note } from "@/lib/types";
 
 interface StarredKey { cardIndex: number; bulletIndex: number; }
@@ -438,6 +438,24 @@ export default function StoryReader({ set, storySetId }: Props) {
                 {isFirst ? "tap right to advance" : isLast ? "tap right to restart" : `${cardIndex + 1} / ${total}`}
               </span>
             </div>
+
+            {/* Sign-in nudge on last card for guests */}
+            {isLast && isLoaded && !isLoggedIn && (
+              <div
+                style={{ margin: "14px 0 4px", padding: "14px 16px", background: "rgba(124,92,255,0.18)", border: "1px solid rgba(124,92,255,0.35)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, backdropFilter: "blur(8px)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div>
+                  <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.95)", lineHeight: 1.35 }}>Save this story</p>
+                  <p style={{ margin: "3px 0 0", fontSize: 11.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.4 }}>Sign in to build your library — it&apos;s free</p>
+                </div>
+                <SignInButton mode="modal">
+                  <button style={{ ...SG, flexShrink: 0, padding: "9px 16px", borderRadius: 10, border: "none", background: "#7C5CFF", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 14px -4px rgba(124,92,255,0.7)" }}>
+                    Sign in
+                  </button>
+                </SignInButton>
+              </div>
+            )}
 
             {/* Action buttons */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28, padding: "22px 0 44px" }}
