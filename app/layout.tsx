@@ -14,7 +14,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#7C5CFF",
+          colorBackground: "#ffffff",
+          colorText: "#15131F",
+          colorTextSecondary: "#54506B",
+          colorInputBackground: "#ffffff",
+          colorInputText: "#15131F",
+          colorNeutral: "#15131F",
+          borderRadius: "12px",
+        },
+      }}
+    >
       <html lang="en" suppressHydrationWarning className="h-full">
         <head>
           <script
