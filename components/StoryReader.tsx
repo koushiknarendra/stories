@@ -12,6 +12,7 @@ import { addToCurate, recordDislike } from "@/lib/storage";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
 import type { StorySet, Note } from "@/lib/types";
+import BottomNav from "@/components/BottomNav";
 
 interface StarredKey { cardIndex: number; bulletIndex: number; }
 function starKey(cardIndex: number, bulletIndex: number) { return `${cardIndex}_${bulletIndex}`; }
@@ -442,7 +443,7 @@ export default function StoryReader({ set, storySetId }: Props) {
             )}
 
             {/* Action buttons */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28, padding: "22px 0 44px" }}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28, padding: isLoggedIn ? "22px 0 calc(80px + env(safe-area-inset-bottom, 0px))" : "22px 0 44px" }}
               onClick={(e) => e.stopPropagation()}
             >
               {cardNotes.length === 0 && (
@@ -488,6 +489,9 @@ export default function StoryReader({ set, storySetId }: Props) {
 
           </div>
       </motion.div>
+
+      {/* Bottom nav for logged-in users */}
+      {isLoggedIn && <BottomNav />}
 
       {/* Top bar — floats over the card */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 18px 10px", pointerEvents: "none" }}>
