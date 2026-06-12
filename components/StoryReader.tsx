@@ -257,68 +257,27 @@ export default function StoryReader({ set, storySetId }: Props) {
   }
 
   return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", userSelect: "none", background: "#000" }}>
+    <div style={{ height: "100dvh", position: "relative", overflow: "hidden", userSelect: "none", background: "#000" }}>
 
-      {/* Top bar */}
-      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 18px 10px", position: "relative", zIndex: 30 }}>
-        <button
-          onClick={() => { window.location.href = storySetId ? "/space" : (isLoggedIn ? "/space" : "/"); }}
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, backdropFilter: "blur(8px)" }}
-        >
-          ✕
-        </button>
-        <span style={{ ...SG, color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
-          {set.title}
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {storySetId && (
-            <button
-              onClick={shareStory}
-              aria-label="Share"
-              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: copied ? "rgba(52,211,153,0.9)" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(8px)", transition: "color .2s" }}
-            >
-              {copied
-                ? <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
-                : <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              }
-            </button>
-          )}
-          <button
-            onClick={toggle}
-            aria-label="Toggle theme"
-            style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, backdropFilter: "blur(8px)" }}
-          >
-            {theme === "dark" ? "☀︎" : "☽"}
-          </button>
-          {set.sourceUrl && (
-            <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
-              style={{ ...SG, color: "rgba(255,255,255,0.45)", fontSize: 11, textDecoration: "none", fontWeight: 700 }}>
-              Source ↗
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Card */}
-      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
-        <motion.div
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.15}
-          style={{ x, rotate, position: "absolute", inset: 0, touchAction: "none" }}
-          whileDrag={{ cursor: "grabbing" }}
-          onDragStart={onDragStart}
-          onDrag={onDrag}
-          onDragEnd={onDragEnd}
-          onClick={handleCardClick}
-        >
+      {/* Full-screen card */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.15}
+        style={{ x, rotate, position: "absolute", inset: 0, touchAction: "none" }}
+        whileDrag={{ cursor: "grabbing" }}
+        onDragStart={onDragStart}
+        onDrag={onDrag}
+        onDragEnd={onDragEnd}
+        onClick={handleCardClick}
+      >
           {/* Background: article hero image with dark overlay, or solid gradient */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.88) 100%)" }} />
           {/* Subtle gradient color tint for visual variety across cards */}
           <div style={{ position: "absolute", inset: 0, background: gradient, opacity: 0.22 }} />
 
-          {/* Progress bars */}
+          {/* Progress bars — sit above the floating nav buttons */}
           <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>
             <div style={{ display: "flex", gap: 4 }}>
               {set.cards.map((_, i) => (
@@ -334,21 +293,17 @@ export default function StoryReader({ set, storySetId }: Props) {
             )}
           </div>
 
-          {/* Source tag */}
-          <div style={{ position: "absolute", top: 34, left: 16, zIndex: 10 }}>
-            <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", background: "rgba(255,255,255,0.18)", padding: "5px 12px", borderRadius: 999, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
+          {/* Source chip + note indicator — below the floating nav */}
+          <div style={{ position: "absolute", top: 96, left: 16, right: 16, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", background: "rgba(255,255,255,0.15)", padding: "5px 12px", borderRadius: 999, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
               {set.source}
             </span>
-          </div>
-
-          {/* Note indicator */}
-          {cardNotes.length > 0 && (
-            <div style={{ position: "absolute", top: 34, right: 16, zIndex: 10 }}>
+            {cardNotes.length > 0 && (
               <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".08em", color: "rgba(255,220,80,0.9)", background: "rgba(255,220,80,0.15)", padding: "5px 10px", borderRadius: 999, backdropFilter: "blur(10px)" }}>
                 ✎ {cardNotes.length} note{cardNotes.length > 1 ? "s" : ""}
               </span>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* LIKE stamp */}
           <motion.div style={{ opacity: likeOpacity, position: "absolute", top: 80, left: 20, zIndex: 20, border: "3px solid #34D399", borderRadius: 10, padding: "6px 16px", transform: "rotate(-18deg)", pointerEvents: "none", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(6px)" }}>
@@ -503,8 +458,41 @@ export default function StoryReader({ set, storySetId }: Props) {
             </div>
 
           </div>
-        </motion.div>
+      </motion.div>
+
+      {/* Top bar — floats over the card */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 18px 10px", pointerEvents: "none" }}>
+        <button
+          onClick={() => { window.location.href = storySetId ? "/space" : (isLoggedIn ? "/space" : "/"); }}
+          style={{ pointerEvents: "auto", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.35)", border: "none", color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        >
+          ✕
+        </button>
+        <span style={{ ...SG, color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+          {set.title}
+        </span>
+        <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          {storySetId && (
+            <button
+              onClick={shareStory}
+              aria-label="Share"
+              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.35)", border: "none", color: copied ? "rgba(52,211,153,0.9)" : "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", transition: "color .2s" }}
+            >
+              {copied
+                ? <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
+                : <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              }
+            </button>
+          )}
+          {set.sourceUrl && (
+            <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
+              style={{ ...SG, color: "rgba(255,255,255,0.75)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.35)", padding: "6px 10px", borderRadius: 20, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+              Source ↗
+            </a>
+          )}
+        </div>
       </div>
+
     </div>
   );
 }
