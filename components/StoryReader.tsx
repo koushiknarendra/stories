@@ -10,7 +10,7 @@ import {
 } from "framer-motion";
 import { addToCurate, recordDislike } from "@/lib/storage";
 import { useTheme } from "@/components/ThemeProvider";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
 import type { StorySet, Note } from "@/lib/types";
 
 interface StarredKey { cardIndex: number; bulletIndex: number; }
@@ -38,6 +38,8 @@ interface Props {
 export default function StoryReader({ set, storySetId }: Props) {
   const { theme, toggle } = useTheme();
   const { user, isLoaded } = useUser();
+  const { openSignIn } = useClerk();
+  const [pendingSave, setPendingSave] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [resumed, setResumed] = useState(false);
   const dragged = useRef(false);
@@ -209,19 +211,46 @@ export default function StoryReader({ set, storySetId }: Props) {
     }).catch(() => {});
   }
 
+  // After sign-in completes, auto-save the pending story and navigate to /space
+  useEffect(() => {
+    if (!isLoggedIn || !pendingSave) return;
+    setPendingSave(false);
+    (async () => {
+      addToCurate(set);
+      recordInteraction("like");
+      if (!storySetId) {
+        await fetch("/api/space", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(set),
+        }).catch(() => {});
+      }
+      flyOff(1, "/space");
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, pendingSave]);
+
   async function handleLike() {
+    if (!isLoaded) return;
+
+    if (!isLoggedIn) {
+      // Open Clerk modal; pendingSave triggers auto-save once they sign in
+      setPendingSave(true);
+      openSignIn();
+      return;
+    }
+
     addToCurate(set);
     recordInteraction("like");
-    // Persist to DB before navigating — do not fire-and-forget; navigation
-    // cancels in-flight fetches, so the story would never reach the DB.
-    if (isLoggedIn && !storySetId) {
+    // Persist to DB before navigating — navigation cancels in-flight fetches
+    if (!storySetId) {
       await fetch("/api/space", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(set),
       }).catch(() => {});
     }
-    flyOff(1, isLoggedIn ? "/space" : "/");
+    flyOff(1, "/space");
   }
   function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1, "/"); }
   function onDragStart() { dragged.current = false; }
