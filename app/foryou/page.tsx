@@ -88,20 +88,20 @@ export default function ForYouPage() {
   void theme; // used via CSS vars
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
-      {/* Header */}
-      <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 24px) 20px 0" }}>
-        <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 4px", color: "var(--lp-text)" }}>
+      {/* Header — sticky glass */}
+      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)", padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 14px" }}>
+        <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 2px", color: "var(--lp-text)" }}>
           {greeting}
         </h1>
-        <p style={{ fontSize: 13, color: "var(--lp-text3)", margin: "0 0 20px" }}>
+        <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>
           Based on your interests · {interests.map((i) => CATEGORIES.find((c) => c.key === i)?.emoji).join(" ")}
         </p>
       </div>
 
       {/* Feed */}
-      <div style={{ padding: "0 16px" }}>
+      <div style={{ padding: "16px 16px 0" }}>
         {loadingStories ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[1, 2, 3].map((i) => (

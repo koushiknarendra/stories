@@ -22,6 +22,16 @@
   --lp-radius-lg: 26px;
 }
 
+/* Glass UI tokens — auto-adapt via var() references, no dark override needed */
+:root {
+  --lp-page-bg:
+    radial-gradient(ellipse 80% 35% at 85% 0%, color-mix(in srgb, var(--lp-accent) 6%, transparent) 0%, transparent 100%),
+    var(--lp-bg);
+  --lp-glass-nav:    color-mix(in srgb, var(--lp-bg)      70%, transparent);
+  --lp-glass-surface: color-mix(in srgb, var(--lp-surface) 78%, transparent);
+  --lp-glass-border: color-mix(in srgb, var(--lp-border)  55%, transparent);
+}
+
 /* Landing page design tokens — dark mode */
 html.dark {
   --lp-bg: #0B0A12;

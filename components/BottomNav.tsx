@@ -56,13 +56,15 @@ export default function BottomNav() {
       right: 12,
       zIndex: 50,
       borderRadius: 999,
-      background: "rgba(14, 11, 26, 0.94)",
-      backdropFilter: "blur(24px)",
-      WebkitBackdropFilter: "blur(24px)",
-      boxShadow: "0 8px 32px -8px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)",
       height: 60,
+      boxSizing: "border-box",
       display: "flex",
       alignItems: "center",
+      background: "var(--lp-glass-nav)",
+      backdropFilter: "blur(40px) saturate(180%)",
+      WebkitBackdropFilter: "blur(40px) saturate(180%)",
+      border: "1px solid var(--lp-glass-border)",
+      boxShadow: "0 8px 32px -8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.07)",
     }}>
       {NAV_ITEMS.map(({ href, label, Icon }) => {
         const active = pathname === href;
@@ -78,7 +80,7 @@ export default function BottomNav() {
               justifyContent: "center",
               height: "100%",
               gap: 3,
-              color: active ? "#7C5CFF" : "rgba(255,255,255,0.38)",
+              color: active ? "var(--lp-accent)" : "var(--lp-text3)",
               textDecoration: "none",
               transition: "color .15s",
             }}

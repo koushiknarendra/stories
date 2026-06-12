@@ -446,17 +446,17 @@ export default function StoryReader({ set, storySetId }: Props) {
               )}
             </div>
 
-            {/* Action buttons — frosted strip on the image */}
+            {/* Action buttons — iOS glass strip on the image */}
             <div
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "16px 28px 22px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "16px 28px 22px", background: "rgba(0,0,0,0.32)", backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", borderTop: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)" }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Skip */}
               <button
                 onClick={handleNope}
-                style={{ width: 56, height: 56, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s, background .15s", flexShrink: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.background = "rgba(255,107,129,0.22)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s, background .15s", flexShrink: 0, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.background = "rgba(255,107,129,0.2)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
               >
                 <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
@@ -465,7 +465,7 @@ export default function StoryReader({ set, storySetId }: Props) {
               {isLoggedIn && (
                 <button
                   onClick={() => setShowNoteInput((v) => !v)}
-                  style={{ width: 48, height: 48, borderRadius: "50%", border: "none", background: showNoteInput ? "rgba(255,220,80,0.2)" : "rgba(255,255,255,0.1)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0 }}
+                  style={{ width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: showNoteInput ? "rgba(255,220,80,0.18)" : "rgba(255,255,255,0.08)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
                   onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
                   onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                 >
@@ -476,9 +476,9 @@ export default function StoryReader({ set, storySetId }: Props) {
               {/* Save — primary */}
               <button
                 onClick={handleLike}
-                style={{ width: 68, height: 68, borderRadius: "50%", border: "none", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 24px -4px rgba(124,92,255,0.65)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 10px 30px -4px rgba(124,92,255,0.8)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 6px 24px -4px rgba(124,92,255,0.65)"; }}
+                style={{ width: 68, height: 68, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.22)", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 24px -4px rgba(124,92,255,0.65), inset 0 1px 0 rgba(255,255,255,0.2)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 10px 30px -4px rgba(124,92,255,0.8), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 6px 24px -4px rgba(124,92,255,0.65), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
               >
                 <svg width={26} height={26} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
               </button>
@@ -490,13 +490,13 @@ export default function StoryReader({ set, storySetId }: Props) {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "32px 14px 0", pointerEvents: "none" }}>
           <button
             onClick={() => { window.location.href = storySetId ? "/space" : (isLoggedIn ? "/foryou" : "/"); }}
-            style={{ pointerEvents: "auto", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.28)", border: "none", color: "rgba(255,255,255,0.88)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
+            style={{ pointerEvents: "auto", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)" }}
           >
             <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8 }}>
             {storySetId && (
-              <button onClick={shareStory} aria-label="Share" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.28)", border: "none", color: copied ? "#34D399" : "rgba(255,255,255,0.88)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", transition: "color .2s" }}>
+              <button onClick={shareStory} aria-label="Share" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.1)", color: copied ? "#34D399" : "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", transition: "color .2s" }}>
                 {copied
                   ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
                   : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -505,7 +505,7 @@ export default function StoryReader({ set, storySetId }: Props) {
             )}
             {set.sourceUrl && (
               <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
-                style={{ ...SG, color: "rgba(255,255,255,0.8)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.28)", padding: "6px 11px", borderRadius: 20, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}>
+                style={{ ...SG, color: "rgba(255,255,255,0.88)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 11px", borderRadius: 20, backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)" }}>
                 Source ↗
               </a>
             )}

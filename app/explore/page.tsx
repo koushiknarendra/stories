@@ -39,35 +39,37 @@ export default function ExplorePage() {
   const filtered = active ? stories.filter((s) => s.category === active) : stories;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
-      {/* Header */}
-      <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 24px) 20px 0" }}>
-        <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 4px" }}>Explore</h1>
-        <p style={{ fontSize: 13, color: "var(--lp-text3)", margin: "0 0 20px" }}>Browse your library by topic</p>
-      </div>
+      {/* Header + category pills — sticky glass bar */}
+      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
+        <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 0" }}>
+          <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 2px" }}>Explore</h1>
+          <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>Browse your library by topic</p>
+        </div>
 
-      {/* Category pills */}
-      <div style={{ padding: "0 16px 16px", overflowX: "auto", display: "flex", gap: 8, scrollbarWidth: "none" }}>
-        <button
-          onClick={() => setActive(null)}
-          style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${!active ? "var(--lp-accent)" : "var(--lp-border)"}`, background: !active ? "color-mix(in srgb, var(--lp-accent) 12%, transparent)" : "var(--lp-surface)", color: !active ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: !active ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
-        >
-          All
-        </button>
-        {usedCategories.map(({ key, label, emoji }) => (
+        {/* Category pills */}
+        <div style={{ padding: "12px 16px 14px", overflowX: "auto", display: "flex", gap: 8, scrollbarWidth: "none" }}>
           <button
-            key={key}
-            onClick={() => setActive(key === active ? null : key)}
-            style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${active === key ? "var(--lp-accent)" : "var(--lp-border)"}`, background: active === key ? "color-mix(in srgb, var(--lp-accent) 12%, transparent)" : "var(--lp-surface)", color: active === key ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: active === key ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
+            onClick={() => setActive(null)}
+            style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${!active ? "var(--lp-accent)" : "var(--lp-glass-border)"}`, background: !active ? "color-mix(in srgb, var(--lp-accent) 14%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", color: !active ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: !active ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
           >
-            {emoji} {label}
+            All
           </button>
-        ))}
+          {usedCategories.map(({ key, label, emoji }) => (
+            <button
+              key={key}
+              onClick={() => setActive(key === active ? null : key)}
+              style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${active === key ? "var(--lp-accent)" : "var(--lp-glass-border)"}`, background: active === key ? "color-mix(in srgb, var(--lp-accent) 14%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", color: active === key ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: active === key ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
+            >
+              {emoji} {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Story grid */}
-      <div style={{ padding: "0 16px" }}>
+      <div style={{ padding: "16px 16px 0" }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--lp-text3)" }}>
             <p style={{ fontSize: 15, margin: 0 }}>

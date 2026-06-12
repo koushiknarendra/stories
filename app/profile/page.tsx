@@ -51,17 +51,17 @@ export default function ProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Top bar */}
       <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 20px) 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h1 style={{ ...SG, fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0 }}>Profile</h1>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={toggle} style={{ width: 34, height: 34, borderRadius: 9, border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-text)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <button onClick={toggle} style={{ width: 34, height: 34, borderRadius: 9, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", color: "var(--lp-text)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             {theme === "dark" ? <IconSun /> : <IconMoon />}
           </button>
           <SignOutButton>
-            <button style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "7px 14px", borderRadius: 9, border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-text2)", cursor: "pointer" }}>
+            <button style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "7px 14px", borderRadius: 9, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", color: "var(--lp-text2)", cursor: "pointer" }}>
               Sign out
             </button>
           </SignOutButton>
@@ -72,7 +72,7 @@ export default function ProfilePage() {
 
         {/* Avatar + name */}
         {user && (
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28, padding: "18px 18px", background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28, padding: "18px 18px", background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
             {user.imageUrl
               ? <img src={user.imageUrl} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
               : <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--lp-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, fontWeight: 700, flexShrink: 0 }}>
@@ -96,7 +96,7 @@ export default function ProfilePage() {
             { label: "Saved articles", value: storyCount ?? "—" },
             { label: "Interests", value: interests.length },
           ].map(({ label, value }) => (
-            <div key={label} style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
+            <div key={label} style={{ background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--lp-glass-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center", boxShadow: "0 4px 20px -8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
               <p style={{ ...SG, fontSize: 26, fontWeight: 700, color: "var(--lp-accent)", margin: "0 0 4px" }}>{value}</p>
               <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>{label}</p>
             </div>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Interests section */}
-        <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 16 }}>
+        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 16, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: editingInterests ? 16 : (interests.length > 0 ? 14 : 0) }}>
             <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: 0 }}>My interests</p>
             <button
