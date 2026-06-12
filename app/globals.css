@@ -22,14 +22,19 @@
   --lp-radius-lg: 26px;
 }
 
-/* Glass UI tokens — auto-adapt via var() references, no dark override needed */
+/* Glass UI tokens */
 :root {
   --lp-page-bg:
-    radial-gradient(ellipse 80% 35% at 85% 0%, color-mix(in srgb, var(--lp-accent) 6%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 80% 35% at 85% 0%, color-mix(in srgb, var(--lp-accent) 10%, transparent) 0%, transparent 100%),
     var(--lp-bg);
-  --lp-glass-nav:    color-mix(in srgb, var(--lp-bg)      70%, transparent);
-  --lp-glass-surface: color-mix(in srgb, var(--lp-surface) 78%, transparent);
-  --lp-glass-border: color-mix(in srgb, var(--lp-border)  55%, transparent);
+  --lp-glass-nav:     color-mix(in srgb, var(--lp-bg)      50%, transparent);
+  --lp-glass-surface: color-mix(in srgb, var(--lp-surface) 58%, transparent);
+  --lp-glass-border:  rgba(0, 0, 0, 0.07);
+  --lp-glass-blur:    blur(56px) saturate(200%);
+  --lp-glass-blur-card: blur(28px) saturate(180%);
+}
+html.dark {
+  --lp-glass-border: rgba(255, 255, 255, 0.11);
 }
 
 /* Landing page design tokens — dark mode */

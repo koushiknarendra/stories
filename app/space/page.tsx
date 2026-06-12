@@ -208,7 +208,7 @@ export default function SpacePage() {
     <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: text, paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Nav */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
             <span style={{ display: "inline-flex", width: 28, height: 28, borderRadius: 7, background: accent, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px -4px rgba(124,92,255,0.6)", flexShrink: 0 }}>
@@ -228,11 +228,11 @@ export default function SpacePage() {
                 </span>
               </div>
             )}
-            <button onClick={toggle} aria-label="Toggle theme" style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", color: text, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <button onClick={toggle} aria-label="Toggle theme" style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
             <SignOutButton>
-              <button style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", color: text2, cursor: "pointer" }}>
+              <button style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text2, cursor: "pointer" }}>
                 Sign out
               </button>
             </SignOutButton>
@@ -248,7 +248,7 @@ export default function SpacePage() {
           <div style={{ marginBottom: 36 }}>
             <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: "0 0 10px" }}>Today&apos;s pick</p>
             <a href={`/stories/${dailyCard.storySetId}`} style={{ textDecoration: "none", display: "block" }}>
-              <div style={{ background: "linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(124,92,255,0.04) 100%)", border: "1px solid rgba(124,92,255,0.24)", borderRadius: 16, padding: "18px 20px", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 4px 24px -8px rgba(124,92,255,0.15), inset 0 1px 0 rgba(255,255,255,0.04)", transition: "border-color .15s" }}
+              <div style={{ background: "linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(124,92,255,0.04) 100%)", border: "1px solid rgba(124,92,255,0.24)", borderRadius: 16, padding: "18px 20px", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", boxShadow: "0 4px 24px -8px rgba(124,92,255,0.15), inset 0 1px 0 rgba(255,255,255,0.04)", transition: "border-color .15s" }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(124,92,255,0.45)")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(124,92,255,0.22)")}
               >
@@ -331,7 +331,7 @@ export default function SpacePage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filtered.map((item) => (
-              <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+              <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {item.title}
@@ -381,7 +381,7 @@ export default function SpacePage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {visibleStars.map((bullet) => (
-                <div key={bullet.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--lp-glass-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+                <div key={bullet.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
                   <span style={{ color: "#FBBF24", fontSize: 13, flexShrink: 0, marginTop: 1 }}>★</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13, color: text, margin: "0 0 4px", lineHeight: 1.5 }}>{bullet.bullet_text}</p>
@@ -441,7 +441,7 @@ export default function SpacePage() {
                 ))}
                 {askLoading && (
                   <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                    <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid var(--lp-glass-border)", borderRadius: "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13, color: text3 }}>
+                    <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13, color: text3 }}>
                       Thinking…
                     </div>
                   </div>

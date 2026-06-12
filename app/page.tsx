@@ -104,13 +104,13 @@ function SavedVisual() {
     { title: "How Figma Killed the Design Stack",  src: "stratechery.com",  n: 5 },
   ];
   return (
-    <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius-lg)", overflow: "hidden", boxShadow: "var(--lp-shadow)", width: "100%", maxWidth: 420 }}>
-      <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--lp-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: "var(--lp-radius-lg)", overflow: "hidden", boxShadow: "var(--lp-shadow), inset 0 1px 0 rgba(255,255,255,0.08)", width: "100%", maxWidth: 420 }}>
+      <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--lp-glass-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--lp-text3)" }}>My space</span>
         <span style={{ fontSize: 11, color: "var(--lp-text3)" }}>4 saved</span>
       </div>
       {rows.map(({ title, src, n }, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px", borderBottom: i < rows.length - 1 ? "1px solid var(--lp-border)" : "none" }}>
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px", borderBottom: i < rows.length - 1 ? "1px solid var(--lp-glass-border)" : "none" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--lp-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
             <div style={{ fontSize: 11.5, color: "var(--lp-text3)", marginTop: 3 }}>{src}</div>
@@ -178,11 +178,11 @@ function HomeInner() {
   const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", color: "var(--lp-text)", overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", overflowX: "hidden" }}>
       <style>{STYLES}</style>
 
       {/* Nav */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", background: "color-mix(in srgb, var(--lp-bg) 80%, transparent)", borderBottom: "1px solid var(--lp-border)" }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
         <div className="lp-nav">
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <span style={{ display: "inline-flex", width: 30, height: 30, borderRadius: 8, background: "var(--lp-accent)", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px -6px var(--lp-glow)", flexShrink: 0 }}>
@@ -198,7 +198,7 @@ function HomeInner() {
             <a href="/install" style={{ color: "inherit", textDecoration: "none" }}>Bookmarklet</a>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={toggle} aria-label="Toggle theme" style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-text)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <button onClick={toggle} aria-label="Toggle theme" style={{ width: 36, height: 36, borderRadius: 9, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: "var(--lp-text)", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
             {isLoaded && (
@@ -220,7 +220,7 @@ function HomeInner() {
       <header>
         <div className="lp-hero">
           {/* Eyebrow */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 13px", borderRadius: 999, border: "1px solid var(--lp-border)", background: "var(--lp-surface)", marginBottom: 28 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 13px", borderRadius: 999, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", marginBottom: 28, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--lp-accent)", display: "inline-block" }} />
             <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--lp-text2)", letterSpacing: ".02em" }}>Any article → story cards</span>
           </div>
@@ -235,7 +235,7 @@ function HomeInner() {
           {/* Tab + input */}
           <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 520, marginTop: 36 }}>
             {/* Tabs */}
-            <div style={{ display: "inline-flex", background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: 10, padding: 3, marginBottom: 10 }}>
+            <div style={{ display: "inline-flex", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 10, padding: 3, marginBottom: 10, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
               {(["url", "text"] as const).map((t) => (
                 <button
                   key={t}
@@ -255,7 +255,7 @@ function HomeInner() {
                   placeholder="Paste a link to any article…"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  style={{ flex: 1, minWidth: 220, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)" }}
+                  style={{ flex: 1, minWidth: 220, background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
                 />
                 <button type="submit" disabled={!url.trim()} style={{ padding: "13px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 10px 26px -8px var(--lp-glow)", fontFamily: "inherit", whiteSpace: "nowrap", opacity: url.trim() ? 1 : 0.5 }}>
                   Get the story →
@@ -269,7 +269,7 @@ function HomeInner() {
                   value={pastedText}
                   onChange={(e) => setPastedText(e.target.value)}
                   rows={5}
-                  style={{ width: "100%", background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box", boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)", lineHeight: 1.6 }}
+                  style={{ width: "100%", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: "var(--lp-radius)", padding: "13px 16px", color: "var(--lp-text)", fontSize: 15, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)", lineHeight: 1.6 }}
                 />
                 <button type="submit" disabled={pastedText.trim().length < 30} style={{ padding: "13px 22px", borderRadius: "var(--lp-radius)", border: "none", background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 10px 26px -8px var(--lp-glow)", fontFamily: "inherit", opacity: pastedText.trim().length >= 30 ? 1 : 0.5 }}>
                   Turn into cards →
@@ -298,7 +298,7 @@ function HomeInner() {
       </header>
 
       {/* How it works */}
-      <div style={{ borderTop: "1px solid var(--lp-border)", background: "var(--lp-bg2)" }}>
+      <div style={{ borderTop: "1px solid var(--lp-glass-border)", background: "color-mix(in srgb, var(--lp-bg2) 60%, transparent)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)" }}>
         <div className="lp-steps">
           <Step
             n="1"
@@ -319,7 +319,7 @@ function HomeInner() {
       </div>
 
       {/* Value prop */}
-      <div style={{ borderTop: "1px solid var(--lp-border)" }}>
+      <div style={{ borderTop: "1px solid var(--lp-glass-border)" }}>
         <div className="lp-vaul">
           <div>
             <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--lp-accent)", marginBottom: 16 }}>Your space</div>
@@ -342,7 +342,7 @@ function HomeInner() {
       </div>
 
       {/* Footer */}
-      <footer style={{ borderTop: "1px solid var(--lp-border)" }}>
+      <footer style={{ borderTop: "1px solid var(--lp-glass-border)" }}>
         <div className="lp-footer">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ display: "inline-flex", width: 24, height: 24, borderRadius: 6, background: "var(--lp-accent)", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

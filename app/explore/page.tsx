@@ -42,7 +42,7 @@ export default function ExplorePage() {
     <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Header + category pills — sticky glass bar */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
         <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 0" }}>
           <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 2px" }}>Explore</h1>
           <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>Browse your library by topic</p>
@@ -52,7 +52,7 @@ export default function ExplorePage() {
         <div style={{ padding: "12px 16px 14px", overflowX: "auto", display: "flex", gap: 8, scrollbarWidth: "none" }}>
           <button
             onClick={() => setActive(null)}
-            style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${!active ? "var(--lp-accent)" : "var(--lp-glass-border)"}`, background: !active ? "color-mix(in srgb, var(--lp-accent) 14%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", color: !active ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: !active ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
+            style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${!active ? "var(--lp-accent)" : "var(--lp-glass-border)"}`, background: !active ? "color-mix(in srgb, var(--lp-accent) 14%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: !active ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: !active ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
           >
             All
           </button>
@@ -60,7 +60,7 @@ export default function ExplorePage() {
             <button
               key={key}
               onClick={() => setActive(key === active ? null : key)}
-              style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${active === key ? "var(--lp-accent)" : "var(--lp-glass-border)"}`, background: active === key ? "color-mix(in srgb, var(--lp-accent) 14%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", color: active === key ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: active === key ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
+              style={{ ...SG, flexShrink: 0, padding: "7px 16px", borderRadius: 999, border: `1.5px solid ${active === key ? "var(--lp-accent)" : "var(--lp-glass-border)"}`, background: active === key ? "color-mix(in srgb, var(--lp-accent) 14%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: active === key ? "var(--lp-accent)" : "var(--lp-text2)", fontWeight: active === key ? 700 : 500, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
             >
               {emoji} {label}
             </button>

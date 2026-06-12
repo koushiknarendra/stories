@@ -293,10 +293,12 @@ export default function StoryReader({ set, storySetId }: Props) {
       flexDirection: "column",
       background: "var(--lp-bg)",
       userSelect: "none",
+      boxSizing: "border-box",
       paddingTop: "env(safe-area-inset-top, 0px)",
+      paddingBottom: 8,
     }}>
 
-      {/* Card — fills everything above the pill nav */}
+      {/* Card — fills to 8px from screen bottom; pill nav floats on top */}
       <div style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
 
         <motion.div
@@ -448,7 +450,7 @@ export default function StoryReader({ set, storySetId }: Props) {
 
             {/* Action buttons — iOS glass strip on the image */}
             <div
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "16px 28px 22px", background: "rgba(0,0,0,0.32)", backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", borderTop: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)" }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: `16px 28px ${isLoggedIn ? "calc(env(safe-area-inset-bottom, 0px) + 82px)" : "calc(env(safe-area-inset-bottom, 0px) + 22px)"}`, background: "rgba(0,0,0,0.28)", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", borderTop: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)" }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Skip */}
@@ -490,13 +492,13 @@ export default function StoryReader({ set, storySetId }: Props) {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "32px 14px 0", pointerEvents: "none" }}>
           <button
             onClick={() => { window.location.href = storySetId ? "/space" : (isLoggedIn ? "/foryou" : "/"); }}
-            style={{ pointerEvents: "auto", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)" }}
+            style={{ pointerEvents: "auto", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)" }}
           >
             <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8 }}>
             {storySetId && (
-              <button onClick={shareStory} aria-label="Share" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.1)", color: copied ? "#34D399" : "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", transition: "color .2s" }}>
+              <button onClick={shareStory} aria-label="Share" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}>
                 {copied
                   ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
                   : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -505,16 +507,13 @@ export default function StoryReader({ set, storySetId }: Props) {
             )}
             {set.sourceUrl && (
               <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
-                style={{ ...SG, color: "rgba(255,255,255,0.88)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 11px", borderRadius: 20, backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)" }}>
+                style={{ ...SG, color: "rgba(255,255,255,0.92)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", padding: "6px 11px", borderRadius: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)" }}>
                 Source ↗
               </a>
             )}
           </div>
         </div>
       </div>
-
-      {/* Spacer for pill nav */}
-      <div style={{ flexShrink: 0, height: isLoggedIn ? "calc(68px + env(safe-area-inset-bottom, 0px) + 10px)" : "env(safe-area-inset-bottom, 0px)" }} />
 
       {isLoggedIn && <BottomNav />}
     </div>

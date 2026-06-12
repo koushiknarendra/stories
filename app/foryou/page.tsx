@@ -91,7 +91,7 @@ export default function ForYouPage() {
     <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Header — sticky glass */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)", padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 14px" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)", padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 14px" }}>
         <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 2px", color: "var(--lp-text)" }}>
           {greeting}
         </h1>
