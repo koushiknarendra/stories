@@ -101,19 +101,22 @@ async function generateCards(
   text: string,
   title: string,
   source: string
-): Promise<StoryCard[] | null> {
+): Promise<{ cards: StoryCard[]; category: string | null } | null> {
   const prompt = `You are a content summarizer for a mobile stories app.
 
 Given this article/document, generate 5–7 story cards. Each card covers ONE key idea and is standalone.
 
-Return ONLY a valid JSON array with this exact structure (no markdown, no prose):
-[
-  {
-    "headline": "Short punchy statement (max 8 words)",
-    "bullets": ["Specific fact or insight (max 20 words)", "Another point (max 20 words)", "Third point (max 20 words)"],
-    "readTime": "15s"
-  }
-]
+Return ONLY a valid JSON object (no markdown, no prose):
+{
+  "category": "<best match from: technology|science|business|health|design|world|finance|philosophy|culture|lifestyle>",
+  "cards": [
+    {
+      "headline": "Short punchy statement (max 8 words)",
+      "bullets": ["Specific fact or insight (max 20 words)", "Another point (max 20 words)", "Third point (max 20 words)"],
+      "readTime": "15s"
+    }
+  ]
+}
 
 Rules:
 - Headlines are declarative statements, not questions
@@ -135,10 +138,11 @@ ${text.slice(0, 8000)}`;
       messages: [{ role: "user", content: prompt }],
     });
     const raw = message.content[0].type === "text" ? message.content[0].text : "";
-    const match = raw.match(/\[[\s\S]*\]/);
+    const match = raw.match(/\{[\s\S]*\}/);
     if (!match) continue;
     try {
-      return JSON.parse(match[0]) as StoryCard[];
+      const parsed = JSON.parse(match[0]);
+      return { cards: parsed.cards as StoryCard[], category: parsed.category ?? null };
     } catch {
       continue;
     }
@@ -192,8 +196,8 @@ export async function POST(request: Request) {
       parseResult = { text: text!, title: "Pasted text" };
     }
 
-    const cards = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text");
-    if (!cards) {
+    const generated = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text");
+    if (!generated) {
       await markInboxItemError(item.id, "Failed to generate story cards");
       return Response.json({ error: "Failed to generate story cards" }, { status: 500 });
     }
@@ -204,11 +208,12 @@ export async function POST(request: Request) {
       source: url ? "url" : "text",
       sourceUrl: url ?? undefined,
       coverImageUrl: coverImageUrl ?? undefined,
-      cards,
+      category: generated.category ?? undefined,
+      cards: generated.cards,
       savedAt: new Date().toISOString(),
     };
 
-    await saveStorySet(userId, item.id, storySet, cards);
+    await saveStorySet(userId, item.id, storySet, generated.cards);
     await markInboxItemDone(item.id, storySet.title);
 
     return Response.json({ id: storySet.id, title: storySet.title, itemId: item.id });

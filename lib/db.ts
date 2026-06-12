@@ -111,6 +111,18 @@ export async function runMigration() {
 
   // Add cover_image_url to existing story_sets tables (idempotent)
   await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS cover_image_url TEXT`;
+  await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS category TEXT`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_interests (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      clerk_user_id TEXT        NOT NULL,
+      category      TEXT        NOT NULL,
+      created_at    TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(clerk_user_id, category)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS user_interests_user_idx ON user_interests(clerk_user_id)`;
 }
 
 // ─── Inbox helpers ────────────────────────────────────────────────────────────
@@ -180,8 +192,8 @@ export async function saveStorySet(
   if (!sql) throw new Error("DB not configured");
 
   await sql`
-    INSERT INTO story_sets (id, clerk_user_id, inbox_item_id, title, source, source_url, cover_image_url)
-    VALUES (${set.id}, ${clerkUserId}, ${inboxItemId}, ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null})
+    INSERT INTO story_sets (id, clerk_user_id, inbox_item_id, title, source, source_url, cover_image_url, category)
+    VALUES (${set.id}, ${clerkUserId}, ${inboxItemId}, ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null}, ${set.category ?? null})
     ON CONFLICT (id) DO NOTHING
   `;
 
@@ -242,8 +254,8 @@ export async function deleteStorySet(id: string, clerkUserId: string) {
 export async function listStorySets(clerkUserId: string) {
   const sql = getDb();
   if (!sql) return [];
-  return sql<{ id: string; title: string; source: string; source_url: string | null; saved_at: string }[]>`
-    SELECT id, title, source, source_url, saved_at
+  return sql<{ id: string; title: string; source: string; source_url: string | null; cover_image_url: string | null; category: string | null; saved_at: string }[]>`
+    SELECT id, title, source, source_url, cover_image_url, category, saved_at
     FROM story_sets
     WHERE clerk_user_id = ${clerkUserId}
     ORDER BY saved_at DESC
@@ -283,6 +295,29 @@ export async function deleteNote(id: string, clerkUserId: string) {
   const sql = getDb();
   if (!sql) throw new Error("DB not configured");
   await sql`DELETE FROM notes WHERE id = ${id} AND clerk_user_id = ${clerkUserId}`;
+}
+
+// ─── User interests helpers ───────────────────────────────────────────────────
+
+export async function getUserInterests(clerkUserId: string): Promise<string[]> {
+  const sql = getDb();
+  if (!sql) return [];
+  const rows = await sql<{ category: string }[]>`
+    SELECT category FROM user_interests WHERE clerk_user_id = ${clerkUserId} ORDER BY created_at
+  `;
+  return rows.map((r) => r.category);
+}
+
+export async function setUserInterests(clerkUserId: string, categories: string[]): Promise<void> {
+  const sql = getDb();
+  if (!sql) return;
+  await sql`DELETE FROM user_interests WHERE clerk_user_id = ${clerkUserId}`;
+  for (const cat of categories) {
+    await sql`
+      INSERT INTO user_interests (clerk_user_id, category) VALUES (${clerkUserId}, ${cat})
+      ON CONFLICT DO NOTHING
+    `;
+  }
 }
 
 // ─── Starred bullets helpers ──────────────────────────────────────────────────

@@ -15,14 +15,17 @@ export async function POST(request: Request) {
 
 Given this article/document, generate 5–7 story cards. Each card covers ONE key idea and is standalone.
 
-Return ONLY a valid JSON array with this exact structure (no markdown, no prose):
-[
-  {
-    "headline": "Short punchy statement (max 8 words)",
-    "bullets": ["Specific fact or insight (max 20 words)", "Another point (max 20 words)", "Third point (max 20 words)"],
-    "readTime": "15s"
-  }
-]
+Return ONLY a valid JSON object (no markdown, no prose):
+{
+  "category": "<best match from: technology|science|business|health|design|world|finance|philosophy|culture|lifestyle>",
+  "cards": [
+    {
+      "headline": "Short punchy statement (max 8 words)",
+      "bullets": ["Specific fact or insight (max 20 words)", "Another point (max 20 words)", "Third point (max 20 words)"],
+      "readTime": "15s"
+    }
+  ]
+}
 
 Rules:
 - Headlines are declarative statements, not questions
@@ -38,6 +41,7 @@ Content:
 ${text.slice(0, 8000)}`;
 
   let cards;
+  let category: string | null = null;
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       const message = await client.messages.create({
@@ -47,11 +51,13 @@ ${text.slice(0, 8000)}`;
       });
 
       const raw = message.content[0].type === "text" ? message.content[0].text : "";
-      const match = raw.match(/\[[\s\S]*\]/);
+      const match = raw.match(/\{[\s\S]*\}/);
       if (!match) continue;
 
       try {
-        cards = JSON.parse(match[0]);
+        const parsed = JSON.parse(match[0]);
+        cards = parsed.cards;
+        category = parsed.category ?? null;
         break;
       } catch {
         continue;
@@ -66,5 +72,5 @@ ${text.slice(0, 8000)}`;
     return Response.json({ error: "Failed to generate story cards" }, { status: 500 });
   }
 
-  return Response.json({ cards, title, source, sourceUrl, imageUrl: imageUrl ?? null });
+  return Response.json({ cards, title, source, sourceUrl, imageUrl: imageUrl ?? null, category });
 }

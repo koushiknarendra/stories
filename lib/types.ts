@@ -10,6 +10,7 @@ export interface StorySet {
   source: string;
   sourceUrl?: string;
   coverImageUrl?: string;
+  category?: string;
   cards: StoryCard[];
   savedAt: string;
 }

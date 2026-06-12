@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useTheme } from "@/components/ThemeProvider";
+import BottomNav from "@/components/BottomNav";
 
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
@@ -204,7 +205,7 @@ export default function SpacePage() {
   const visibleStars = showAllStars ? starredBullets : starredBullets.slice(0, 5);
 
   return (
-    <div style={{ minHeight: "100vh", background: bg, color: text }}>
+    <div style={{ minHeight: "100vh", background: bg, color: text, paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Nav */}
       <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", background: `color-mix(in srgb, ${bg} 78%, transparent)`, borderBottom: `1px solid ${border}` }}>
@@ -470,6 +471,7 @@ export default function SpacePage() {
         )}
 
       </div>
+      <BottomNav />
     </div>
   );
 }
