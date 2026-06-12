@@ -45,27 +45,44 @@ const NAV_ITEMS = [
   { href: "/profile", label: "Profile",  Icon: IconProfile },
 ];
 
-export default function BottomNav() {
+export default function BottomNav({ fixed = true }: { fixed?: boolean }) {
   const pathname = usePathname();
 
+  const navStyle: React.CSSProperties = fixed
+    ? {
+        position: "fixed",
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
+        left: 12,
+        right: 12,
+        zIndex: 50,
+        borderRadius: 999,
+        height: 60,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        background: "var(--lp-glass-nav)",
+        backdropFilter: "var(--lp-glass-blur)",
+        WebkitBackdropFilter: "var(--lp-glass-blur)",
+        border: "1px solid var(--lp-glass-border)",
+        boxShadow: "0 8px 32px -8px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
+      }
+    : {
+        flexShrink: 0,
+        margin: "0 12px",
+        borderRadius: 999,
+        height: 60,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        background: "var(--lp-glass-nav)",
+        backdropFilter: "var(--lp-glass-blur)",
+        WebkitBackdropFilter: "var(--lp-glass-blur)",
+        border: "1px solid var(--lp-glass-border)",
+        boxShadow: "0 8px 32px -8px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
+      };
+
   return (
-    <nav style={{
-      position: "fixed",
-      bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
-      left: 12,
-      right: 12,
-      zIndex: 50,
-      borderRadius: 999,
-      height: 60,
-      boxSizing: "border-box",
-      display: "flex",
-      alignItems: "center",
-      background: "var(--lp-glass-nav)",
-      backdropFilter: "var(--lp-glass-blur)",
-      WebkitBackdropFilter: "var(--lp-glass-blur)",
-      border: "1px solid var(--lp-glass-border)",
-      boxShadow: "0 8px 32px -8px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
-    }}>
+    <nav style={navStyle}>
       {NAV_ITEMS.map(({ href, label, Icon }) => {
         const active = pathname === href;
         return (

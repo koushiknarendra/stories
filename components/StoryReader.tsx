@@ -295,10 +295,11 @@ export default function StoryReader({ set, storySetId }: Props) {
       userSelect: "none",
       boxSizing: "border-box",
       paddingTop: "env(safe-area-inset-top, 0px)",
-      paddingBottom: 8,
+      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      gap: isLoggedIn ? 8 : 0,
     }}>
 
-      {/* Card — fills to 8px from screen bottom; pill nav floats on top */}
+      {/* Card — flex:1, stretches exactly to the inline nav below */}
       <div style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
 
         <motion.div
@@ -314,10 +315,12 @@ export default function StoryReader({ set, storySetId }: Props) {
         >
           {/* Cover image */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
-          {/* Dark gradient */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.28) 38%, rgba(0,0,0,0.88) 100%)" }} />
+          {/* Dark gradient — covers center-to-bottom for text readability */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 22%, rgba(0,0,0,0.65) 50%, rgba(0,0,0,0.94) 100%)" }} />
           {/* Color tint */}
           <div style={{ position: "absolute", inset: 0, background: gradient, opacity: 0.16 }} />
+          {/* Top vignette for progress bars */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 110, background: "linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
 
           {/* Progress bars */}
           <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>
@@ -344,15 +347,20 @@ export default function StoryReader({ set, storySetId }: Props) {
             <span style={{ ...SG, color: "#FF6B81", fontWeight: 900, fontSize: 26, letterSpacing: ".1em" }}>SKIP</span>
           </motion.div>
 
-          {/* Bottom overlay — text content */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}>
+          {/* Full-height content overlay — flex column: spacer | text (centered) | buttons */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", zIndex: 10, pointerEvents: "none" }}>
 
-            {/* Gradient + text content */}
-            <div style={{ background: "linear-gradient(transparent 0%, rgba(0,0,0,0.55) 24%, rgba(0,0,0,0.9) 100%)", padding: "90px 20px 0" }}>
+            {/* Spacer — clears progress bars + SAVE/SKIP stamp area */}
+            <div style={{ height: 90, flexShrink: 0 }} />
 
+            {/* Middle: text content — vertically centered in remaining space */}
+            <div
+              style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 20px 8px", overflowY: "hidden", pointerEvents: "auto" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Notes list */}
               {cardNotes.length > 0 && !showNoteInput && (
-                <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                   {cardNotes.map((note) => (
                     <div key={note.id} style={{ background: "rgba(255,220,80,0.1)", border: "1px solid rgba(255,220,80,0.2)", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
                       <p onClick={() => openEditNote(note)} style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1, cursor: "text" }}>✎ {note.content}</p>
@@ -364,7 +372,7 @@ export default function StoryReader({ set, storySetId }: Props) {
 
               {/* Note input */}
               {showNoteInput && (
-                <div style={{ marginBottom: 14 }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ marginBottom: 14 }}>
                   <textarea
                     autoFocus
                     value={noteText}
@@ -448,41 +456,41 @@ export default function StoryReader({ set, storySetId }: Props) {
               )}
             </div>
 
-            {/* Action buttons — iOS glass strip on the image */}
+            {/* Action buttons — float directly on image, no separator line */}
             <div
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: `16px 28px ${isLoggedIn ? "calc(env(safe-area-inset-bottom, 0px) + 82px)" : "calc(env(safe-area-inset-bottom, 0px) + 22px)"}`, background: "rgba(0,0,0,0.28)", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", borderTop: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)" }}
+              style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "14px 28px 22px", pointerEvents: "auto" }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Skip */}
               <button
                 onClick={handleNope}
-                style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s, background .15s", flexShrink: 0, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.background = "rgba(255,107,129,0.2)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+                style={{ width: 42, height: 42, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.28)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0, backdropFilter: "blur(12px) saturate(150%)", WebkitBackdropFilter: "blur(12px) saturate(150%)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.background = "rgba(255,107,129,0.22)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(0,0,0,0.28)"; }}
               >
-                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
 
               {/* Note (logged-in only) */}
               {isLoggedIn && (
                 <button
                   onClick={() => setShowNoteInput((v) => !v)}
-                  style={{ width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: showNoteInput ? "rgba(255,220,80,0.18)" : "rgba(255,255,255,0.08)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+                  style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: showNoteInput ? "rgba(255,220,80,0.22)" : "rgba(0,0,0,0.28)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0, backdropFilter: "blur(12px) saturate(150%)", WebkitBackdropFilter: "blur(12px) saturate(150%)" }}
                   onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
                   onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                 >
-                  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
               )}
 
               {/* Save — primary */}
               <button
                 onClick={handleLike}
-                style={{ width: 68, height: 68, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.22)", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 24px -4px rgba(124,92,255,0.65), inset 0 1px 0 rgba(255,255,255,0.2)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
+                style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.22)", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 6px 24px -4px rgba(124,92,255,0.65), inset 0 1px 0 rgba(255,255,255,0.2)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 10px 30px -4px rgba(124,92,255,0.8), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 6px 24px -4px rgba(124,92,255,0.65), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
               >
-                <svg width={26} height={26} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
               </button>
             </div>
           </div>
@@ -515,7 +523,7 @@ export default function StoryReader({ set, storySetId }: Props) {
         </div>
       </div>
 
-      {isLoggedIn && <BottomNav />}
+      {isLoggedIn && <BottomNav fixed={false} />}
     </div>
   );
 }
