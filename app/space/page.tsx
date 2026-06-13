@@ -36,14 +36,6 @@ interface StarredBullet {
   created_at: string;
 }
 
-interface DailyCard {
-  storySetId: string;
-  storyTitle: string;
-  cardIndex: number;
-  headline: string;
-  bullet: string;
-}
-
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -68,9 +60,6 @@ export default function SpacePage() {
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-
-  // Daily card
-  const [dailyCard, setDailyCard] = useState<DailyCard | null | undefined>(undefined);
 
   // Starred bullets
   const [starredBullets, setStarredBullets] = useState<StarredBullet[]>([]);
@@ -115,15 +104,9 @@ export default function SpacePage() {
     setStarredBullets(Array.isArray(data) ? data : []);
   }
 
-  async function loadDailyCard() {
-    const data = await fetch("/api/daily").then((r) => r.json()).catch(() => null);
-    setDailyCard(data);
-  }
-
   useEffect(() => {
     loadItems();
     loadStarredBullets();
-    loadDailyCard();
   }, []);
 
   // Scroll chat to bottom when new message arrives
@@ -242,26 +225,6 @@ export default function SpacePage() {
 
       {/* Content */}
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "40px 20px 80px" }}>
-
-        {/* ── Daily card ── */}
-        {dailyCard && (
-          <div style={{ marginBottom: 36 }}>
-            <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: "0 0 10px" }}>Today&apos;s pick</p>
-            <a href={`/stories/${dailyCard.storySetId}`} style={{ textDecoration: "none", display: "block" }}>
-              <div style={{ background: "linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(124,92,255,0.04) 100%)", border: "1px solid rgba(124,92,255,0.24)", borderRadius: 16, padding: "18px 20px", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", boxShadow: "0 4px 24px -8px rgba(124,92,255,0.15), inset 0 1px 0 rgba(255,255,255,0.4)", transition: "border-color .15s" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(124,92,255,0.45)")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(124,92,255,0.22)")}
-              >
-                <p style={{ fontSize: 11, color: text3, margin: "0 0 6px" }}>{dailyCard.storyTitle}</p>
-                <p style={{ ...SG, fontSize: 15, fontWeight: 600, color: text, margin: "0 0 8px", lineHeight: 1.35 }}>{dailyCard.headline}</p>
-                {dailyCard.bullet && (
-                  <p style={{ fontSize: 13, color: text2, margin: 0, lineHeight: 1.5 }}>— {dailyCard.bullet}</p>
-                )}
-                <p style={{ fontSize: 11, color: accent, margin: "10px 0 0", fontWeight: 600 }}>Read cards →</p>
-              </div>
-            </a>
-          </div>
-        )}
 
         <h1 style={{ ...SG, fontSize: "clamp(26px,5vw,36px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 6px", color: text }}>
           Library

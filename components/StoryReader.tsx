@@ -11,7 +11,7 @@ import {
 import { addToCurate, recordDislike } from "@/lib/storage";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
-import type { StorySet, Note } from "@/lib/types";
+import type { StorySet } from "@/lib/types";
 import BottomNav from "@/components/BottomNav";
 
 interface StarredKey { cardIndex: number; bulletIndex: number; }
@@ -46,13 +46,6 @@ export default function StoryReader({ set, storySetId }: Props) {
   const dragged = useRef(false);
   const flying = useRef(false);
 
-  // Notes state
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [showNoteInput, setShowNoteInput] = useState(false);
-  const [noteText, setNoteText] = useState("");
-  const [savingNote, setSavingNote] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-
   // Starred bullets state — Set of "cardIndex_bulletIndex" strings
   const [starred, setStarred] = useState<Set<string>>(new Set());
   const [togglingBullet, setTogglingBullet] = useState<string | null>(null);
@@ -68,18 +61,10 @@ export default function StoryReader({ set, storySetId }: Props) {
   const isFirst = cardIndex === 0;
   const gradient = GRADIENTS[cardIndex % GRADIENTS.length];
   const sid = storySetId || set.id;
-  // Cover image: OG image from article, or deterministic Picsum fallback keyed by story ID
   const coverImg = set.coverImageUrl || `https://picsum.photos/seed/${set.id}/800/500`;
   const isLoggedIn = isLoaded && !!user;
 
-  // Load notes for this story set when logged in
-  useEffect(() => {
-    if (!isLoggedIn || !sid) return;
-    fetch(`/api/notes?storySetId=${encodeURIComponent(sid)}`)
-      .then((r) => r.json())
-      .then((data) => setNotes(Array.isArray(data) ? data : []))
-      .catch(() => {});
-  }, [isLoggedIn, sid]);
+  void gradient;
 
   // Load starred bullets for this story set
   useEffect(() => {
@@ -116,59 +101,6 @@ export default function StoryReader({ set, storySetId }: Props) {
     if (!storySetId) return;
     try { localStorage.setItem(`storis_progress_${storySetId}`, String(cardIndex)); } catch {}
   }, [storySetId, cardIndex]);
-
-  const cardNotes = notes.filter((n) => n.card_index === cardIndex);
-
-  async function deleteNote(id: string) {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
-    await fetch("/api/notes", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    }).catch(() => {});
-  }
-
-  function openEditNote(note: Note) {
-    setEditingNoteId(note.id);
-    setNoteText(note.content);
-    setShowNoteInput(true);
-  }
-
-  function cancelNote() {
-    setShowNoteInput(false);
-    setNoteText("");
-    setEditingNoteId(null);
-  }
-
-  async function saveNote() {
-    if (!noteText.trim() || !isLoggedIn || savingNote) return;
-    setSavingNote(true);
-    try {
-      // If editing, delete the old note first then re-create
-      if (editingNoteId) {
-        await fetch("/api/notes", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingNoteId }),
-        });
-        setNotes((prev) => prev.filter((n) => n.id !== editingNoteId));
-        setEditingNoteId(null);
-      }
-      const res = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storySetId: sid, cardIndex, content: noteText.trim() }),
-      });
-      const note = await res.json();
-      setNotes((prev) => [...prev, note as Note]);
-      setNoteText("");
-      setShowNoteInput(false);
-    } catch {
-      // silent
-    } finally {
-      setSavingNote(false);
-    }
-  }
 
   async function toggleStar(bulletIndex: number) {
     if (!isLoggedIn || !storySetId) return;
@@ -233,17 +165,13 @@ export default function StoryReader({ set, storySetId }: Props) {
 
   async function handleLike() {
     if (!isLoaded) return;
-
     if (!isLoggedIn) {
-      // Open Clerk modal; pendingSave triggers auto-save once they sign in
       setPendingSave(true);
       openSignIn();
       return;
     }
-
     addToCurate(set);
     recordInteraction("like");
-    // Persist to DB before navigating — navigation cancels in-flight fetches
     if (!storySetId) {
       await fetch("/api/space", {
         method: "POST",
@@ -253,6 +181,7 @@ export default function StoryReader({ set, storySetId }: Props) {
     }
     flyOff(1, "/space");
   }
+
   function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1, "/"); }
   function onDragStart() { dragged.current = false; }
   function onDrag(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
@@ -264,7 +193,6 @@ export default function StoryReader({ set, storySetId }: Props) {
   }
   function handleCardClick(e: React.MouseEvent<HTMLDivElement>) {
     if (dragged.current || flying.current) return;
-    if (showNoteInput) { cancelNote(); return; }
     x.set(0);
     const rect = e.currentTarget.getBoundingClientRect();
     const tappedLeft = e.clientX - rect.left < rect.width / 2;
@@ -299,7 +227,7 @@ export default function StoryReader({ set, storySetId }: Props) {
       gap: isLoggedIn ? 8 : 0,
     }}>
 
-      {/* Card — flex:1, stretches exactly to the inline nav below */}
+      {/* Card */}
       <div style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
 
         <motion.div
@@ -315,7 +243,7 @@ export default function StoryReader({ set, storySetId }: Props) {
         >
           {/* Cover image */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
-          {/* Gradient: image clear at top, blends to near-black at bottom */}
+          {/* Gradient overlay */}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.84) 54%, rgba(0,0,0,0.97) 100%)" }} />
           {/* Top vignette for progress bars */}
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 90, background: "linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
@@ -345,57 +273,18 @@ export default function StoryReader({ set, storySetId }: Props) {
             <span style={{ ...SG, color: "#FF6B81", fontWeight: 900, fontSize: 26, letterSpacing: ".1em" }}>SKIP</span>
           </motion.div>
 
-          {/* Full-height content overlay — flex column: spacer | text (centered) | buttons */}
+          {/* Content overlay */}
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", zIndex: 10, pointerEvents: "none" }}>
 
-            {/* Spacer — clears progress bars + SAVE/SKIP stamp area */}
             <div style={{ height: 90, flexShrink: 0 }} />
 
-            {/* Middle: text content — pushed to bottom, just above buttons */}
-            <div
-              style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 0", overflowY: "hidden", pointerEvents: "auto" }}
-            >
-              {/* Notes list */}
-              {cardNotes.length > 0 && !showNoteInput && (
-                <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }} onClick={(e) => e.stopPropagation()}>
-                  {cardNotes.map((note) => (
-                    <div key={note.id} style={{ background: "rgba(255,220,80,0.1)", border: "1px solid rgba(255,220,80,0.2)", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                      <p onClick={() => openEditNote(note)} style={{ margin: 0, fontSize: 12, color: "rgba(255,220,80,0.9)", lineHeight: 1.5, flex: 1, cursor: "text" }}>✎ {note.content}</p>
-                      <button onClick={() => deleteNote(note.id)} style={{ background: "none", border: "none", color: "rgba(255,220,80,0.3)", cursor: "pointer", padding: "1px 0 0", fontSize: 14, lineHeight: 1, flexShrink: 0 }} aria-label="Delete note">✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 0", overflowY: "hidden", pointerEvents: "auto" }}>
 
-              {/* Note input */}
-              {showNoteInput && (
-                <div style={{ marginBottom: 14 }} onClick={(e) => e.stopPropagation()}>
-                  <textarea
-                    autoFocus
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Add a note for this card…"
-                    rows={2}
-                    style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 10, color: "white", fontSize: 16, padding: "10px 12px", resize: "none", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
-                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveNote(); } if (e.key === "Escape") cancelNote(); }}
-                  />
-                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                    <button onClick={saveNote} disabled={savingNote || !noteText.trim()} style={{ ...SG, flex: 1, padding: "8px 0", borderRadius: 8, border: "none", background: "rgba(255,220,80,0.85)", color: "#000", fontWeight: 700, fontSize: 12, cursor: "pointer", opacity: savingNote ? 0.6 : 1 }}>
-                      {savingNote ? "Saving…" : editingNoteId ? "Update note" : "Save note"}
-                    </button>
-                    <button onClick={cancelNote} style={{ ...SG, padding: "8px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-
-              {/* Source + note count */}
-              <div style={{ marginBottom: 9, display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Source pill */}
+              <div style={{ marginBottom: 9 }}>
                 <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
                   {set.source}
                 </span>
-                {cardNotes.length > 0 && (
-                  <span style={{ ...SG, fontSize: 10, fontWeight: 700, color: "rgba(255,220,80,0.85)", background: "rgba(255,220,80,0.12)", padding: "4px 8px", borderRadius: 999 }}>✎ {cardNotes.length}</span>
-                )}
               </div>
 
               {/* Headline */}
@@ -453,7 +342,7 @@ export default function StoryReader({ set, storySetId }: Props) {
               )}
             </div>
 
-            {/* Action buttons — float directly on image, no separator line */}
+            {/* Action buttons */}
             <div
               style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 16, padding: "6px 28px 18px", pointerEvents: "auto" }}
               onClick={(e) => e.stopPropagation()}
@@ -468,19 +357,7 @@ export default function StoryReader({ set, storySetId }: Props) {
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
 
-              {/* Note (logged-in only) */}
-              {isLoggedIn && (
-                <button
-                  onClick={() => setShowNoteInput((v) => !v)}
-                  style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: showNoteInput ? "rgba(255,220,80,0.22)" : "rgba(0,0,0,0.28)", color: "rgba(255,220,80,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0, backdropFilter: "blur(12px) saturate(150%)", WebkitBackdropFilter: "blur(12px) saturate(150%)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.12)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                >
-                  <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-              )}
-
-              {/* Save — primary */}
+              {/* Save */}
               <button
                 onClick={handleLike}
                 style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.22)", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px -4px rgba(124,92,255,0.7), inset 0 1px 0 rgba(255,255,255,0.2)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
