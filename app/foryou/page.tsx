@@ -169,7 +169,7 @@ export default function ForYouPage() {
 
   const matched = savedStories.filter((s) => s.category && interests.includes(s.category));
   const feed = matched.length > 0 ? matched : savedStories;
-  const greeting = user?.firstName ? `Hey ${user.firstName} 👋` : "For You";
+  const greeting = user?.firstName ? `Hey ${user.firstName} 👋` : "Today";
 
   void theme;
 

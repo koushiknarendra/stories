@@ -264,7 +264,7 @@ export default function SpacePage() {
         )}
 
         <h1 style={{ ...SG, fontSize: "clamp(26px,5vw,36px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 6px", color: text }}>
-          My space
+          Library
         </h1>
         <p style={{ fontSize: 15, color: text2, margin: "0 0 32px" }}>
           Add any link — article, thread, newsletter — and it becomes story cards.

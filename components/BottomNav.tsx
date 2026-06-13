@@ -39,10 +39,10 @@ const IconProfile = ({ active }: { active: boolean }) => (
 );
 
 const NAV_ITEMS = [
-  { href: "/foryou",  label: "For You",  Icon: IconHome },
-  { href: "/explore", label: "Explore",  Icon: IconExplore },
-  { href: "/space",   label: "My Space", Icon: IconSpace },
-  { href: "/profile", label: "Profile",  Icon: IconProfile },
+  { href: "/foryou",  label: "Today",   Icon: IconHome },
+  { href: "/explore", label: "Explore", Icon: IconExplore },
+  { href: "/space",   label: "Library", Icon: IconSpace },
+  { href: "/profile", label: "Profile", Icon: IconProfile },
 ];
 
 export default function BottomNav({ fixed = true }: { fixed?: boolean }) {
