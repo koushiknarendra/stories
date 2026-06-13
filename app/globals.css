@@ -63,14 +63,25 @@ input, textarea, select {
   font-size: 16px;
 }
 
-/* Clerk modal — always light regardless of app theme */
-:root, html.dark {
-  --clerk-modal-color-scheme: light;
-}
-/* Target Clerk's portal root so dark color-scheme doesn't bleed in */
+/* Clerk modal — always light, regardless of OS/app dark mode */
 #clerk-components,
-.cl-rootBox {
-  color-scheme: light;
+.cl-rootBox,
+.cl-card,
+.cl-modalContent,
+.cl-signIn-root,
+.cl-signUp-root {
+  color-scheme: only light !important;
+  background-color: #ffffff !important;
+  color: #15131F !important;
+}
+.cl-formFieldInput,
+.cl-input {
+  background-color: #f5f4fb !important;
+  color: #15131F !important;
+  border-color: #e7e4f2 !important;
+}
+.cl-internal-b3fm6y {
+  background-color: #ffffff !important;
 }
 
 @keyframes floatY {

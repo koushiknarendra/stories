@@ -22,10 +22,27 @@ export default function RootLayout({
           colorBackground: "#ffffff",
           colorText: "#15131F",
           colorTextSecondary: "#54506B",
-          colorInputBackground: "#ffffff",
+          colorInputBackground: "#f5f4fb",
           colorInputText: "#15131F",
           colorNeutral: "#15131F",
+          colorShimmer: "#f0eefb",
           borderRadius: "12px",
+        },
+        elements: {
+          card: {
+            backgroundColor: "#ffffff",
+            color: "#15131F",
+            boxShadow: "0 24px 64px -16px rgba(0,0,0,0.22)",
+          },
+          formFieldInput: {
+            backgroundColor: "#f5f4fb",
+            color: "#15131F",
+            borderColor: "#e7e4f2",
+          },
+          modalBackdrop: {
+            backgroundColor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(6px)",
+          },
         },
       }}
     >
