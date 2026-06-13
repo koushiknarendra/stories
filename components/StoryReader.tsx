@@ -281,11 +281,16 @@ export default function StoryReader({ set, storySetId }: Props) {
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 0", overflowY: "hidden", pointerEvents: "auto" }}>
 
               {/* Source pill */}
-              <div style={{ marginBottom: 9 }}>
+              <div style={{ marginBottom: 8 }}>
                 <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
                   {set.source}
                 </span>
               </div>
+
+              {/* Article title — context anchor so card headlines make sense out of context */}
+              <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.42)", margin: "0 0 7px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+                {set.title}
+              </p>
 
               {/* Headline */}
               <h2 style={{ ...SG, fontSize: "clamp(20px,5.5vw,30px)", fontWeight: 800, color: "white", lineHeight: 1.08, letterSpacing: "-0.025em", margin: "0 0 12px", textShadow: "0 1px 8px rgba(0,0,0,1), 0 2px 20px rgba(0,0,0,0.8)" }}>

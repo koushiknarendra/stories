@@ -14,11 +14,14 @@ const CATEGORY_FOCUS: Record<string, string> = {
 const RULES = `
 Rules:
 1. FIRST CARD — open with the most surprising or counter-intuitive point in the article, not the introduction.
-2. HEADLINES — create a curiosity gap; make the reader need to know more. Do not give away the answer.
-   Weak: "AI Models Now Process 1 Million Tokens"
-   Strong: "The AI that read your entire life — and still wants more"
+2. HEADLINES — must be fully self-contained: a reader who sees ONLY this headline (with no article title, no other cards, and weeks later) must immediately understand the subject AND feel curious.
+   The formula is: [subject or context] + [curiosity gap or tension]. Do NOT write a curiosity gap without first anchoring the topic.
+   Weak: "Why you stay — even when you know better"  ← topic missing, cryptic out of context
+   Weak: "AI Models Now Process 1 Million Tokens"  ← no curiosity gap
+   Strong: "Why people stay in bad relationships — economists finally have an answer"
+   Strong: "The AI that read your entire novel — and still wants more context"
 3. BULLETS — first two are concrete facts, numbers, or insights. Third bullet always answers "So what does this mean for me?" — a personal implication, behavior shift, or thing to watch.
-4. Each card must make sense without reading the others.
+4. Each card must make sense without reading the others and without knowing the article title.
 5. Total words per card (headline + 3 bullets) must be under 60.
 6. readTime reflects bullet density (10s–30s range).`.trim();
 
