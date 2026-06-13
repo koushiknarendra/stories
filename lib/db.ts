@@ -123,6 +123,31 @@ export async function runMigration() {
     )
   `;
   await sql`CREATE INDEX IF NOT EXISTS user_interests_user_idx ON user_interests(clerk_user_id)`;
+
+  // Discover / generated stories columns
+  await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS is_generated BOOLEAN DEFAULT FALSE`;
+  await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS generated_category TEXT`;
+  await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS generated_at TIMESTAMPTZ`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_read_stories (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      clerk_user_id TEXT        NOT NULL,
+      story_set_id  TEXT        NOT NULL,
+      read_at       TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(clerk_user_id, story_set_id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS user_read_stories_user_idx ON user_read_stories(clerk_user_id)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_streaks (
+      clerk_user_id  TEXT PRIMARY KEY,
+      current_streak INT  DEFAULT 0,
+      last_read_date DATE,
+      longest_streak INT  DEFAULT 0
+    )
+  `;
 }
 
 // ─── Inbox helpers ────────────────────────────────────────────────────────────
@@ -424,6 +449,112 @@ export async function getDailyCard(clerkUserId: string): Promise<{
     headline: row.headline,
     bullet: bullets[0] ?? "",
   };
+}
+
+// ─── Discover / generated stories helpers ────────────────────────────────────
+
+export async function getGeneratedStories(categories: string[]): Promise<{
+  id: string; title: string; source: string; source_url: string | null;
+  cover_image_url: string | null; category: string | null; saved_at: string;
+  is_generated: boolean;
+}[]> {
+  const sql = getDb();
+  if (!sql || !categories.length) return [];
+  return sql`
+    SELECT id, title, source, source_url, cover_image_url, category, saved_at, is_generated
+    FROM story_sets
+    WHERE is_generated = true
+      AND generated_category = ANY(${categories})
+      AND generated_at > NOW() - INTERVAL '24 hours'
+    ORDER BY generated_at DESC
+  `;
+}
+
+export async function saveGeneratedStorySet(
+  set: import("./types").StorySet,
+  category: string
+) {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  await sql`
+    INSERT INTO story_sets (id, clerk_user_id, title, source, source_url, cover_image_url, category, is_generated, generated_category, generated_at)
+    VALUES (${set.id}, '__generated__', ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null}, ${category}, true, ${category}, NOW())
+    ON CONFLICT (id) DO NOTHING
+  `;
+  for (const [i, card] of set.cards.entries()) {
+    await sql`
+      INSERT INTO story_cards (story_set_id, card_index, headline, bullets, read_time)
+      VALUES (${set.id}, ${i}, ${card.headline}, ${JSON.stringify(card.bullets ?? [])}::jsonb, ${card.readTime})
+    `;
+  }
+}
+
+export async function markStoryRead(clerkUserId: string, storySetId: string) {
+  const sql = getDb();
+  if (!sql) return;
+  await sql`
+    INSERT INTO user_read_stories (clerk_user_id, story_set_id)
+    VALUES (${clerkUserId}, ${storySetId})
+    ON CONFLICT (clerk_user_id, story_set_id) DO NOTHING
+  `;
+}
+
+export async function getUserStreak(clerkUserId: string): Promise<{
+  currentStreak: number; longestStreak: number; lastReadDate: string | null; todayCount: number;
+}> {
+  const sql = getDb();
+  if (!sql) return { currentStreak: 0, longestStreak: 0, lastReadDate: null, todayCount: 0 };
+
+  const [streakRow] = await sql<{ current_streak: number; longest_streak: number; last_read_date: string | null }[]>`
+    SELECT current_streak, longest_streak, last_read_date::text FROM user_streaks WHERE clerk_user_id = ${clerkUserId}
+  `;
+  const [countRow] = await sql<{ count: string }[]>`
+    SELECT COUNT(*)::text AS count FROM user_read_stories
+    WHERE clerk_user_id = ${clerkUserId} AND read_at >= current_date
+  `;
+
+  return {
+    currentStreak: streakRow?.current_streak ?? 0,
+    longestStreak: streakRow?.longest_streak ?? 0,
+    lastReadDate: streakRow?.last_read_date ?? null,
+    todayCount: parseInt(countRow?.count ?? "0", 10),
+  };
+}
+
+export async function updateUserStreak(clerkUserId: string) {
+  const sql = getDb();
+  if (!sql) return;
+
+  const [existing] = await sql<{ current_streak: number; longest_streak: number; last_read_date: string | null }[]>`
+    SELECT current_streak, longest_streak, last_read_date::text FROM user_streaks WHERE clerk_user_id = ${clerkUserId}
+  `;
+
+  if (!existing) {
+    await sql`
+      INSERT INTO user_streaks (clerk_user_id, current_streak, longest_streak, last_read_date)
+      VALUES (${clerkUserId}, 1, 1, current_date)
+    `;
+    return;
+  }
+
+  // Compare last_read_date to today in SQL to avoid timezone issues
+  const [dateCheck] = await sql<{ is_today: boolean; is_yesterday: boolean }[]>`
+    SELECT
+      last_read_date = current_date AS is_today,
+      last_read_date = current_date - 1 AS is_yesterday
+    FROM user_streaks WHERE clerk_user_id = ${clerkUserId}
+  `;
+
+  if (dateCheck.is_today) return; // already counted today
+
+  const newStreak = dateCheck.is_yesterday ? existing.current_streak + 1 : 1;
+  const newLongest = Math.max(newStreak, existing.longest_streak);
+
+  await sql`
+    UPDATE user_streaks
+    SET current_streak = ${newStreak}, longest_streak = ${newLongest}, last_read_date = current_date
+    WHERE clerk_user_id = ${clerkUserId}
+  `;
 }
 
 // ─── Library cards for Ask ────────────────────────────────────────────────────

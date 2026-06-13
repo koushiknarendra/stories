@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { buildClassifyPrompt } from "@/lib/cardPrompt";
 
 export const runtime = "nodejs";
 
@@ -11,34 +12,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "text is required" }, { status: 400 });
   }
 
-  const prompt = `You are a content summarizer for a mobile stories app.
-
-Given this article/document, generate 5–7 story cards. Each card covers ONE key idea and is standalone.
-
-Return ONLY a valid JSON object (no markdown, no prose):
-{
-  "category": "<best match from: technology|science|business|health|design|world|finance|philosophy|culture|lifestyle>",
-  "cards": [
-    {
-      "headline": "Short punchy statement (max 8 words)",
-      "bullets": ["Specific fact or insight (max 20 words)", "Another point (max 20 words)", "Third point (max 20 words)"],
-      "readTime": "15s"
-    }
-  ]
-}
-
-Rules:
-- Headlines are declarative statements, not questions
-- Bullets are concrete facts, numbers, or insights — no filler
-- Each card must make sense without reading the others
-- Total words per card (headline + 3 bullets) must be under 60
-- readTime should reflect bullet density (10s–30s range)
-
-Title: ${title}
-Source: ${source}
-
-Content:
-${text.slice(0, 8000)}`;
+  const prompt = buildClassifyPrompt(text, title, source);
 
   let cards;
   let category: string | null = null;
@@ -46,7 +20,7 @@ ${text.slice(0, 8000)}`;
     for (let attempt = 0; attempt < 2; attempt++) {
       const message = await client.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 2048,
+        max_tokens: 3072,
         messages: [{ role: "user", content: prompt }],
       });
 

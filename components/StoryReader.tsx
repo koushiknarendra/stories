@@ -269,7 +269,7 @@ export default function StoryReader({ set, storySetId }: Props) {
     const rect = e.currentTarget.getBoundingClientRect();
     const tappedLeft = e.clientX - rect.left < rect.width / 2;
     if (tappedLeft) { if (!isFirst) setCardIndex((i) => i - 1); }
-    else { if (!isLast) setCardIndex((i) => i + 1); }
+    else { setCardIndex((i) => (i + 1) % total); }
   }
 
   void theme;
@@ -430,7 +430,7 @@ export default function StoryReader({ set, storySetId }: Props) {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                 <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 600 }}>{card.readTime} read</span>
                 <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)" }}>
-                  {isFirst ? "tap → to advance" : isLast ? `${cardIndex + 1} / ${total} · end` : `${cardIndex + 1} / ${total}`}
+                  {isFirst ? "tap → to advance" : isLast ? `${cardIndex + 1} / ${total} · tap to restart` : `${cardIndex + 1} / ${total}`}
                 </span>
               </div>
 
