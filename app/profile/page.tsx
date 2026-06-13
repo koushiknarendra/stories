@@ -72,7 +72,7 @@ export default function ProfilePage() {
 
         {/* Avatar + name */}
         {user && (
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28, padding: "18px 18px", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28, padding: "18px 18px", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
             {user.imageUrl
               ? <img src={user.imageUrl} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
               : <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--lp-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, fontWeight: 700, flexShrink: 0 }}>
@@ -96,7 +96,7 @@ export default function ProfilePage() {
             { label: "Saved articles", value: storyCount ?? "—" },
             { label: "Interests", value: interests.length },
           ].map(({ label, value }) => (
-            <div key={label} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center", boxShadow: "0 4px 20px -8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+            <div key={label} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center", boxShadow: "0 4px 20px -8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
               <p style={{ ...SG, fontSize: 26, fontWeight: 700, color: "var(--lp-accent)", margin: "0 0 4px" }}>{value}</p>
               <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>{label}</p>
             </div>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Interests section */}
-        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 16, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 16, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: editingInterests ? 16 : (interests.length > 0 ? 14 : 0) }}>
             <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: 0 }}>My interests</p>
             <button

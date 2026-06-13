@@ -64,7 +64,7 @@ export default function BottomNav({ fixed = true }: { fixed?: boolean }) {
         backdropFilter: "var(--lp-glass-blur)",
         WebkitBackdropFilter: "var(--lp-glass-blur)",
         border: "1px solid var(--lp-glass-border)",
-        boxShadow: "0 8px 32px -8px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
+        boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.5)",
       }
     : {
         flexShrink: 0,
@@ -78,7 +78,7 @@ export default function BottomNav({ fixed = true }: { fixed?: boolean }) {
         backdropFilter: "var(--lp-glass-blur)",
         WebkitBackdropFilter: "var(--lp-glass-blur)",
         border: "1px solid var(--lp-glass-border)",
-        boxShadow: "0 8px 32px -8px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.1)",
+        boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.5)",
       };
 
   return (

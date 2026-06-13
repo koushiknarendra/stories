@@ -248,7 +248,7 @@ export default function SpacePage() {
           <div style={{ marginBottom: 36 }}>
             <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: "0 0 10px" }}>Today&apos;s pick</p>
             <a href={`/stories/${dailyCard.storySetId}`} style={{ textDecoration: "none", display: "block" }}>
-              <div style={{ background: "linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(124,92,255,0.04) 100%)", border: "1px solid rgba(124,92,255,0.24)", borderRadius: 16, padding: "18px 20px", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", boxShadow: "0 4px 24px -8px rgba(124,92,255,0.15), inset 0 1px 0 rgba(255,255,255,0.04)", transition: "border-color .15s" }}
+              <div style={{ background: "linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(124,92,255,0.04) 100%)", border: "1px solid rgba(124,92,255,0.24)", borderRadius: 16, padding: "18px 20px", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", boxShadow: "0 4px 24px -8px rgba(124,92,255,0.15), inset 0 1px 0 rgba(255,255,255,0.4)", transition: "border-color .15s" }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(124,92,255,0.45)")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(124,92,255,0.22)")}
               >
@@ -331,7 +331,7 @@ export default function SpacePage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filtered.map((item) => (
-              <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+              <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {item.title}
@@ -381,7 +381,7 @@ export default function SpacePage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {visibleStars.map((bullet) => (
-                <div key={bullet.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+                <div key={bullet.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
                   <span style={{ color: "#FBBF24", fontSize: 13, flexShrink: 0, marginTop: 1 }}>★</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13, color: text, margin: "0 0 4px", lineHeight: 1.5 }}>{bullet.bullet_text}</p>
@@ -433,7 +433,7 @@ export default function SpacePage() {
                       fontSize: 13,
                       color: text,
                       lineHeight: 1.55,
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)",
                     }}>
                       {msg.content}
                     </div>

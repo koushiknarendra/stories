@@ -25,16 +25,25 @@
 /* Glass UI tokens */
 :root {
   --lp-page-bg:
-    radial-gradient(ellipse 80% 35% at 85% 0%, color-mix(in srgb, var(--lp-accent) 10%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 78% 58% at 92% -4%,  color-mix(in srgb, var(--lp-accent) 22%, transparent) 0%, transparent 52%),
+    radial-gradient(ellipse 55% 48% at 6%  96%,  color-mix(in srgb, #5B6EFF       16%, transparent) 0%, transparent 58%),
+    radial-gradient(ellipse 44% 38% at 72% 82%,  color-mix(in srgb, var(--lp-accent)  9%, transparent) 0%, transparent 62%),
     var(--lp-bg);
-  --lp-glass-nav:     color-mix(in srgb, var(--lp-bg)      50%, transparent);
-  --lp-glass-surface: color-mix(in srgb, var(--lp-surface) 58%, transparent);
-  --lp-glass-border:  rgba(0, 0, 0, 0.07);
-  --lp-glass-blur:    blur(56px) saturate(200%);
-  --lp-glass-blur-card: blur(28px) saturate(180%);
+  --lp-glass-nav:       color-mix(in srgb, var(--lp-bg)      34%, transparent);
+  --lp-glass-surface:   color-mix(in srgb, var(--lp-surface) 42%, transparent);
+  --lp-glass-border:    rgba(0, 0, 0, 0.10);
+  --lp-glass-blur:      blur(80px) saturate(240%);
+  --lp-glass-blur-card: blur(48px) saturate(210%);
+  --lp-glass-highlight: inset 0 1px 0 rgba(255,255,255,0.55);
 }
 html.dark {
-  --lp-glass-border: rgba(255, 255, 255, 0.11);
+  --lp-glass-border:    rgba(255, 255, 255, 0.16);
+  --lp-glass-highlight: inset 0 1px 0 rgba(255,255,255,0.12);
+  --lp-page-bg:
+    radial-gradient(ellipse 78% 58% at 92% -4%,  color-mix(in srgb, var(--lp-accent) 30%, transparent) 0%, transparent 52%),
+    radial-gradient(ellipse 55% 48% at 6%  96%,  color-mix(in srgb, #3B4EDF       22%, transparent) 0%, transparent 58%),
+    radial-gradient(ellipse 44% 38% at 72% 82%,  color-mix(in srgb, var(--lp-accent) 14%, transparent) 0%, transparent 62%),
+    var(--lp-bg);
 }
 
 /* Landing page design tokens — dark mode */
