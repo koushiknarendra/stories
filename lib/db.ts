@@ -500,24 +500,28 @@ export async function markStoryRead(clerkUserId: string, storySetId: string) {
 }
 
 export async function getUserStreak(clerkUserId: string): Promise<{
-  currentStreak: number; longestStreak: number; lastReadDate: string | null; todayCount: number;
+  currentStreak: number; longestStreak: number; lastReadDate: string | null; todayCount: number; totalReads: number;
 }> {
   const sql = getDb();
-  if (!sql) return { currentStreak: 0, longestStreak: 0, lastReadDate: null, todayCount: 0 };
+  if (!sql) return { currentStreak: 0, longestStreak: 0, lastReadDate: null, todayCount: 0, totalReads: 0 };
 
   const [streakRow] = await sql<{ current_streak: number; longest_streak: number; last_read_date: string | null }[]>`
     SELECT current_streak, longest_streak, last_read_date::text FROM user_streaks WHERE clerk_user_id = ${clerkUserId}
   `;
-  const [countRow] = await sql<{ count: string }[]>`
-    SELECT COUNT(*)::text AS count FROM user_read_stories
-    WHERE clerk_user_id = ${clerkUserId} AND read_at >= current_date
+  const [countRow] = await sql<{ today: string; total: string }[]>`
+    SELECT
+      COUNT(*) FILTER (WHERE read_at >= current_date)::text AS today,
+      COUNT(*)::text AS total
+    FROM user_read_stories
+    WHERE clerk_user_id = ${clerkUserId}
   `;
 
   return {
     currentStreak: streakRow?.current_streak ?? 0,
     longestStreak: streakRow?.longest_streak ?? 0,
     lastReadDate: streakRow?.last_read_date ?? null,
-    todayCount: parseInt(countRow?.count ?? "0", 10),
+    todayCount: parseInt(countRow?.today ?? "0", 10),
+    totalReads: parseInt(countRow?.total ?? "0", 10),
   };
 }
 

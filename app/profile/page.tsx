@@ -11,11 +11,32 @@ const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 const IconSun  = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2}/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>;
 const IconMoon = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>;
 
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  todayCount: number;
+  totalReads: number;
+}
+
+const DAILY_GOAL = 3;
+
+const ALL_BADGES = [
+  { id: "first_story",  emoji: "📖", label: "First Story",    desc: "Added your first article",          check: (s: number, _r: number, streak: number, longest: number) => s >= 1 || _r >= 1 || streak >= 1 || longest >= 1 },
+  { id: "bookworm",     emoji: "🐛", label: "Bookworm",       desc: "Saved 5 stories",                   check: (s: number) => s >= 5 },
+  { id: "library",      emoji: "📚", label: "Library Builder", desc: "Saved 10 stories",                 check: (s: number) => s >= 10 },
+  { id: "on_a_roll",    emoji: "🔥", label: "On a Roll",      desc: "3-day reading streak",              check: (_s: number, _r: number, streak: number) => streak >= 3 },
+  { id: "week_warrior", emoji: "⚡",  label: "Week Warrior",   desc: "7-day reading streak",              check: (_s: number, _r: number, streak: number) => streak >= 7 },
+  { id: "consistent",   emoji: "💎", label: "Consistent",     desc: "14-day streak ever",                check: (_s: number, _r: number, _streak: number, longest: number) => longest >= 14 },
+  { id: "centurion",    emoji: "🏆", label: "Centurion",      desc: "Read 100 story cards",              check: (_s: number, r: number) => r >= 100 },
+  { id: "month_master", emoji: "👑", label: "Month Master",   desc: "30-day streak ever",                check: (_s: number, _r: number, _streak: number, longest: number) => longest >= 30 },
+];
+
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const { theme, toggle } = useTheme();
   const [interests, setInterests] = useState<string[]>([]);
   const [storyCount, setStoryCount] = useState<number | null>(null);
+  const [streak, setStreak] = useState<StreakData | null>(null);
   const [editingInterests, setEditingInterests] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -31,6 +52,9 @@ export default function ProfilePage() {
     }).catch(() => {});
     fetch("/api/space").then((r) => r.json()).then((data) => {
       if (Array.isArray(data)) setStoryCount(data.length);
+    }).catch(() => {});
+    fetch("/api/streak").then((r) => r.json()).then((data) => {
+      if (data && typeof data.currentStreak === "number") setStreak(data);
     }).catch(() => {});
   }, [user]);
 
@@ -50,6 +74,17 @@ export default function ProfilePage() {
     setSelected((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   }
 
+  const savedCount   = storyCount ?? 0;
+  const totalReads   = streak?.totalReads ?? 0;
+  const currentStreak = streak?.currentStreak ?? 0;
+  const longestStreak = streak?.longestStreak ?? 0;
+  const todayCount   = streak?.todayCount ?? 0;
+
+  const earnedBadges = ALL_BADGES.filter(b => b.check(savedCount, totalReads, currentStreak, longestStreak));
+  const lockedBadges = ALL_BADGES.filter(b => !b.check(savedCount, totalReads, currentStreak, longestStreak));
+
+  const todayProgress = Math.min(todayCount / DAILY_GOAL, 1);
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
@@ -68,43 +103,110 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div style={{ padding: "24px 20px" }}>
+      <div style={{ padding: "20px 20px" }}>
 
         {/* Avatar + name */}
         {user && (
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28, padding: "18px 18px", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "16px 18px", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
             {user.imageUrl
               ? <img src={user.imageUrl} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
               : <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--lp-accent)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, fontWeight: 700, flexShrink: 0 }}>
                   {(user.firstName ?? user.emailAddresses[0]?.emailAddress ?? "?")[0].toUpperCase()}
                 </div>
             }
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ ...SG, margin: 0, fontSize: 16, fontWeight: 700, color: "var(--lp-text)" }}>
                 {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName ?? "Reader"}
               </p>
-              <p style={{ margin: "3px 0 0", fontSize: 13, color: "var(--lp-text3)" }}>
+              <p style={{ margin: "3px 0 0", fontSize: 12, color: "var(--lp-text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user.emailAddresses[0]?.emailAddress}
               </p>
             </div>
+            {earnedBadges.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 2, maxWidth: 72, justifyContent: "flex-end" }}>
+                {earnedBadges.slice(0, 4).map(b => (
+                  <span key={b.id} title={b.label} style={{ fontSize: 18 }}>{b.emoji}</span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 28 }}>
+        {/* ── Reading streak ── */}
+        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 20px", marginBottom: 12, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+          <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--lp-text3)", margin: "0 0 14px" }}>Reading streak</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ ...SG, fontSize: 36, fontWeight: 800, color: currentStreak > 0 ? "#F97316" : "var(--lp-text3)", margin: 0, lineHeight: 1 }}>
+                {currentStreak > 0 ? "🔥" : "✨"} {currentStreak}
+              </p>
+              <p style={{ fontSize: 11, color: "var(--lp-text3)", margin: "4px 0 0", fontWeight: 500 }}>day streak</p>
+            </div>
+            <div style={{ flex: 1, height: 1, background: "var(--lp-border)" }} />
+            <div style={{ textAlign: "center" }}>
+              <p style={{ ...SG, fontSize: 20, fontWeight: 700, color: "var(--lp-accent)", margin: 0 }}>{longestStreak}</p>
+              <p style={{ fontSize: 11, color: "var(--lp-text3)", margin: "4px 0 0", fontWeight: 500 }}>best</p>
+            </div>
+          </div>
+
+          {/* Daily goal progress */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 12, color: "var(--lp-text2)", fontWeight: 500 }}>Today&apos;s goal</span>
+              <span style={{ ...SG, fontSize: 12, fontWeight: 700, color: todayCount >= DAILY_GOAL ? "#34D399" : "var(--lp-accent)" }}>
+                {todayCount} / {DAILY_GOAL} stories
+              </span>
+            </div>
+            <div style={{ height: 6, borderRadius: 999, background: "var(--lp-border)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${todayProgress * 100}%`, borderRadius: 999, background: todayCount >= DAILY_GOAL ? "linear-gradient(90deg, #34D399, #10B981)" : "linear-gradient(90deg, var(--lp-accent), #A78BFA)", transition: "width .6s ease" }} />
+            </div>
+            {todayCount >= DAILY_GOAL && (
+              <p style={{ fontSize: 12, color: "#34D399", margin: "6px 0 0", fontWeight: 600 }}>Goal reached! Keep it up 🎉</p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Stats grid ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
           {[
-            { label: "Saved articles", value: storyCount ?? "—" },
+            { label: "Saved", value: storyCount ?? "—" },
+            { label: "Read",  value: totalReads },
             { label: "Interests", value: interests.length },
           ].map(({ label, value }) => (
-            <div key={label} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center", boxShadow: "0 4px 20px -8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
-              <p style={{ ...SG, fontSize: 26, fontWeight: 700, color: "var(--lp-accent)", margin: "0 0 4px" }}>{value}</p>
-              <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>{label}</p>
+            <div key={label} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 14, padding: "14px 12px", textAlign: "center", boxShadow: "0 2px 16px -6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+              <p style={{ ...SG, fontSize: 22, fontWeight: 700, color: "var(--lp-accent)", margin: "0 0 3px" }}>{value}</p>
+              <p style={{ fontSize: 11, color: "var(--lp-text3)", margin: 0, fontWeight: 500 }}>{label}</p>
             </div>
           ))}
         </div>
 
-        {/* Interests section */}
-        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 16, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+        {/* ── Badges ── */}
+        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 12, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: 0 }}>Badges</p>
+            <span style={{ fontSize: 12, color: "var(--lp-text3)" }}>{earnedBadges.length} / {ALL_BADGES.length}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {[...earnedBadges, ...lockedBadges].map((badge) => {
+              const unlocked = earnedBadges.includes(badge);
+              return (
+                <div
+                  key={badge.id}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, background: unlocked ? "color-mix(in srgb, var(--lp-accent) 8%, transparent)" : "transparent", border: `1px solid ${unlocked ? "color-mix(in srgb, var(--lp-accent) 22%, transparent)" : "var(--lp-border)"}`, opacity: unlocked ? 1 : 0.45 }}
+                >
+                  <span style={{ fontSize: 22, flexShrink: 0, filter: unlocked ? "none" : "grayscale(1)" }}>{badge.emoji}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ ...SG, fontSize: 12, fontWeight: 700, color: unlocked ? "var(--lp-text)" : "var(--lp-text3)", margin: 0 }}>{badge.label}</p>
+                    <p style={{ fontSize: 10, color: "var(--lp-text3)", margin: "2px 0 0", lineHeight: 1.3 }}>{badge.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Interests ── */}
+        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: editingInterests ? 16 : (interests.length > 0 ? 14 : 0) }}>
             <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: 0 }}>My interests</p>
             <button
@@ -156,7 +258,6 @@ export default function ProfilePage() {
         </div>
 
       </div>
-
       <BottomNav />
     </div>
   );

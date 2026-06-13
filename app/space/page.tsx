@@ -1,22 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useUser, SignOutButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useTheme } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
-const IconSun = () => (
-  <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
-    <circle cx={12} cy={12} r={4.2} /><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" />
-  </svg>
-);
-const IconMoon = () => (
-  <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />
-  </svg>
-);
+const IconSun  = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2}/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>;
+const IconMoon = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>;
 
 interface SpaceItem {
   id: string;
@@ -55,9 +47,6 @@ export default function SpacePage() {
   const { user } = useUser();
   const { theme, toggle } = useTheme();
   const [items, setItems] = useState<SpaceItem[]>([]);
-  const [urlInput, setUrlInput] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
@@ -71,28 +60,12 @@ export default function SpacePage() {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const filtered = query.trim()
     ? items.filter((item) => {
         const q = query.toLowerCase();
-        return (
-          item.title.toLowerCase().includes(q) ||
-          (item.source_url ?? "").toLowerCase().includes(q)
-        );
+        return item.title.toLowerCase().includes(q) || (item.source_url ?? "").toLowerCase().includes(q);
       })
     : items;
-
-  async function handleShare(id: string, title: string) {
-    const url = `${window.location.origin}/stories/${id}`;
-    if (navigator.share) {
-      navigator.share({ title, url }).catch(() => {});
-    } else {
-      await navigator.clipboard.writeText(url).catch(() => {});
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }
-  }
 
   async function loadItems() {
     const data = await fetch("/api/space").then((r) => r.json()).catch(() => []);
@@ -109,31 +82,18 @@ export default function SpacePage() {
     loadStarredBullets();
   }, []);
 
-  // Scroll chat to bottom when new message arrives
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    const val = urlInput.trim();
-    if (!val) return;
-    setError("");
-    setAdding(true);
-    try {
-      const res = await fetch("/api/inbox", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: val.startsWith("http") ? val : "https://" + val }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
-      setUrlInput("");
-      await loadItems();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setAdding(false);
+  async function handleShare(id: string, title: string) {
+    const url = `${window.location.origin}/stories/${id}`;
+    if (navigator.share) {
+      navigator.share({ title, url }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url).catch(() => {});
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
     }
   }
 
@@ -183,7 +143,6 @@ export default function SpacePage() {
   const text2   = "var(--lp-text2)";
   const text3   = "var(--lp-text3)";
   const accent  = "var(--lp-accent)";
-  const bg      = "var(--lp-bg)";
 
   const visibleStars = showAllStars ? starredBullets : starredBullets.slice(0, 5);
 
@@ -192,74 +151,23 @@ export default function SpacePage() {
 
       {/* Nav */}
       <nav style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            <span style={{ display: "inline-flex", width: 28, height: 28, borderRadius: 7, background: accent, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px -4px rgba(124,92,255,0.6)", flexShrink: 0 }}>
-              <svg width={15} height={15} viewBox="0 0 24 24" fill="none"><rect x={6.5} y={4.5} width={11} height={15} rx={2.6} transform="rotate(-9 12 12)" fill="white" opacity={0.5} /><rect x={6.5} y={4.5} width={11} height={15} rx={2.6} transform="rotate(7 12 12)" fill="white" /></svg>
-            </span>
-            <span style={{ ...SG, fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em", color: text }}>Storis</span>
-          </a>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {user && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {user.imageUrl && (
-                  <img src={user.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
-                )}
-                <span style={{ fontSize: 13, color: text2, fontWeight: 500, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {user.firstName || user.emailAddresses[0]?.emailAddress}
-                </span>
-              </div>
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "calc(env(safe-area-inset-top, 0px) + 14px) 20px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h1 style={{ ...SG, fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: text }}>Library</h1>
+            <p style={{ fontSize: 11, color: text3, margin: "2px 0 0" }}>Your saved stories</p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {user?.imageUrl && (
+              <img src={user.imageUrl} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
             )}
             <button onClick={toggle} aria-label="Toggle theme" style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
-            <SignOutButton>
-              <button style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--lp-glass-border)", background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text2, cursor: "pointer" }}>
-                Sign out
-              </button>
-            </SignOutButton>
           </div>
         </div>
       </nav>
 
-      {/* Content */}
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "40px 20px 80px" }}>
-
-        <h1 style={{ ...SG, fontSize: "clamp(26px,5vw,36px)", fontWeight: 700, letterSpacing: "-0.03em", margin: "0 0 6px", color: text }}>
-          Library
-        </h1>
-        <p style={{ fontSize: 15, color: text2, margin: "0 0 32px" }}>
-          Add any link — article, thread, newsletter — and it becomes story cards.
-        </p>
-
-        {/* Add form */}
-        <form onSubmit={handleAdd} style={{ display: "flex", gap: 10, marginBottom: error ? 10 : 28 }}>
-          <input
-            ref={inputRef}
-            type="text"
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            placeholder="Paste a link…"
-            disabled={adding}
-            style={{ flex: 1, padding: "12px 16px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", transition: "border-color .15s" }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
-            onBlur={(e) => (e.currentTarget.style.borderColor = border)}
-          />
-          <button
-            type="submit"
-            disabled={adding || !urlInput.trim()}
-            style={{ padding: "12px 20px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: 14, cursor: adding ? "not-allowed" : "pointer", opacity: adding ? 0.7 : 1, whiteSpace: "nowrap", fontFamily: "'Space Grotesk', sans-serif", boxShadow: "0 4px 14px -4px rgba(124,92,255,0.5)", transition: "opacity .15s" }}
-          >
-            {adding ? "Adding…" : "Add"}
-          </button>
-        </form>
-
-        {error && (
-          <p style={{ fontSize: 13, color: "#FF6B81", margin: "0 0 20px", padding: "10px 14px", background: "rgba(255,107,129,0.08)", borderRadius: 10, border: "1px solid rgba(255,107,129,0.2)" }}>
-            {error}
-          </p>
-        )}
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 20px 80px" }}>
 
         {/* Search */}
         {items.length > 0 && (
@@ -271,13 +179,13 @@ export default function SpacePage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search your space…"
+              placeholder="Search your library…"
               style={{ width: "100%", padding: "11px 16px 11px 36px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box", transition: "border-color .15s" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
               onBlur={(e) => (e.currentTarget.style.borderColor = border)}
             />
             {query && (
-              <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 4 }}>✕</button>
+              <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 16, padding: 4 }}>✕</button>
             )}
           </div>
         )}
@@ -285,7 +193,9 @@ export default function SpacePage() {
         {/* Story list */}
         {items.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
-            <p style={{ fontSize: 15, margin: 0 }}>Your space is empty — add the first link above.</p>
+            <div style={{ fontSize: 40, marginBottom: 14 }}>📚</div>
+            <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>Library is empty</p>
+            <p style={{ fontSize: 14, color: text2, margin: "0 0 24px", lineHeight: 1.6 }}>Tap the + button below to add articles, or save stories from your feed.</p>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 20px", color: text3 }}>
@@ -324,9 +234,7 @@ export default function SpacePage() {
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B81")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = text3)}
                     aria-label="Delete"
-                  >
-                    ✕
-                  </button>
+                  >✕</button>
                 </div>
               </div>
             ))}
@@ -335,11 +243,9 @@ export default function SpacePage() {
 
         {/* ── Starred bullets ── */}
         {starredBullets.length > 0 && (
-          <div style={{ marginTop: 48 }}>
+          <div style={{ marginTop: 40 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: 0 }}>
-                ★ Starred insights
-              </p>
+              <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: 0 }}>★ Starred insights</p>
               <span style={{ fontSize: 12, color: text3 }}>{starredBullets.length}</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -348,23 +254,14 @@ export default function SpacePage() {
                   <span style={{ color: "#FBBF24", fontSize: 13, flexShrink: 0, marginTop: 1 }}>★</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13, color: text, margin: "0 0 4px", lineHeight: 1.5 }}>{bullet.bullet_text}</p>
-                    <a href={`/stories/${bullet.story_set_id}`} style={{ fontSize: 11, color: text3, textDecoration: "none", fontWeight: 500 }}>
-                      {bullet.story_title}
-                    </a>
+                    <a href={`/stories/${bullet.story_set_id}`} style={{ fontSize: 11, color: text3, textDecoration: "none", fontWeight: 500 }}>{bullet.story_title}</a>
                   </div>
-                  <button
-                    onClick={() => handleUnstar(bullet)}
-                    aria-label="Unstar"
-                    style={{ background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 14, padding: 2, flexShrink: 0 }}
-                  >✕</button>
+                  <button onClick={() => handleUnstar(bullet)} aria-label="Unstar" style={{ background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 14, padding: 2, flexShrink: 0 }}>✕</button>
                 </div>
               ))}
             </div>
             {starredBullets.length > 5 && (
-              <button
-                onClick={() => setShowAllStars((v) => !v)}
-                style={{ ...SG, marginTop: 10, fontSize: 12, fontWeight: 600, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-              >
+              <button onClick={() => setShowAllStars((v) => !v)} style={{ ...SG, marginTop: 10, fontSize: 12, fontWeight: 600, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                 {showAllStars ? "Show less" : `Show all ${starredBullets.length}`}
               </button>
             )}
@@ -373,47 +270,27 @@ export default function SpacePage() {
 
         {/* ── Ask my library ── */}
         {items.length > 0 && (
-          <div style={{ marginTop: 48 }}>
-            <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: "0 0 14px" }}>
-              Ask my library
-            </p>
+          <div style={{ marginTop: 40 }}>
+            <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: "0 0 14px" }}>Ask my library</p>
 
-            {/* Chat log */}
             {chat.length > 0 && (
               <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
                 {chat.map((msg, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                    <div style={{
-                      maxWidth: "85%",
-                      background: msg.role === "user"
-                        ? `color-mix(in srgb, ${accent} 18%, transparent)`
-                        : "var(--lp-glass-surface)",
-                      backdropFilter: "blur(20px)",
-                      WebkitBackdropFilter: "blur(20px)",
-                      border: `1px solid ${msg.role === "user" ? `color-mix(in srgb, ${accent} 30%, transparent)` : "var(--lp-glass-border)"}`,
-                      borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                      padding: "10px 14px",
-                      fontSize: 13,
-                      color: text,
-                      lineHeight: 1.55,
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)",
-                    }}>
+                    <div style={{ maxWidth: "85%", background: msg.role === "user" ? `color-mix(in srgb, ${accent} 18%, transparent)` : "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: `1px solid ${msg.role === "user" ? `color-mix(in srgb, ${accent} 30%, transparent)` : "var(--lp-glass-border)"}`, borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13, color: text, lineHeight: 1.55, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)" }}>
                       {msg.content}
                     </div>
                   </div>
                 ))}
                 {askLoading && (
                   <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                    <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13, color: text3 }}>
-                      Thinking…
-                    </div>
+                    <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13, color: text3 }}>Thinking…</div>
                   </div>
                 )}
                 <div ref={chatEndRef} />
               </div>
             )}
 
-            {/* Ask input */}
             <form onSubmit={handleAsk} style={{ display: "flex", gap: 8 }}>
               <input
                 type="text"

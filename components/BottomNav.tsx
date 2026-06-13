@@ -1,15 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
+import AddModal from "@/components/AddModal";
 
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
-
-const IconForYou = ({ active }: { active: boolean }) => (
-  <svg width={22} height={22} viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" style={{ display: active ? "block" : "none" }} />
-    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7zm-1-11H9v6h2v-6zm4 0h-2v6h2v-6z" style={{ display: active ? "none" : "block" }} />
-  </svg>
-);
 
 const IconHome = ({ active }: { active: boolean }) => (
   <svg width={22} height={22} viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -38,77 +33,64 @@ const IconProfile = ({ active }: { active: boolean }) => (
   </svg>
 );
 
-const NAV_ITEMS = [
+const LEFT_ITEMS  = [
   { href: "/foryou",  label: "Today",   Icon: IconHome },
   { href: "/explore", label: "Explore", Icon: IconExplore },
+];
+const RIGHT_ITEMS = [
   { href: "/space",   label: "Library", Icon: IconSpace },
   { href: "/profile", label: "Profile", Icon: IconProfile },
 ];
 
 export default function BottomNav({ fixed = true }: { fixed?: boolean }) {
   const pathname = usePathname();
+  const [addOpen, setAddOpen] = useState(false);
 
   const navStyle: React.CSSProperties = fixed
-    ? {
-        position: "fixed",
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
-        left: 12,
-        right: 12,
-        zIndex: 50,
-        borderRadius: 999,
-        height: 60,
-        boxSizing: "border-box",
-        display: "flex",
-        alignItems: "center",
-        background: "var(--lp-glass-nav)",
-        backdropFilter: "var(--lp-glass-blur)",
-        WebkitBackdropFilter: "var(--lp-glass-blur)",
-        border: "1px solid var(--lp-glass-border)",
-        boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.5)",
-      }
-    : {
-        flexShrink: 0,
-        margin: "0 12px",
-        borderRadius: 999,
-        height: 60,
-        boxSizing: "border-box",
-        display: "flex",
-        alignItems: "center",
-        background: "var(--lp-glass-nav)",
-        backdropFilter: "var(--lp-glass-blur)",
-        WebkitBackdropFilter: "var(--lp-glass-blur)",
-        border: "1px solid var(--lp-glass-border)",
-        boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.5)",
-      };
+    ? { position: "fixed", bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)", left: 12, right: 12, zIndex: 50, borderRadius: 999, height: 60, boxSizing: "border-box", display: "flex", alignItems: "center", background: "var(--lp-glass-nav)", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", border: "1px solid var(--lp-glass-border)", boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.5)" }
+    : { flexShrink: 0, margin: "0 12px", borderRadius: 999, height: 60, boxSizing: "border-box", display: "flex", alignItems: "center", background: "var(--lp-glass-nav)", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", border: "1px solid var(--lp-glass-border)", boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.5)" };
+
+  function NavLink({ href, label, Icon }: { href: string; label: string; Icon: React.FC<{ active: boolean }> }) {
+    const active = pathname === href;
+    return (
+      <a
+        href={href}
+        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 3, color: active ? "var(--lp-accent)" : "var(--lp-text3)", textDecoration: "none", transition: "color .15s" }}
+      >
+        <Icon active={active} />
+        <span style={{ ...SG, fontSize: 9.5, fontWeight: active ? 700 : 500, letterSpacing: ".04em" }}>{label}</span>
+      </a>
+    );
+  }
 
   return (
-    <nav style={navStyle}>
-      {NAV_ITEMS.map(({ href, label, Icon }) => {
-        const active = pathname === href;
-        return (
-          <a
-            key={href}
-            href={href}
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              gap: 3,
-              color: active ? "var(--lp-accent)" : "var(--lp-text3)",
-              textDecoration: "none",
-              transition: "color .15s",
-            }}
+    <>
+      <nav style={navStyle}>
+        {LEFT_ITEMS.map(({ href, label, Icon }) => (
+          <NavLink key={href} href={href} label={label} Icon={Icon} />
+        ))}
+
+        {/* Center + button */}
+        <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 10px" }}>
+          <button
+            onClick={() => setAddOpen(true)}
+            aria-label="Add content"
+            style={{ width: 46, height: 46, borderRadius: "50%", border: "none", background: "var(--lp-accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 18px -4px rgba(124,92,255,0.7), inset 0 1px 0 rgba(255,255,255,0.25)", flexShrink: 0, transition: "transform .15s, box-shadow .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 8px 24px -4px rgba(124,92,255,0.85), inset 0 1px 0 rgba(255,255,255,0.25)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px -4px rgba(124,92,255,0.7), inset 0 1px 0 rgba(255,255,255,0.25)"; }}
           >
-            <Icon active={active} />
-            <span style={{ ...SG, fontSize: 9.5, fontWeight: active ? 700 : 500, letterSpacing: ".04em" }}>
-              {label}
-            </span>
-          </a>
-        );
-      })}
-    </nav>
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
+
+        {RIGHT_ITEMS.map(({ href, label, Icon }) => (
+          <NavLink key={href} href={href} label={label} Icon={Icon} />
+        ))}
+      </nav>
+
+      <AddModal open={addOpen} onClose={() => setAddOpen(false)} />
+    </>
   );
 }

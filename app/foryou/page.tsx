@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useTheme } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import InterestsOnboarding from "@/components/InterestsOnboarding";
-import StreakWidget from "@/components/StreakWidget";
 import { CATEGORIES } from "@/lib/categories";
 
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
@@ -21,89 +19,130 @@ interface StoryItem {
   is_generated?: boolean;
 }
 
-interface StreakData {
-  currentStreak: number;
-  longestStreak: number;
-  todayCount: number;
-}
-
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
-
 function CategoryEmoji({ cat }: { cat: string | null }) {
   const found = CATEGORIES.find((c) => c.key === cat);
   if (!found) return null;
-  return <span style={{ fontSize: 11 }}>{found.emoji} {found.label}</span>;
+  return <>{found.emoji} {found.label}</>;
 }
 
-function StoryCard({ story, onRead }: { story: StoryItem; onRead: (id: string) => void }) {
-  const img = story.cover_image_url || `https://picsum.photos/seed/${story.id}/800/500`;
+function StorySlide({
+  story,
+  index,
+  total,
+  onRead,
+}: {
+  story: StoryItem;
+  index: number;
+  total: number;
+  onRead: (id: string) => void;
+}) {
+  const img = story.cover_image_url || `https://picsum.photos/seed/${story.id}/800/1200`;
+
   return (
-    <a
-      href={`/stories/${story.id}`}
-      onClick={() => onRead(story.id)}
-      style={{ textDecoration: "none", display: "block", borderRadius: 20, overflow: "hidden", position: "relative", height: 220, boxShadow: "0 8px 28px -8px rgba(0,0,0,0.18)" }}
+    <div
+      style={{
+        height: "100dvh",
+        scrollSnapAlign: "start",
+        scrollSnapStop: "always",
+        position: "relative",
+        overflow: "hidden",
+        flexShrink: 0,
+      }}
     >
-      <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.72) 100%)" }} />
+      {/* Cover */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${img})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      {/* Gradient overlays */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)" }} />
 
-      {/* Badges row */}
-      <div style={{ position: "absolute", top: 14, left: 14, display: "flex", gap: 6 }}>
-        {story.category && (
-          <span style={{ ...SG, fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", background: "rgba(255,255,255,0.18)", padding: "4px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
-            <CategoryEmoji cat={story.category} />
+      {/* Top bar */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, padding: "calc(env(safe-area-inset-top, 0px) + 18px) 18px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <span style={{ display: "inline-flex", width: 26, height: 26, borderRadius: 6, background: "var(--lp-accent)", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px -4px rgba(124,92,255,0.6)", flexShrink: 0 }}>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none"><rect x={6.5} y={4.5} width={11} height={15} rx={2.6} transform="rotate(-9 12 12)" fill="white" opacity={0.5} /><rect x={6.5} y={4.5} width={11} height={15} rx={2.6} transform="rotate(7 12 12)" fill="white" /></svg>
           </span>
-        )}
-        {story.is_generated && (
-          <span style={{ ...SG, fontSize: 10, fontWeight: 700, letterSpacing: ".06em", color: "#fff", background: "rgba(34,197,94,0.75)", padding: "4px 9px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
-            NEW
-          </span>
-        )}
-      </div>
-
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 18px" }}>
-        <p style={{ ...SG, fontSize: 16, fontWeight: 700, color: "#fff", margin: "0 0 6px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>{story.title}</p>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
-            {story.source_url ? (() => { try { return new URL(story.source_url).hostname.replace("www.", ""); } catch { return story.source; } })() : story.source}
-            {" · "}{timeAgo(story.saved_at)}
-          </span>
-          <span style={{ ...SG, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.9)", background: "rgba(255,255,255,0.18)", padding: "3px 9px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
-            Read →
-          </span>
+          <span style={{ ...SG, fontWeight: 700, fontSize: 15, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>Storis</span>
         </div>
+        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>{index + 1} / {total}</span>
       </div>
-    </a>
+
+      {/* Bottom content */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10, padding: "0 20px calc(90px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
+        {/* Badges */}
+        <div style={{ display: "flex", gap: 7, marginBottom: 12 }}>
+          {story.category && (
+            <span style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", background: "rgba(255,255,255,0.14)", padding: "5px 11px", borderRadius: 999, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
+              <CategoryEmoji cat={story.category} />
+            </span>
+          )}
+          {story.is_generated && (
+            <span style={{ ...SG, fontSize: 11, fontWeight: 700, color: "#fff", background: "rgba(34,197,94,0.7)", padding: "5px 10px", borderRadius: 999, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+              FRESH
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h2 style={{ ...SG, fontSize: "clamp(22px,5.5vw,32px)", fontWeight: 800, color: "#fff", lineHeight: 1.08, letterSpacing: "-0.025em", margin: "0 0 10px", textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>
+          {story.title}
+        </h2>
+
+        {/* Source */}
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: "0 0 18px", fontWeight: 500 }}>
+          {story.source_url ? (() => { try { return new URL(story.source_url).hostname.replace("www.", ""); } catch { return story.source; } })() : story.source}
+        </p>
+
+        {/* CTA */}
+        <a
+          href={`/stories/${story.id}`}
+          onClick={() => onRead(story.id)}
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 22px", borderRadius: 14, background: "rgba(255,255,255,0.95)", color: "#111", textDecoration: "none", ...SG, fontWeight: 700, fontSize: 14, letterSpacing: "-0.01em", boxShadow: "0 4px 18px -4px rgba(0,0,0,0.35)", transition: "transform .15s" }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.04)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          Read cards
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+        </a>
+      </div>
+
+      {/* Swipe hint (only on first slide) */}
+      {index === 0 && (
+        <div style={{ position: "absolute", bottom: "calc(90px + env(safe-area-inset-bottom, 0px) + 80px)", left: 0, right: 0, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, pointerEvents: "none", opacity: 0.5 }}>
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+          <span style={{ fontSize: 10, color: "white", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase" }}>Swipe up</span>
+        </div>
+      )}
+    </div>
   );
 }
 
-function SkeletonCard() {
-  return <div style={{ height: 220, borderRadius: 20, background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }} />;
+function SkeletonSlide() {
+  return (
+    <div style={{ height: "100dvh", scrollSnapAlign: "start", flexShrink: 0, background: "var(--lp-surface)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid var(--lp-border)", borderTopColor: "var(--lp-accent)", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 }
 
 export default function ForYouPage() {
   const { user, isLoaded } = useUser();
-  const { theme } = useTheme();
   const [interests, setInterests] = useState<string[] | null>(null);
-  const [savedStories, setSavedStories] = useState<StoryItem[]>([]);
-  const [discoverStories, setDiscoverStories] = useState<StoryItem[]>([]);
-  const [loadingSaved, setLoadingSaved] = useState(true);
-  const [loadingDiscover, setLoadingDiscover] = useState(true);
-  const [streak, setStreak] = useState<StreakData | null>(null);
+  const [stories, setStories] = useState<StoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Redirect guests
   useEffect(() => {
     if (isLoaded && !user) window.location.href = "/";
   }, [isLoaded, user]);
 
-  // Load interests
   useEffect(() => {
     if (!user) return;
     fetch("/api/interests")
@@ -112,51 +151,42 @@ export default function ForYouPage() {
       .catch(() => setInterests([]));
   }, [user]);
 
-  // Load saved stories + streak in parallel
   useEffect(() => {
-    if (!user) return;
-    fetch("/api/space")
-      .then((r) => r.json())
-      .then((data) => { setSavedStories(Array.isArray(data) ? data : []); setLoadingSaved(false); })
-      .catch(() => setLoadingSaved(false));
+    if (!user || interests === null) return;
+    setLoading(true);
 
-    fetch("/api/streak")
-      .then((r) => r.json())
-      .then((data) => setStreak(data))
-      .catch(() => {});
-  }, [user]);
+    // Load discover + saved stories in parallel
+    Promise.allSettled([
+      fetch("/api/discover").then((r) => r.json()).then((d) => (Array.isArray(d.stories) ? d.stories : [])),
+      fetch("/api/space").then((r) => r.json()).then((d) => (Array.isArray(d) ? d : [])),
+    ]).then(([discoverResult, savedResult]) => {
+      const discover: StoryItem[] = discoverResult.status === "fulfilled" ? discoverResult.value : [];
+      const saved: StoryItem[]    = savedResult.status === "fulfilled"    ? savedResult.value    : [];
 
-  // Load discover stories (may take longer)
-  useEffect(() => {
-    if (!user || interests === null || interests.length === 0) {
-      setLoadingDiscover(false);
-      return;
-    }
-    setLoadingDiscover(true);
-    fetch("/api/discover")
-      .then((r) => r.json())
-      .then((data) => {
-        setDiscoverStories(Array.isArray(data.stories) ? data.stories : []);
-        setLoadingDiscover(false);
-      })
-      .catch(() => setLoadingDiscover(false));
+      // Discover first, then saved (matching interests), deduplicated
+      const seen = new Set<string>();
+      const merged: StoryItem[] = [];
+      for (const s of discover) { if (!seen.has(s.id)) { seen.add(s.id); merged.push({ ...s, is_generated: true }); } }
+      const relevantSaved = saved.filter((s) => interests.length === 0 || (s.category && interests.includes(s.category)));
+      const otherSaved    = saved.filter((s) => !relevantSaved.includes(s));
+      for (const s of [...relevantSaved, ...otherSaved]) { if (!seen.has(s.id)) { seen.add(s.id); merged.push(s); } }
+
+      setStories(merged);
+      setLoading(false);
+    });
   }, [user, interests]);
 
-  const handleRead = useCallback((storySetId: string) => {
-    // Non-blocking: mark read and update streak
+  const handleRead = (storySetId: string) => {
     fetch("/api/streak", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ storySetId }),
-    })
-      .then((r) => r.json())
-      .then((data) => setStreak(data))
-      .catch(() => {});
-  }, []);
+    }).catch(() => {});
+  };
 
   if (!isLoaded || interests === null) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--lp-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ height: "100dvh", background: "var(--lp-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid var(--lp-border)", borderTopColor: "var(--lp-accent)", animation: "spin 0.7s linear infinite" }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
@@ -167,97 +197,49 @@ export default function ForYouPage() {
     return <InterestsOnboarding onComplete={(cats) => setInterests(cats)} />;
   }
 
-  const matched = savedStories.filter((s) => s.category && interests.includes(s.category));
-  const feed = matched.length > 0 ? matched : savedStories;
-  const greeting = user?.firstName ? `Hey ${user.firstName} 👋` : "Today";
-
-  void theme;
-
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ position: "relative", height: "100dvh", background: "var(--lp-bg)" }}>
+      {/* Vertical scroll-snap feed */}
+      <div
+        ref={containerRef}
+        style={{
+          height: "100dvh",
+          overflowY: "scroll",
+          scrollSnapType: "y mandatory",
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        <style>{`::-webkit-scrollbar{display:none}`}</style>
 
-      {/* Header */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)", padding: "calc(env(safe-area-inset-top, 0px) + 18px) 20px 14px" }}>
-        <h1 style={{ ...SG, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 2px", color: "var(--lp-text)" }}>
-          {greeting}
-        </h1>
-        <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: 0 }}>
-          Based on your interests · {interests.map((i) => CATEGORIES.find((c) => c.key === i)?.emoji).join(" ")}
-        </p>
-      </div>
-
-      {/* Streak widget */}
-      {streak && (
-        <StreakWidget
-          currentStreak={streak.currentStreak}
-          longestStreak={streak.longestStreak}
-          todayCount={streak.todayCount}
-        />
-      )}
-
-      {/* Discover section */}
-      <div style={{ padding: "20px 16px 0" }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
-          <h2 style={{ ...SG, fontSize: 16, fontWeight: 700, color: "var(--lp-text)", margin: 0 }}>Discover</h2>
-          <span style={{ fontSize: 11, color: "var(--lp-text3)" }}>Fresh today · curated for you</span>
-        </div>
-
-        {loadingDiscover ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        ) : discoverStories.length === 0 ? (
-          <div style={{ padding: "20px", borderRadius: 16, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", textAlign: "center" }}>
-            <p style={{ ...SG, fontSize: 14, color: "var(--lp-text2)", margin: 0 }}>No fresh picks right now — check back soon.</p>
+        {loading ? (
+          <>
+            <SkeletonSlide />
+            <SkeletonSlide />
+          </>
+        ) : stories.length === 0 ? (
+          <div style={{ height: "100dvh", scrollSnapAlign: "start", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center", background: "var(--lp-page-bg)" }}>
+            <div style={{ fontSize: 48, marginBottom: 18 }}>✨</div>
+            <p style={{ ...SG, fontSize: 18, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 8px" }}>Your feed is warming up</p>
+            <p style={{ fontSize: 14, color: "var(--lp-text2)", margin: "0 0 28px", lineHeight: 1.6 }}>Fresh stories are being generated for you. Check back in a moment.</p>
+            <a href="/explore" style={{ ...SG, padding: "12px 28px", borderRadius: 12, background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: "0 4px 14px -4px var(--lp-glow)" }}>
+              Explore now →
+            </a>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {discoverStories.map((story) => (
-              <StoryCard key={story.id} story={story} onRead={handleRead} />
-            ))}
-          </div>
+          stories.map((story, i) => (
+            <StorySlide
+              key={story.id}
+              story={story}
+              index={i}
+              total={stories.length}
+              onRead={handleRead}
+            />
+          ))
         )}
       </div>
 
-      {/* My Library section */}
-      {(loadingSaved || feed.length > 0) && (
-        <div style={{ padding: "24px 16px 0" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
-            <h2 style={{ ...SG, fontSize: 16, fontWeight: 700, color: "var(--lp-text)", margin: 0 }}>From your library</h2>
-            <span style={{ fontSize: 11, color: "var(--lp-text3)" }}>saved articles</span>
-          </div>
-
-          {loadingSaved ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {[1, 2, 3].map((i) => (
-                <div key={i} style={{ height: 200, borderRadius: 20, background: "var(--lp-surface)", border: "1px solid var(--lp-border)", opacity: 1 - i * 0.25 }} />
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {feed.map((story) => (
-                <StoryCard key={story.id} story={story} onRead={handleRead} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Empty state (no saved stories and no discover) */}
-      {!loadingSaved && !loadingDiscover && feed.length === 0 && discoverStories.length === 0 && (
-        <div style={{ textAlign: "center", padding: "60px 20px" }}>
-          <div style={{ fontSize: 40, marginBottom: 14 }}>📚</div>
-          <p style={{ ...SG, fontSize: 17, fontWeight: 600, color: "var(--lp-text)", margin: "0 0 8px" }}>Your feed is warming up</p>
-          <p style={{ fontSize: 14, color: "var(--lp-text2)", margin: "0 0 24px", lineHeight: 1.6 }}>
-            Discover stories will appear here shortly. You can also save articles from My Space.
-          </p>
-          <a href="/space" style={{ ...SG, display: "inline-block", padding: "11px 24px", borderRadius: 12, background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: "0 4px 14px -4px var(--lp-glow)" }}>
-            Add your first article →
-          </a>
-        </div>
-      )}
-
+      {/* Fixed bottom nav overlays the feed */}
       <BottomNav />
     </div>
   );
