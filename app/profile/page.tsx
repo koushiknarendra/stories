@@ -124,7 +124,7 @@ export default function ProfilePage() {
                     <button
                       key={key}
                       onClick={() => toggleCat(key)}
-                      style={{ ...SG, display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${active ? "var(--lp-accent)" : "var(--lp-border)"}`, background: active ? "color-mix(in srgb, var(--lp-accent) 10%, transparent)" : "transparent", color: active ? "var(--lp-accent)" : "var(--lp-text2)", fontSize: 13, fontWeight: active ? 700 : 500, cursor: "pointer", transition: "all .15s", textAlign: "left" }}
+                      style={{ ...SG, display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${active ? "var(--lp-accent)" : "var(--lp-border)"}`, background: active ? "color-mix(in srgb, var(--lp-accent) 10%, transparent)" : "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: active ? "var(--lp-accent)" : "var(--lp-text2)", fontSize: 13, fontWeight: active ? 700 : 500, cursor: "pointer", transition: "all .15s", textAlign: "left" }}
                     >
                       <span>{emoji}</span><span>{label}</span>
                     </button>
@@ -144,7 +144,7 @@ export default function ProfilePage() {
               {interests.map((key) => {
                 const cat = CATEGORIES.find((c) => c.key === key);
                 return cat ? (
-                  <span key={key} style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 999, background: "color-mix(in srgb, var(--lp-accent) 10%, transparent)", color: "var(--lp-accent)", border: "1px solid color-mix(in srgb, var(--lp-accent) 25%, transparent)" }}>
+                  <span key={key} style={{ ...SG, fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 999, background: "color-mix(in srgb, var(--lp-accent) 10%, transparent)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: "var(--lp-accent)", border: "1px solid color-mix(in srgb, var(--lp-accent) 25%, transparent)" }}>
                     {cat.emoji} {cat.label}
                   </span>
                 ) : null;

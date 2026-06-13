@@ -194,7 +194,7 @@ export default function SpacePage() {
     }
   }
 
-  const surface = "var(--lp-surface)";
+  const surface = "var(--lp-glass-surface)";
   const border  = "var(--lp-border)";
   const text    = "var(--lp-text)";
   const text2   = "var(--lp-text2)";
@@ -279,7 +279,7 @@ export default function SpacePage() {
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="Paste a link…"
             disabled={adding}
-            style={{ flex: 1, padding: "12px 16px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, color: text, outline: "none", fontFamily: "inherit", transition: "border-color .15s" }}
+            style={{ flex: 1, padding: "12px 16px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", transition: "border-color .15s" }}
             onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
             onBlur={(e) => (e.currentTarget.style.borderColor = border)}
           />
@@ -309,7 +309,7 @@ export default function SpacePage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search your space…"
-              style={{ width: "100%", padding: "11px 16px 11px 36px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, color: text, outline: "none", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box", transition: "border-color .15s" }}
+              style={{ width: "100%", padding: "11px 16px 11px 36px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box", transition: "border-color .15s" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
               onBlur={(e) => (e.currentTarget.style.borderColor = border)}
             />
@@ -458,7 +458,7 @@ export default function SpacePage() {
                 onChange={(e) => setAskQuestion(e.target.value)}
                 placeholder="What did I read about AI agents?"
                 disabled={askLoading}
-                style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, color: text, outline: "none", fontFamily: "inherit", fontSize: 14, transition: "border-color .15s" }}
+                style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", fontSize: 14, transition: "border-color .15s" }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
                 onBlur={(e) => (e.currentTarget.style.borderColor = border)}
               />
