@@ -86,7 +86,7 @@ export default function ProfilePage() {
   const todayProgress = Math.min(todayCount / DAILY_GOAL, 1);
 
   return (
-    <div className="lp-has-sidebar" style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Top bar */}
       <div style={{ padding: "calc(env(safe-area-inset-top, 0px) + 20px) 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>

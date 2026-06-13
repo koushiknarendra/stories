@@ -93,63 +93,36 @@ input, textarea, select {
   background-color: #ffffff !important;
 }
 
-/* ─── Desktop sidebar layout ──────────────────────── */
+/* ─── Desktop: center mobile view ─────────────────── */
 
-/* Sidebar: hidden by default (mobile-first), shown on desktop */
-.lp-sidebar {
-  display: none;
-}
-
-/* Bottom nav: shown by default, hidden on desktop */
-.lp-bottom-nav-wrap {
-  /* mobile: visible */
-}
-
-@media (min-width: 768px) {
-  /* Pages shift right to clear the sidebar */
-  .lp-has-sidebar {
-    padding-left: 220px;
-  }
-
-  /* Show sidebar */
-  .lp-sidebar {
-    display: flex !important;
-  }
-
-  /* Hide bottom nav */
-  .lp-bottom-nav-wrap {
-    display: none !important;
-  }
-
-  /* Today feed: center the card column */
-  .lp-today-shell {
+@media (min-width: 500px) {
+  /* Dark surround behind the app column */
+  body {
+    background: #0c0a18 !important;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-  }
-  .lp-today-col {
-    width: 460px;
-    max-width: 100%;
-    flex-shrink: 0;
-    border-left: 1px solid var(--lp-glass-border);
-    border-right: 1px solid var(--lp-glass-border);
+    min-height: 100dvh;
   }
 
-  /* StoryReader card: no rounded corners, fills shifted viewport */
-  .lp-story-card-wrap {
-    border-radius: 0 !important;
+  /* Constrain the entire app to mobile width */
+  .lp-app-root {
+    width: 430px;
+    max-width: 100vw;
+    min-height: 100dvh;
+    position: relative;
+    overflow-x: hidden;
+    box-shadow: 0 0 80px -10px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  /* Explore: 2-column story grid */
-  .lp-story-grid {
-    grid-template-columns: 1fr 1fr !important;
+  /* Re-anchor the fixed bottom nav to stay inside the 430px column */
+  .lp-bottom-nav-wrap {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(430px - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
   }
-}
-
-/* Always full-height for Today wrappers */
-.lp-today-shell,
-.lp-today-col {
-  height: 100dvh;
 }
 
 @keyframes floatY {

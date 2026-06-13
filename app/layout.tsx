@@ -66,7 +66,7 @@ export default function RootLayout({
             }}
           />
         </head>
-        <body className="min-h-full flex flex-col antialiased">
+        <body className="min-h-full antialiased">
           <noscript>
             <iframe
               src="https://www.googletagmanager.com/ns.html?id=GTM-57L9K369"
@@ -75,7 +75,11 @@ export default function RootLayout({
               style={{ display: "none", visibility: "hidden" }}
             />
           </noscript>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <div className="lp-app-root">
+              {children}
+            </div>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

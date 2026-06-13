@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import AddModal from "@/components/AddModal";
-import SidebarNav from "@/components/SidebarNav";
 
 const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
 
@@ -66,10 +65,6 @@ export default function BottomNav({ fixed = true }: { fixed?: boolean }) {
 
   return (
     <>
-      {/* Desktop sidebar — hidden on mobile via CSS */}
-      <SidebarNav />
-
-      {/* Mobile bottom nav — hidden on desktop via CSS */}
       <nav style={navStyle} className="lp-bottom-nav-wrap">
         {LEFT_ITEMS.map(({ href, label, Icon }) => (
           <NavLink key={href} href={href} label={label} Icon={Icon} />
