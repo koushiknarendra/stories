@@ -215,7 +215,7 @@ export default function StoryReader({ set, storySetId }: Props) {
   }
 
   return (
-    <div style={{
+    <div className="lp-has-sidebar" style={{
       height: "100dvh",
       display: "flex",
       flexDirection: "column",
@@ -228,7 +228,7 @@ export default function StoryReader({ set, storySetId }: Props) {
     }}>
 
       {/* Card */}
-      <div style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
+      <div className="lp-story-card-wrap" style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
 
         <motion.div
           drag="x"

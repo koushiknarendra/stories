@@ -198,48 +198,52 @@ export default function ForYouPage() {
   }
 
   return (
-    <div style={{ position: "relative", height: "100dvh", background: "var(--lp-bg)" }}>
-      {/* Vertical scroll-snap feed */}
-      <div
-        ref={containerRef}
-        style={{
-          height: "100dvh",
-          overflowY: "scroll",
-          scrollSnapType: "y mandatory",
-          scrollbarWidth: "none",
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        <style>{`::-webkit-scrollbar{display:none}`}</style>
+    <div className="lp-has-sidebar" style={{ position: "relative", height: "100dvh", background: "var(--lp-bg)" }}>
+      {/* Center the feed column on desktop */}
+      <div className="lp-today-shell">
+        <div className="lp-today-col">
+          <div
+            ref={containerRef}
+            style={{
+              height: "100dvh",
+              overflowY: "scroll",
+              scrollSnapType: "y mandatory",
+              scrollbarWidth: "none",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            <style>{`::-webkit-scrollbar{display:none}`}</style>
 
-        {loading ? (
-          <>
-            <SkeletonSlide />
-            <SkeletonSlide />
-          </>
-        ) : stories.length === 0 ? (
-          <div style={{ height: "100dvh", scrollSnapAlign: "start", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center", background: "var(--lp-page-bg)" }}>
-            <div style={{ fontSize: 48, marginBottom: 18 }}>✨</div>
-            <p style={{ ...SG, fontSize: 18, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 8px" }}>Your feed is warming up</p>
-            <p style={{ fontSize: 14, color: "var(--lp-text2)", margin: "0 0 28px", lineHeight: 1.6 }}>Fresh stories are being generated for you. Check back in a moment.</p>
-            <a href="/explore" style={{ ...SG, padding: "12px 28px", borderRadius: 12, background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: "0 4px 14px -4px var(--lp-glow)" }}>
-              Explore now →
-            </a>
+            {loading ? (
+              <>
+                <SkeletonSlide />
+                <SkeletonSlide />
+              </>
+            ) : stories.length === 0 ? (
+              <div style={{ height: "100dvh", scrollSnapAlign: "start", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center", background: "var(--lp-page-bg)" }}>
+                <div style={{ fontSize: 48, marginBottom: 18 }}>✨</div>
+                <p style={{ ...SG, fontSize: 18, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 8px" }}>Your feed is warming up</p>
+                <p style={{ fontSize: 14, color: "var(--lp-text2)", margin: "0 0 28px", lineHeight: 1.6 }}>Fresh stories are being generated for you. Check back in a moment.</p>
+                <a href="/explore" style={{ ...SG, padding: "12px 28px", borderRadius: 12, background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: "0 4px 14px -4px var(--lp-glow)" }}>
+                  Explore now →
+                </a>
+              </div>
+            ) : (
+              stories.map((story, i) => (
+                <StorySlide
+                  key={story.id}
+                  story={story}
+                  index={i}
+                  total={stories.length}
+                  onRead={handleRead}
+                />
+              ))
+            )}
           </div>
-        ) : (
-          stories.map((story, i) => (
-            <StorySlide
-              key={story.id}
-              story={story}
-              index={i}
-              total={stories.length}
-              onRead={handleRead}
-            />
-          ))
-        )}
+        </div>
       </div>
 
-      {/* Fixed bottom nav overlays the feed */}
+      {/* Bottom nav (mobile) / sidebar (desktop) */}
       <BottomNav />
     </div>
   );

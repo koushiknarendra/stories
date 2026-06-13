@@ -76,7 +76,7 @@ export default function ExplorePage() {
   const activeCat = CATEGORIES.find((c) => c.key === active);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
+    <div className="lp-has-sidebar" style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
 
       {/* Sticky header + category pills */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", background: "var(--lp-glass-nav)", borderBottom: "1px solid var(--lp-glass-border)" }}>
@@ -128,7 +128,7 @@ export default function ExplorePage() {
             <p style={{ ...SG, fontSize: 15, color: "var(--lp-text2)", margin: 0 }}>No stories yet for {activeCat?.label} — check back soon.</p>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="lp-story-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
             {stories.map((story) => {
               const img = story.cover_image_url || `https://picsum.photos/seed/${story.id}/800/500`;
               return (
