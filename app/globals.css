@@ -67,9 +67,9 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Prevent iOS Safari auto-zoom on focus */
+/* Prevent iOS Safari auto-zoom on focus — inline styles must not override this */
 input, textarea, select {
-  font-size: 16px;
+  font-size: 16px !important;
 }
 
 /* Clerk modal — always light, regardless of OS/app dark mode */
