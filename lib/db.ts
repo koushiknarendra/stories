@@ -148,6 +148,26 @@ export async function runMigration() {
       longest_streak INT  DEFAULT 0
     )
   `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS collections (
+      id            TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      clerk_user_id TEXT        NOT NULL,
+      name          TEXT        NOT NULL,
+      created_at    TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+
+  await sql`CREATE INDEX IF NOT EXISTS collections_user_idx ON collections(clerk_user_id)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS collection_items (
+      collection_id TEXT        NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      story_set_id  TEXT        NOT NULL REFERENCES story_sets(id) ON DELETE CASCADE,
+      added_at      TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY   (collection_id, story_set_id)
+    )
+  `;
 }
 
 // ─── Inbox helpers ────────────────────────────────────────────────────────────
@@ -604,5 +624,110 @@ export async function getReadHistory(clerkUserId: string): Promise<{
     WHERE rs.clerk_user_id = ${clerkUserId}
     ORDER BY rs.read_at DESC
     LIMIT 60
+  `;
+}
+
+// ─── Collections helpers ──────────────────────────────────────────────────────
+
+export interface Collection {
+  id: string;
+  name: string;
+  item_count: number;
+  cover_images: string[];
+  created_at: string;
+}
+
+export async function listCollections(clerkUserId: string): Promise<Collection[]> {
+  const sql = getDb();
+  if (!sql) return [];
+  const rows = await sql<{ id: string; name: string; created_at: string; item_count: string; cover_images: string[] }[]>`
+    SELECT
+      c.id,
+      c.name,
+      c.created_at::text,
+      COUNT(ci.story_set_id)::text AS item_count,
+      ARRAY(
+        SELECT ss.cover_image_url
+        FROM collection_items ci2
+        JOIN story_sets ss ON ss.id = ci2.story_set_id
+        WHERE ci2.collection_id = c.id AND ss.cover_image_url IS NOT NULL
+        ORDER BY ci2.added_at DESC
+        LIMIT 4
+      ) AS cover_images
+    FROM collections c
+    LEFT JOIN collection_items ci ON ci.collection_id = c.id
+    WHERE c.clerk_user_id = ${clerkUserId}
+    GROUP BY c.id, c.name, c.created_at
+    ORDER BY c.created_at DESC
+  `;
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    created_at: r.created_at,
+    item_count: parseInt(r.item_count, 10),
+    cover_images: Array.isArray(r.cover_images) ? r.cover_images.filter(Boolean) : [],
+  }));
+}
+
+export async function createCollection(clerkUserId: string, name: string): Promise<{ id: string; name: string; created_at: string }> {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  const [row] = await sql<[{ id: string; name: string; created_at: string }]>`
+    INSERT INTO collections (clerk_user_id, name)
+    VALUES (${clerkUserId}, ${name})
+    RETURNING id, name, created_at::text
+  `;
+  return row;
+}
+
+export async function addToCollection(clerkUserId: string, collectionId: string, storySetId: string): Promise<void> {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  const [col] = await sql`SELECT id FROM collections WHERE id = ${collectionId} AND clerk_user_id = ${clerkUserId}`;
+  if (!col) throw new Error("Collection not found");
+  await sql`
+    INSERT INTO collection_items (collection_id, story_set_id)
+    VALUES (${collectionId}, ${storySetId})
+    ON CONFLICT DO NOTHING
+  `;
+}
+
+export async function removeFromCollection(collectionId: string, storySetId: string, clerkUserId: string): Promise<void> {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  await sql`
+    DELETE FROM collection_items
+    WHERE collection_id = ${collectionId}
+      AND story_set_id = ${storySetId}
+      AND EXISTS (SELECT 1 FROM collections WHERE id = ${collectionId} AND clerk_user_id = ${clerkUserId})
+  `;
+}
+
+export async function deleteCollection(id: string, clerkUserId: string): Promise<void> {
+  const sql = getDb();
+  if (!sql) throw new Error("DB not configured");
+  await sql`DELETE FROM collections WHERE id = ${id} AND clerk_user_id = ${clerkUserId}`;
+}
+
+export interface CollectionItem {
+  id: string;
+  title: string;
+  source: string;
+  source_url: string | null;
+  cover_image_url: string | null;
+  category: string | null;
+  saved_at: string;
+}
+
+export async function getCollectionItems(id: string, clerkUserId: string): Promise<CollectionItem[]> {
+  const sql = getDb();
+  if (!sql) return [];
+  return sql<CollectionItem[]>`
+    SELECT ss.id, ss.title, ss.source, ss.source_url, ss.cover_image_url, ss.category, ss.saved_at::text
+    FROM collection_items ci
+    JOIN story_sets ss ON ss.id = ci.story_set_id
+    WHERE ci.collection_id = ${id}
+      AND EXISTS (SELECT 1 FROM collections WHERE id = ${id} AND clerk_user_id = ${clerkUserId})
+    ORDER BY ci.added_at DESC
   `;
 }

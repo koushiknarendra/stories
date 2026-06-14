@@ -7,6 +7,22 @@ import BottomNav from "@/components/BottomNav";
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
+interface Collection {
+  id: string;
+  name: string;
+  item_count: number;
+  cover_images: string[];
+  created_at: string;
+}
+
+const BLOCK_COLORS = [
+  { bg: "rgba(124,92,255,0.13)", mid: "rgba(124,92,255,0.22)", border: "rgba(124,92,255,0.36)", accent: "#7C5CFF" },
+  { bg: "rgba(52,211,153,0.11)", mid: "rgba(52,211,153,0.19)", border: "rgba(52,211,153,0.34)", accent: "#34D399" },
+  { bg: "rgba(251,146,60,0.11)", mid: "rgba(251,146,60,0.19)", border: "rgba(251,146,60,0.34)", accent: "#FB923C" },
+  { bg: "rgba(244,114,182,0.11)", mid: "rgba(244,114,182,0.19)", border: "rgba(244,114,182,0.34)", accent: "#F472B6" },
+  { bg: "rgba(96,165,250,0.11)", mid: "rgba(96,165,250,0.19)", border: "rgba(96,165,250,0.34)", accent: "#60A5FA" },
+];
+
 const IconSun  = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2}/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>;
 const IconMoon = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>;
 
@@ -57,7 +73,10 @@ export default function SpacePage() {
   const { user } = useUser();
   const { theme, toggle } = useTheme();
   const [items, setItems] = useState<SpaceItem[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [newColName, setNewColName] = useState("");
+  const [creatingCol, setCreatingCol] = useState(false);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<LibTab>("saved");
 
@@ -104,6 +123,29 @@ export default function SpacePage() {
     setItems(Array.isArray(data) ? data : []);
   }
 
+  async function loadCollections() {
+    const data = await fetch("/api/collections").then((r) => r.json()).catch(() => []);
+    setCollections(Array.isArray(data) ? data : []);
+  }
+
+  async function handleCreateCollection() {
+    if (!newColName.trim()) return;
+    const res = await fetch("/api/collections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newColName.trim() }),
+    });
+    const col = await res.json();
+    if (col.id) setCollections((prev) => [{ ...col, item_count: 0, cover_images: [] }, ...prev]);
+    setNewColName("");
+    setCreatingCol(false);
+  }
+
+  async function handleDeleteCollection(id: string) {
+    setCollections((prev) => prev.filter((c) => c.id !== id));
+    await fetch(`/api/collections/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+
   async function loadStarredBullets() {
     const data = await fetch("/api/stars?all=1").then((r) => r.json()).catch(() => []);
     setStarredBullets(Array.isArray(data) ? data : []);
@@ -118,6 +160,7 @@ export default function SpacePage() {
 
   useEffect(() => {
     loadItems();
+    loadCollections();
     loadStarredBullets();
   }, []);
 
@@ -310,57 +353,119 @@ export default function SpacePage() {
           </div>
         )}
 
-        {/* ── SAVED tab ── */}
+        {/* ── SAVED tab — Collections view ── */}
         {!searchMode && activeTab === "saved" && (
           <>
-            {items.length === 0 && !searchMode ? (
+            {items.length === 0 ? (
               <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
                 <div style={{ fontSize: 40, marginBottom: 14 }}>📚</div>
                 <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>Library is empty</p>
                 <p style={{ fontSize: 14, color: text2, margin: "0 0 24px", lineHeight: 1.6 }}>Tap the + button below to add articles, or save stories from your feed.</p>
               </div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px", color: text3 }}>
-                <p style={{ fontSize: 15, margin: 0 }}>No stories match &ldquo;{query}&rdquo;.</p>
-              </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {filtered.map((item) => (
-                  <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {item.title}
-                      </p>
-                      <p style={{ fontSize: 12, color: text3, margin: 0 }}>
-                        {item.source_url ? (() => { try { return new URL(item.source_url).hostname; } catch { return item.source; } })() : item.source}
-                        {" · "}{timeAgo(item.saved_at)}
-                      </p>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                      <button
-                        onClick={() => handleShare(item.id, item.title)}
-                        aria-label="Share"
-                        style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: copiedId === item.id ? "#34D399" : text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "color .2s" }}
-                      >
-                        {copiedId === item.id
-                          ? <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
-                          : <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                        }
-                      </button>
-                      <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16 }}>
-                        →
-                      </a>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, transition: "color .15s" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B81")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = text3)}
-                        aria-label="Delete"
-                      >✕</button>
-                    </div>
+              <>
+                {/* All Stories card — full width */}
+                <a
+                  href="/collections/all"
+                  style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 18px", marginBottom: 18, background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, textDecoration: "none", boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4)" }}
+                >
+                  <div style={{ width: 52, height: 52, borderRadius: 14, background: `color-mix(in srgb, ${accent} 14%, transparent)`, border: `1.5px solid color-mix(in srgb, ${accent} 32%, transparent)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width={24} height={24} viewBox="0 0 24 24" fill={accent}><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
                   </div>
-                ))}
-              </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ ...SG, fontSize: 15, fontWeight: 700, color: text, margin: "0 0 2px" }}>All Stories</p>
+                    <p style={{ fontSize: 12, color: text3, margin: 0 }}>{items.length} {items.length === 1 ? "story" : "stories"} saved</p>
+                  </div>
+                  <span style={{ color: text3, fontSize: 18, flexShrink: 0 }}>›</span>
+                </a>
+
+                {/* Collections label + new button */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: 0 }}>Collections</p>
+                  <button
+                    onClick={() => setCreatingCol((v) => !v)}
+                    style={{ ...SG, fontSize: 12, fontWeight: 700, color: accent, background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}
+                  >
+                    + New
+                  </button>
+                </div>
+
+                {/* New collection input */}
+                {creatingCol && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                    <input
+                      autoFocus
+                      value={newColName}
+                      onChange={(e) => setNewColName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleCreateCollection();
+                        if (e.key === "Escape") { setCreatingCol(false); setNewColName(""); }
+                      }}
+                      placeholder="Collection name…"
+                      maxLength={50}
+                      style={{ flex: 1, padding: "10px 14px", borderRadius: 12, border: `1.5px solid ${accent}`, background: surface, color: text, fontSize: 14, outline: "none", fontFamily: "inherit" }}
+                    />
+                    <button
+                      onClick={handleCreateCollection}
+                      disabled={!newColName.trim()}
+                      style={{ ...SG, padding: "10px 16px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: 13, cursor: newColName.trim() ? "pointer" : "not-allowed", opacity: newColName.trim() ? 1 : 0.5, flexShrink: 0 }}
+                    >Create</button>
+                  </div>
+                )}
+
+                {/* Collections 2-col grid */}
+                {collections.length === 0 && !creatingCol ? (
+                  <div style={{ textAlign: "center", padding: "28px 20px", color: text3, border: "1.5px dashed var(--lp-border)", borderRadius: 16 }}>
+                    <p style={{ fontSize: 13, margin: "0 0 6px" }}>No collections yet</p>
+                    <p style={{ fontSize: 12, margin: 0, color: text3 }}>Tap &ldquo;+ New&rdquo; to create one, or save a story to a collection.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    {collections.map((col, idx) => {
+                      const palette = BLOCK_COLORS[idx % BLOCK_COLORS.length];
+                      return (
+                        <div key={col.id} style={{ position: "relative" }}>
+                          <a href={`/collections/${col.id}`} style={{ display: "flex", flexDirection: "column", gap: 8, textDecoration: "none" }}>
+                            {/* Stacked blocks */}
+                            <div style={{ position: "relative", aspectRatio: "4/3", width: "100%" }}>
+                              <div style={{ position: "absolute", top: 8, left: 4, right: 4, bottom: -3, background: palette.bg, border: `1px solid ${palette.border}`, borderRadius: 13, transform: "rotate(-6deg)", zIndex: 1 }} />
+                              <div style={{ position: "absolute", top: 4, left: 2, right: 2, bottom: -1, background: palette.mid, border: `1px solid ${palette.border}`, borderRadius: 14, transform: "rotate(-2.5deg)", zIndex: 2 }} />
+                              <div style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden", background: palette.bg, border: `1.5px solid ${palette.border}`, zIndex: 3 }}>
+                                {col.cover_images.length > 0 ? (
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "100%", height: "100%", gap: 2 }}>
+                                    {[0, 1, 2, 3].map((i) =>
+                                      col.cover_images[i] ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img key={i} src={col.cover_images[i]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                                      ) : (
+                                        <div key={i} style={{ background: palette.bg }} />
+                                      )
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <svg width={32} height={32} viewBox="0 0 24 24" fill={palette.accent} opacity={0.4}><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <p style={{ ...SG, fontSize: 13, fontWeight: 600, color: text, margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{col.name}</p>
+                              <p style={{ fontSize: 11, color: text3, margin: 0 }}>{col.item_count} {col.item_count === 1 ? "story" : "stories"}</p>
+                            </div>
+                          </a>
+                          {/* Delete collection */}
+                          <button
+                            onClick={() => handleDeleteCollection(col.id)}
+                            aria-label="Delete collection"
+                            style={{ position: "absolute", top: 6, right: 6, zIndex: 10, width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}
+                          >✕</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
             {/* Starred bullets */}

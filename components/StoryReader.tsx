@@ -13,6 +13,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useUser, useClerk, SignInButton } from "@clerk/nextjs";
 import type { StorySet } from "@/lib/types";
 import BottomNav from "@/components/BottomNav";
+import CollectionPicker from "@/components/CollectionPicker";
 
 interface StarredKey { cardIndex: number; bulletIndex: number; }
 function starKey(cardIndex: number, bulletIndex: number) { return `${cardIndex}_${bulletIndex}`; }
@@ -44,6 +45,7 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
   const [showGuide, setShowGuide] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareHint, setShareHint] = useState(false);
+  const [showCollectionPicker, setShowCollectionPicker] = useState(false);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 300], [-14, 14]);
@@ -174,15 +176,25 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, pendingSave]);
 
+  async function onCollectionSave(collectionId?: string) {
+    setShowCollectionPicker(false);
+    addToCurate(set);
+    recordInteraction("like");
+    let savedId = storySetId;
+    if (!savedId) {
+      const data = await fetch("/api/space", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(set) }).then((r) => r.json()).catch(() => ({}));
+      savedId = data?.id;
+    }
+    if (collectionId && savedId) {
+      await fetch(`/api/collections/${collectionId}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storySetId: savedId }) }).catch(() => {});
+    }
+    flyOff(1, "/space");
+  }
+
   async function handleLike() {
     if (!isLoaded) return;
     if (!isLoggedIn) { setPendingSave(true); openSignIn(); return; }
-    addToCurate(set);
-    recordInteraction("like");
-    if (!storySetId) {
-      await fetch("/api/space", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(set) }).catch(() => {});
-    }
-    flyOff(1, "/space");
+    setShowCollectionPicker(true);
   }
 
   function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1, dest); }
@@ -451,6 +463,13 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
       </div>
 
       {isLoggedIn && <BottomNav fixed={false} />}
+
+      <CollectionPicker
+        isOpen={showCollectionPicker}
+        onClose={() => setShowCollectionPicker(false)}
+        onSave={onCollectionSave}
+        storyTitle={set.title}
+      />
     </div>
   );
 }
