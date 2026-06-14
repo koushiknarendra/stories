@@ -209,9 +209,27 @@ async function handleYouTube(videoId: string, originalUrl: string) {
 }
 
 async function handleUrl(url: string) {
-  // YouTube — needs transcript extraction, not HTML scraping
   const ytId = extractYouTubeId(url);
-  if (ytId) return handleYouTube(ytId, url);
+  if (ytId) {
+    // YouTube Shorts: skip content extraction, return embed metadata directly
+    try {
+      if (new URL(url).pathname.includes("/shorts/")) {
+        const thumbUrl = `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+        try {
+          const oembedRes = await fetch(
+            `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${ytId}`)}&format=json`,
+            { signal: AbortSignal.timeout(5000) }
+          );
+          const meta = await oembedRes.json();
+          return Response.json({ source: "youtube-short", title: meta.title ?? "YouTube Short", sourceUrl: url, imageUrl: meta.thumbnail_url ?? thumbUrl, text: "" });
+        } catch {
+          return Response.json({ source: "youtube-short", title: "YouTube Short", sourceUrl: url, imageUrl: thumbUrl, text: "" });
+        }
+      }
+    } catch {}
+    // Regular YouTube video — try transcript/description extraction
+    return handleYouTube(ytId, url);
+  }
 
   // Run Jina text fetch and OG image fetch in parallel
   const [jinaResult, ogImage] = await Promise.all([
