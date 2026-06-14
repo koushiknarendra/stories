@@ -15,6 +15,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const description = set.cards[0]?.headline ?? "Story cards on Storis";
 
+  const ogImage = {
+    url: `/api/og?id=${id}`,
+    width: 1200,
+    height: 630,
+    alt: set.title,
+  };
+
   return {
     title: `${set.title} · Storis`,
     description,
@@ -24,11 +31,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `https://storis.in/stories/${id}`,
       siteName: "Storis",
       type: "article",
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: set.title,
       description,
+      images: [`/api/og?id=${id}`],
     },
   };
 }

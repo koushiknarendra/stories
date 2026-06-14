@@ -1,13 +1,10 @@
 export const runtime = "nodejs";
-export const alt = "Story cards on Storis";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
 
 import { ImageResponse } from "next/og";
+import { NextRequest } from "next/server";
 import { loadStorySet } from "@/lib/db";
 
 const ACCENT = "#7c5cfc";
-const BG = "#0d0d14";
 
 function clamp(text: string, max: number) {
   return text.length > max ? text.slice(0, max - 1) + "…" : text;
@@ -20,13 +17,14 @@ function titleSize(len: number) {
   return 38;
 }
 
-export default async function OGImage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const set = await loadStorySet(id);
+export async function GET(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get("id");
+
+  if (!id) {
+    return new Response("Missing id", { status: 400 });
+  }
+
+  const set = await loadStorySet(id).catch(() => null);
 
   if (!set) {
     return new ImageResponse(
@@ -35,12 +33,26 @@ export default async function OGImage({
           style={{
             width: 1200,
             height: 630,
-            background: BG,
+            background: "#0d0d14",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            gap: 16,
           }}
         >
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: ACCENT,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ color: "white", fontSize: 22, fontWeight: 900 }}>S</span>
+          </div>
           <span style={{ color: "white", fontSize: 52, fontWeight: 800 }}>Storis</span>
         </div>
       ),
@@ -58,7 +70,7 @@ export default async function OGImage({
         style={{
           width: 1200,
           height: 630,
-          background: `linear-gradient(135deg, #0d0d14 0%, #130d20 55%, #0d1420 100%)`,
+          background: "linear-gradient(135deg, #0d0d14 0%, #130d20 55%, #0d1420 100%)",
           display: "flex",
           flexDirection: "column",
           padding: "56px 72px",
@@ -66,7 +78,7 @@ export default async function OGImage({
           overflow: "hidden",
         }}
       >
-        {/* Cover image background — blurred & dimmed */}
+        {/* Cover image background */}
         {set.coverImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -86,7 +98,7 @@ export default async function OGImage({
           />
         )}
 
-        {/* Gradient overlay on top of image */}
+        {/* Gradient overlay */}
         <div
           style={{
             position: "absolute",
@@ -95,12 +107,12 @@ export default async function OGImage({
             right: 0,
             bottom: 0,
             background:
-              "linear-gradient(160deg, rgba(13,13,20,0.8) 0%, rgba(19,13,32,0.88) 60%, rgba(13,20,32,0.92) 100%)",
+              "linear-gradient(160deg, rgba(13,13,20,0.82) 0%, rgba(19,13,32,0.9) 60%, rgba(13,20,32,0.93) 100%)",
             display: "flex",
           }}
         />
 
-        {/* Decorative right glow */}
+        {/* Decorative glow */}
         <div
           style={{
             position: "absolute",
@@ -109,7 +121,7 @@ export default async function OGImage({
             width: 480,
             height: 480,
             borderRadius: "50%",
-            background: `radial-gradient(circle, rgba(124,92,252,0.18) 0%, transparent 70%)`,
+            background: "radial-gradient(circle, rgba(124,92,252,0.2) 0%, transparent 70%)",
             display: "flex",
           }}
         />
@@ -123,7 +135,7 @@ export default async function OGImage({
             height: "100%",
           }}
         >
-          {/* Top row: brand + category */}
+          {/* Top: brand + category */}
           <div
             style={{
               display: "flex",
@@ -132,12 +144,11 @@ export default async function OGImage({
               marginBottom: 44,
             }}
           >
-            {/* Logo */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   borderRadius: 11,
                   background: ACCENT,
                   display: "flex",
@@ -146,39 +157,12 @@ export default async function OGImage({
                   boxShadow: "0 6px 20px rgba(124,92,252,0.5)",
                 }}
               >
-                {/* Stacked card icon */}
-                <svg
-                  width={22}
-                  height={22}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect
-                    x={6.5}
-                    y={4.5}
-                    width={11}
-                    height={15}
-                    rx={2.6}
-                    transform="rotate(-9 12 12)"
-                    fill="white"
-                    fillOpacity={0.5}
-                  />
-                  <rect
-                    x={6.5}
-                    y={4.5}
-                    width={11}
-                    height={15}
-                    rx={2.6}
-                    transform="rotate(7 12 12)"
-                    fill="white"
-                  />
-                </svg>
+                <span style={{ color: "white", fontSize: 22, fontWeight: 900 }}>S</span>
               </div>
               <span
                 style={{
                   color: "rgba(255,255,255,0.95)",
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: 800,
                   letterSpacing: "-0.02em",
                 }}
@@ -187,14 +171,13 @@ export default async function OGImage({
               </span>
             </div>
 
-            {/* Category chip */}
             {set.category && (
               <div
                 style={{
                   background: "rgba(124,92,252,0.18)",
                   border: "1.5px solid rgba(124,92,252,0.45)",
                   borderRadius: 999,
-                  padding: "7px 20px",
+                  padding: "7px 22px",
                   color: "#c4b5fd",
                   fontSize: 15,
                   fontWeight: 700,
@@ -209,7 +192,14 @@ export default async function OGImage({
           </div>
 
           {/* Title + headline */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
             <div
               style={{
                 color: "#ffffff",
@@ -236,70 +226,31 @@ export default async function OGImage({
             )}
           </div>
 
-          {/* Bottom: source + cards + visual */}
+          {/* Bottom: source + cards */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              gap: 14,
               marginTop: 28,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: ACCENT,
-                  display: "flex",
-                }}
-              />
-              <span
-                style={{
-                  color: "rgba(255,255,255,0.55)",
-                  fontSize: 20,
-                  fontWeight: 500,
-                }}
-              >
-                {set.source}
-              </span>
-              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 20 }}>·</span>
-              <span
-                style={{
-                  color: "rgba(255,255,255,0.55)",
-                  fontSize: 20,
-                  fontWeight: 500,
-                }}
-              >
-                {cardCount} cards
-              </span>
-            </div>
-
-            {/* Card stack visual */}
-            <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-              {[
-                { rotate: "-8deg", opacity: 0.35, x: 12 },
-                { rotate: "-3deg", opacity: 0.6, x: 6 },
-                { rotate: "2deg", opacity: 1, x: 0 },
-              ].map((s, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: 48,
-                    height: 68,
-                    borderRadius: 10,
-                    background: `linear-gradient(145deg, ${ACCENT}, #5b3fd4)`,
-                    opacity: s.opacity,
-                    transform: `rotate(${s.rotate}) translateX(${s.x}px)`,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
-                    position: "absolute",
-                    display: "flex",
-                  }}
-                />
-              ))}
-              <div style={{ width: 80, height: 68, display: "flex" }} />
-            </div>
+            <div
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: ACCENT,
+                display: "flex",
+              }}
+            />
+            <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 20, fontWeight: 500 }}>
+              {set.source}
+            </span>
+            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 20 }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 20, fontWeight: 500 }}>
+              {cardCount} cards
+            </span>
           </div>
         </div>
       </div>
