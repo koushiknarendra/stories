@@ -119,6 +119,32 @@ function HomeInner() {
 
   const generate = useCallback(async (body: { url: string } | { text: string }) => {
     setError(""); setLoading(true);
+
+    // YouTube Shorts bypass the parse/stories pipeline — save the embed directly
+    if ("url" in body) {
+      try {
+        const u = new URL(body.url);
+        const shortsMatch = u.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
+        if (shortsMatch) {
+          const videoId = shortsMatch[1];
+          const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)}&format=json`;
+          const meta = await fetch(oembedUrl).then(r => r.json()).catch(() => ({}));
+          const storySet: StorySet = {
+            id: crypto.randomUUID(),
+            title: (meta.title as string) ?? "YouTube Short",
+            source: "youtube-short",
+            sourceUrl: body.url,
+            coverImageUrl: (meta.thumbnail_url as string) ?? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+            cards: [],
+            savedAt: new Date().toISOString(),
+          };
+          saveCurrent(storySet);
+          router.push("/stories");
+          return;
+        }
+      } catch { /* fall through to normal parse */ }
+    }
+
     try {
       const parseRes = await fetch("/api/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const parseData = await parseRes.json();

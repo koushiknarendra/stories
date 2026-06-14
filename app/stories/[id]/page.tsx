@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadStorySet } from "@/lib/db";
 import StoryReader from "@/components/StoryReader";
+import ShortPlayer from "@/components/ShortPlayer";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -48,5 +49,6 @@ export default async function StoriesIdPage({ params, searchParams }: Props) {
   const initialCardIndex = card ? Math.max(0, parseInt(card, 10) || 0) : 0;
   const set = await loadStorySet(id);
   if (!set) notFound();
+  if (set.source === "youtube-short") return <ShortPlayer set={set} storySetId={id} />;
   return <StoryReader set={set} storySetId={id} initialCardIndex={initialCardIndex} />;
 }

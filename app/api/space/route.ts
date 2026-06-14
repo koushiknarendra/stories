@@ -19,7 +19,8 @@ export async function POST(request: Request) {
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const set = await request.json() as StorySet;
-  if (!set?.id || !set?.cards?.length) {
+  const isShort = set?.source === "youtube-short";
+  if (!set?.id || (!set?.cards?.length && !isShort)) {
     return Response.json({ error: "Invalid story set" }, { status: 400 });
   }
 
