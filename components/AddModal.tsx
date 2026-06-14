@@ -105,6 +105,7 @@ export default function AddModal({ open, onClose }: Props) {
   async function handleLink() {
     const url = urlInput.trim();
     if (!url || loading) return;
+    const start = Date.now();
     setLoading(true); setError("");
     try {
       const res = await fetch("/api/inbox", {
@@ -114,11 +115,12 @@ export default function AddModal({ open, onClose }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
+      const elapsed = Date.now() - start;
+      if (elapsed < 1500) await new Promise(r => setTimeout(r, 1500 - elapsed));
       reset(); setDone(true);
       setTimeout(() => { setDone(false); onClose(); window.location.href = "/space"; }, 900);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
-    } finally {
       setLoading(false);
     }
   }

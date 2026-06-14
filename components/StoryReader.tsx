@@ -43,6 +43,7 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
   const [cardLimit, setCardLimit] = useState<number>(5);
   const [showGuide, setShowGuide] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareHint, setShareHint] = useState(false);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 300], [-14, 14]);
@@ -203,8 +204,13 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
   }
 
   async function shareStory() {
+    if (!storySetId) {
+      setShareHint(true);
+      setTimeout(() => setShareHint(false), 2500);
+      return;
+    }
     const cardParam = cardIndex > 0 ? `?card=${cardIndex}` : "";
-    const url = `${window.location.origin}/stories/${sid}${cardParam}`;
+    const url = `${window.location.origin}/stories/${storySetId}${cardParam}`;
     if (navigator.share) {
       navigator.share({ title: set.title, url }).catch(() => {});
     } else {
@@ -394,15 +400,8 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
               <span style={{ ...SG, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: ".02em" }}>Previous</span>
             </div>
 
-            {/* Center divider with phone icon */}
-            <div style={{ width: 1, background: "rgba(255,255,255,0.15)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ position: "absolute", background: "rgba(0,0,0,0.6)", borderRadius: 14, padding: "8px 10px", border: "1px solid rgba(255,255,255,0.15)" }}>
-                <svg width={18} height={22} viewBox="0 0 18 22" fill="none">
-                  <rect x={1} y={1} width={16} height={20} rx={3} stroke="rgba(255,255,255,0.6)" strokeWidth={1.5}/>
-                  <circle cx={9} cy={18} r={1} fill="rgba(255,255,255,0.4)"/>
-                </svg>
-              </div>
-            </div>
+            {/* Center divider */}
+            <div style={{ width: 1, background: "rgba(255,255,255,0.15)" }} />
 
             {/* Right tap zone */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
@@ -427,19 +426,21 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
           >
             <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Share — only when story exists in DB (has a storySetId) */}
-            {storySetId && (
-              <button
-                onClick={shareStory}
-                aria-label="Share"
-                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}
-              >
-                {copied
-                  ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
-                  : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                }
-              </button>
+          <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+            <button
+              onClick={shareStory}
+              aria-label="Share"
+              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}
+            >
+              {copied
+                ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+                : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              }
+            </button>
+            {shareHint && (
+              <div style={{ position: "absolute", top: 42, right: 0, background: "rgba(0,0,0,0.82)", color: "rgba(255,255,255,0.9)", fontSize: 11.5, fontWeight: 600, borderRadius: 10, padding: "7px 11px", whiteSpace: "nowrap", pointerEvents: "none", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                Add to library to share
+              </div>
             )}
             {set.sourceUrl && (
               <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
