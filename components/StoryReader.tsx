@@ -18,26 +18,17 @@ interface StarredKey { cardIndex: number; bulletIndex: number; }
 function starKey(cardIndex: number, bulletIndex: number) { return `${cardIndex}_${bulletIndex}`; }
 
 const SWIPE_THRESHOLD = 80;
-
-const GRADIENTS = [
-  "linear-gradient(160deg, #9B7BFF 0%, #2D1060 100%)",
-  "linear-gradient(160deg, #FF8FA3 0%, #7C0A1E 100%)",
-  "linear-gradient(160deg, #38BDF8 0%, #043558 100%)",
-  "linear-gradient(160deg, #FB923C 0%, #6B1E05 100%)",
-  "linear-gradient(160deg, #A78BFA 0%, #2E0B5F 100%)",
-  "linear-gradient(160deg, #34D399 0%, #022C1E 100%)",
-  "linear-gradient(160deg, #F472B6 0%, #5C0A34 100%)",
-];
-
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
+const DEPTH_LIMIT: Record<string, number> = { light: 3, balanced: 5, deep: Infinity };
 
 interface Props {
   set: StorySet;
   storySetId?: string;
+  initialCardIndex?: number;
 }
 
-export default function StoryReader({ set, storySetId }: Props) {
-  const { theme } = useTheme();
+export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: Props) {
+  useTheme(); // subscribe to theme changes
   const { user, isLoaded } = useUser();
   const { openSignIn } = useClerk();
   const [pendingSave, setPendingSave] = useState(false);
@@ -45,28 +36,67 @@ export default function StoryReader({ set, storySetId }: Props) {
   const [resumed, setResumed] = useState(false);
   const dragged = useRef(false);
   const flying = useRef(false);
+  const streakRecorded = useRef(false);
 
-  // Starred bullets state — Set of "cardIndex_bulletIndex" strings
   const [starred, setStarred] = useState<Set<string>>(new Set());
   const [togglingBullet, setTogglingBullet] = useState<string | null>(null);
+  const [cardLimit, setCardLimit] = useState<number>(5);
+  const [showGuide, setShowGuide] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 300], [-14, 14]);
   const likeOpacity = useTransform(x, [30, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -30], [1, 0]);
 
-  const card = set.cards[cardIndex];
-  const total = set.cards.length;
+  const visibleCards = set.cards.slice(0, cardLimit === Infinity ? undefined : cardLimit);
+  const card = visibleCards[cardIndex] ?? set.cards[0];
+  const total = visibleCards.length;
   const isLast = cardIndex === total - 1;
   const isFirst = cardIndex === 0;
-  const gradient = GRADIENTS[cardIndex % GRADIENTS.length];
   const sid = storySetId || set.id;
   const coverImg = set.coverImageUrl || `https://picsum.photos/seed/${set.id}/800/500`;
   const isLoggedIn = isLoaded && !!user;
+  const dest = isLoggedIn ? "/space" : "/";
 
-  void gradient;
+  // Read reading-depth preference from localStorage
+  useEffect(() => {
+    try {
+      const pref = localStorage.getItem("storis_reading_depth") ?? "balanced";
+      setCardLimit(DEPTH_LIMIT[pref] ?? 5);
+    } catch { /* keep 5 */ }
+  }, []);
 
-  // Load starred bullets for this story set
+  // Show first-time navigation guide
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("storis_guide_shown")) setShowGuide(true);
+    } catch {}
+  }, []);
+
+  function dismissGuide() {
+    setShowGuide(false);
+    try { localStorage.setItem("storis_guide_shown", "1"); } catch {}
+  }
+
+  useEffect(() => {
+    if (!showGuide) return;
+    const t = setTimeout(dismissGuide, 5000);
+    return () => clearTimeout(t);
+  }, [showGuide]);
+
+  // Record streak once when reading a story by ID
+  useEffect(() => {
+    if (!isLoggedIn || !storySetId || streakRecorded.current) return;
+    streakRecorded.current = true;
+    fetch("/api/streak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storySetId }),
+    }).catch(() => {});
+  }, [isLoggedIn, storySetId]);
+
+  // Load starred bullets
   useEffect(() => {
     if (!isLoggedIn || !storySetId) return;
     fetch(`/api/stars?storySetId=${encodeURIComponent(storySetId)}`)
@@ -79,24 +109,29 @@ export default function StoryReader({ set, storySetId }: Props) {
       .catch(() => {});
   }, [isLoggedIn, storySetId]);
 
-  // Restore reading progress for saved stories
+  // Restore reading progress
   useEffect(() => {
     if (!storySetId) return;
+    if (initialCardIndex > 0) {
+      const capped = Math.min(initialCardIndex, visibleCards.length - 1);
+      if (capped > 0) { setCardIndex(capped); setResumed(true); setTimeout(() => setResumed(false), 2500); }
+      return;
+    }
     try {
       const saved = localStorage.getItem(`storis_progress_${storySetId}`);
       if (saved) {
         const idx = parseInt(saved, 10);
-        if (!isNaN(idx) && idx > 0 && idx < total) {
-          setCardIndex(idx);
-          setResumed(true);
-          setTimeout(() => setResumed(false), 2500);
+        if (!isNaN(idx) && idx > 0) {
+          const capped = Math.min(idx, visibleCards.length - 1);
+          setCardIndex(capped);
+          if (capped > 0) { setResumed(true); setTimeout(() => setResumed(false), 2500); }
         }
       }
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storySetId]);
+  }, [storySetId, cardLimit]);
 
-  // Persist progress on every card change
+  // Persist progress
   useEffect(() => {
     if (!storySetId) return;
     try { localStorage.setItem(`storis_progress_${storySetId}`, String(cardIndex)); } catch {}
@@ -110,41 +145,26 @@ export default function StoryReader({ set, storySetId }: Props) {
     const isStarred = starred.has(key);
     try {
       if (isStarred) {
-        await fetch("/api/stars", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ storySetId, cardIndex, bulletIndex }),
-        });
+        await fetch("/api/stars", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storySetId, cardIndex, bulletIndex }) });
         setStarred((prev) => { const next = new Set(prev); next.delete(key); return next; });
       } else {
-        await fetch("/api/stars", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ storySetId, storyTitle: set.title, cardIndex, bulletIndex, bulletText: card.bullets[bulletIndex] }),
-        });
+        await fetch("/api/stars", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storySetId, storyTitle: set.title, cardIndex, bulletIndex, bulletText: card.bullets[bulletIndex] }) });
         setStarred((prev) => new Set([...prev, key]));
       }
-    } catch { /* silent */ } finally {
-      setTogglingBullet(null);
-    }
+    } catch { /* silent */ } finally { setTogglingBullet(null); }
   }
 
-  async function flyOff(dir: 1 | -1, dest = "/") {
+  async function flyOff(dir: 1 | -1, destination = "/") {
     if (flying.current) return;
     flying.current = true;
     await animate(x, dir * 1400, { duration: 0.32, ease: [0.32, 0, 0.67, 0] });
-    window.location.href = dest;
+    window.location.href = destination;
   }
 
   function recordInteraction(action: "like" | "dislike") {
-    fetch("/api/interactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storyId: set.id, storyTitle: set.title, storySource: set.source, action }),
-    }).catch(() => {});
+    fetch("/api/interactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storyId: set.id, storyTitle: set.title, storySource: set.source, action }) }).catch(() => {});
   }
 
-  // After sign-in completes, auto-save the pending story and navigate to /space
   useEffect(() => {
     if (!isLoggedIn || !pendingSave) return;
     setPendingSave(false);
@@ -152,11 +172,7 @@ export default function StoryReader({ set, storySetId }: Props) {
       addToCurate(set);
       recordInteraction("like");
       if (!storySetId) {
-        await fetch("/api/space", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(set),
-        }).catch(() => {});
+        await fetch("/api/space", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(set) }).catch(() => {});
       }
       flyOff(1, "/space");
     })();
@@ -165,24 +181,16 @@ export default function StoryReader({ set, storySetId }: Props) {
 
   async function handleLike() {
     if (!isLoaded) return;
-    if (!isLoggedIn) {
-      setPendingSave(true);
-      openSignIn();
-      return;
-    }
+    if (!isLoggedIn) { setPendingSave(true); openSignIn(); return; }
     addToCurate(set);
     recordInteraction("like");
     if (!storySetId) {
-      await fetch("/api/space", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(set),
-      }).catch(() => {});
+      await fetch("/api/space", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(set) }).catch(() => {});
     }
     flyOff(1, "/space");
   }
 
-  function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1, "/"); }
+  function handleNope() { recordDislike(set.id); recordInteraction("dislike"); flyOff(-1, dest); }
   function onDragStart() { dragged.current = false; }
   function onDrag(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     if (Math.abs(info.offset.x) > 6) dragged.current = true;
@@ -200,11 +208,9 @@ export default function StoryReader({ set, storySetId }: Props) {
     else { setCardIndex((i) => (i + 1) % total); }
   }
 
-  void theme;
-
-  const [copied, setCopied] = useState(false);
   async function shareStory() {
-    const url = `${window.location.origin}/stories/${sid}`;
+    const cardParam = cardIndex > 0 ? `?card=${cardIndex}` : "";
+    const url = `${window.location.origin}/stories/${sid}${cardParam}`;
     if (navigator.share) {
       navigator.share({ title: set.title, url }).catch(() => {});
     } else {
@@ -226,8 +232,6 @@ export default function StoryReader({ set, storySetId }: Props) {
       paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
       gap: isLoggedIn ? 8 : 0,
     }}>
-
-      {/* Card */}
       <div style={{ flex: 1, position: "relative", borderRadius: 24, overflow: "hidden", minHeight: 0 }}>
 
         <motion.div
@@ -243,15 +247,15 @@ export default function StoryReader({ set, storySetId }: Props) {
         >
           {/* Cover image */}
           <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverImg})`, backgroundSize: "cover", backgroundPosition: "center top" }} />
-          {/* Gradient overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.84) 54%, rgba(0,0,0,0.97) 100%)" }} />
-          {/* Top vignette for progress bars */}
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 90, background: "linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
+          {/* Stronger gradient for legibility on light/busy images */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.9) 62%, rgba(0,0,0,0.98) 100%)" }} />
+          {/* Top vignette */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100, background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 100%)", zIndex: 5, pointerEvents: "none" }} />
 
           {/* Progress bars */}
           <div style={{ position: "absolute", top: 14, left: 14, right: 14, zIndex: 10 }}>
             <div style={{ display: "flex", gap: 4 }}>
-              {set.cards.map((_, i) => (
+              {visibleCards.map((_, i) => (
                 <div key={i} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= cardIndex ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.22)", transition: "background .3s" }} />
               ))}
             </div>
@@ -275,20 +279,18 @@ export default function StoryReader({ set, storySetId }: Props) {
 
           {/* Content overlay */}
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", zIndex: 10, pointerEvents: "none" }}>
-
             <div style={{ height: 90, flexShrink: 0 }} />
-
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 20px 0", overflowY: "hidden", pointerEvents: "auto" }}>
 
               {/* Source pill */}
               <div style={{ marginBottom: 8 }}>
-                <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.1)", padding: "4px 10px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
+                <span style={{ ...SG, fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,0.92)", background: "rgba(0,0,0,0.38)", padding: "4px 11px", borderRadius: 999, backdropFilter: "blur(10px)" }}>
                   {set.source}
                 </span>
               </div>
 
-              {/* Article title — context anchor so card headlines make sense out of context */}
-              <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.42)", margin: "0 0 7px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+              {/* Article title */}
+              <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.82)", margin: "0 0 7px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 2px 12px rgba(0,0,0,0.8)" }}>
                 {set.title}
               </p>
 
@@ -303,14 +305,14 @@ export default function StoryReader({ set, storySetId }: Props) {
                   const key = starKey(cardIndex, i);
                   const isStarred = starred.has(key);
                   return (
-                    <li key={i} style={{ display: "flex", gap: 9, color: "rgba(255,255,255,0.75)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.5, alignItems: "flex-start", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
-                      <span style={{ color: "rgba(255,255,255,0.25)", flexShrink: 0, marginTop: 2 }}>—</span>
+                    <li key={i} style={{ display: "flex", gap: 9, color: "rgba(255,255,255,0.9)", fontSize: "clamp(13px,3.2vw,15px)", lineHeight: 1.5, alignItems: "flex-start", textShadow: "0 1px 5px rgba(0,0,0,0.95)" }}>
+                      <span style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0, marginTop: 2 }}>—</span>
                       <span style={{ flex: 1 }}>{b}</span>
                       {isLoggedIn && storySetId && (
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleStar(i); }}
                           aria-label={isStarred ? "Unstar" : "Star"}
-                          style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0 0", flexShrink: 0, fontSize: 15, color: isStarred ? "#FBBF24" : "rgba(255,255,255,0.16)", transition: "color .15s", opacity: togglingBullet === key ? 0.5 : 1 }}
+                          style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0 0", flexShrink: 0, fontSize: 15, color: isStarred ? "#FBBF24" : "rgba(255,255,255,0.22)", transition: "color .15s", opacity: togglingBullet === key ? 0.5 : 1 }}
                         >
                           {isStarred ? "★" : "☆"}
                         </button>
@@ -321,9 +323,9 @@ export default function StoryReader({ set, storySetId }: Props) {
               </ul>
 
               {/* Read time + position */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 600 }}>{card.readTime} read</span>
-                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.75)", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{card.readTime} read</span>
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.68)", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
                   {isFirst ? "tap → to advance" : isLast ? `${cardIndex + 1} / ${total} · tap to restart` : `${cardIndex + 1} / ${total}`}
                 </span>
               </div>
@@ -347,27 +349,28 @@ export default function StoryReader({ set, storySetId }: Props) {
               )}
             </div>
 
-            {/* Action buttons */}
+            {/* Action buttons — Skip and Save both use the same glass style */}
             <div
               style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 16, padding: "6px 28px 18px", pointerEvents: "auto" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Skip */}
               <button
                 onClick={handleNope}
-                style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.28)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s", flexShrink: 0, backdropFilter: "blur(12px) saturate(150%)", WebkitBackdropFilter: "blur(12px) saturate(150%)" }}
+                aria-label="Skip"
+                style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.28)", color: "#FF6B81", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s, background .15s", flexShrink: 0, backdropFilter: "blur(12px) saturate(150%)", WebkitBackdropFilter: "blur(12px) saturate(150%)" }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.background = "rgba(255,107,129,0.22)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(0,0,0,0.28)"; }}
               >
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
 
-              {/* Save */}
+              {/* Save — glass (same as Skip), green bookmark icon */}
               <button
                 onClick={handleLike}
-                style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.22)", background: "#7C5CFF", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px -4px rgba(124,92,255,0.7), inset 0 1px 0 rgba(255,255,255,0.2)", transition: "transform .15s, box-shadow .15s", flexShrink: 0 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.boxShadow = "0 8px 22px -4px rgba(124,92,255,0.85), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 16px -4px rgba(124,92,255,0.7), inset 0 1px 0 rgba(255,255,255,0.2)"; }}
+                aria-label="Save"
+                style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.28)", color: "#34D399", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "transform .15s, background .15s", flexShrink: 0, backdropFilter: "blur(12px) saturate(150%)", WebkitBackdropFilter: "blur(12px) saturate(150%)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.12)"; e.currentTarget.style.background = "rgba(52,211,153,0.22)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(0,0,0,0.28)"; }}
               >
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
               </button>
@@ -375,23 +378,85 @@ export default function StoryReader({ set, storySetId }: Props) {
           </div>
         </motion.div>
 
+        {/* Guide overlay — shows once on very first story read */}
+        {showGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={dismissGuide}
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 50,
+              background: "rgba(0,0,0,0.74)",
+              backdropFilter: "blur(3px)",
+              WebkitBackdropFilter: "blur(3px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 28,
+              padding: "0 28px",
+              cursor: "pointer",
+            }}
+          >
+            {/* Left / Right tap zones */}
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 32, marginBottom: 6 }}>←</div>
+                <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>Previous card</span>
+              </div>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)"><rect x={5} y={2} width={14} height={20} rx={2.5}/></svg>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 32, marginBottom: 6 }}>→</div>
+                <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>Next card</span>
+              </div>
+            </div>
+
+            {/* Swipe hints */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)", borderRadius: 14, padding: "12px 16px" }}>
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="#34D399"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
+                <div>
+                  <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "#34D399" }}>Swipe right or tap 🔖</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Save story to your library</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,107,129,0.08)", border: "1px solid rgba(255,107,129,0.2)", borderRadius: 14, padding: "12px 16px" }}>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#FF6B81" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <div>
+                  <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "#FF6B81" }}>Swipe left or tap ✕</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Skip to the next story</p>
+                </div>
+              </div>
+            </div>
+
+            <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>Tap anywhere to dismiss</span>
+          </motion.div>
+        )}
+
         {/* Top floating bar */}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "32px 14px 0", pointerEvents: "none" }}>
           <button
-            onClick={() => { window.location.href = storySetId ? "/space" : (isLoggedIn ? "/foryou" : "/"); }}
+            onClick={() => { window.location.href = dest; }}
             style={{ pointerEvents: "auto", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)" }}
           >
             <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            {storySetId && (
-              <button onClick={shareStory} aria-label="Share" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}>
-                {copied
-                  ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
-                  : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                }
-              </button>
-            )}
+            {/* Share button — always shown, uses per-card URL */}
+            <button
+              onClick={shareStory}
+              aria-label="Share"
+              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}
+            >
+              {copied
+                ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+                : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              }
+            </button>
             {set.sourceUrl && (
               <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
                 style={{ ...SG, color: "rgba(255,255,255,0.92)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", padding: "6px 11px", borderRadius: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)" }}>

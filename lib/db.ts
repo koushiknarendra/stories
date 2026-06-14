@@ -589,3 +589,20 @@ export async function getAllCardsForUser(clerkUserId: string): Promise<{
     return { storySetId: r.story_set_id, storyTitle: r.title, sourceUrl: r.source_url, headline: r.headline, bullets };
   });
 }
+
+// ─── Read history ─────────────────────────────────────────────────────────────
+
+export async function getReadHistory(clerkUserId: string): Promise<{
+  id: string; title: string; source: string; source_url: string | null; read_at: string;
+}[]> {
+  const sql = getDb();
+  if (!sql) return [];
+  return sql<{ id: string; title: string; source: string; source_url: string | null; read_at: string }[]>`
+    SELECT ss.id, ss.title, ss.source, ss.source_url, rs.read_at::text
+    FROM user_read_stories rs
+    JOIN story_sets ss ON ss.id = rs.story_set_id
+    WHERE rs.clerk_user_id = ${clerkUserId}
+    ORDER BY rs.read_at DESC
+    LIMIT 60
+  `;
+}

@@ -40,6 +40,16 @@ export default function ProfilePage() {
   const [editingInterests, setEditingInterests] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [readingDepth, setReadingDepthState] = useState<string>("balanced");
+
+  useEffect(() => {
+    try { setReadingDepthState(localStorage.getItem("storis_reading_depth") ?? "balanced"); } catch {}
+  }, []);
+
+  function setReadingDepth(val: string) {
+    setReadingDepthState(val);
+    try { localStorage.setItem("storis_reading_depth", val); } catch {}
+  }
 
   useEffect(() => {
     if (isLoaded && !user) window.location.href = "/";
@@ -200,6 +210,32 @@ export default function ProfilePage() {
                     <p style={{ fontSize: 10, color: "var(--lp-text3)", margin: "2px 0 0", lineHeight: 1.3 }}>{badge.desc}</p>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Reading depth ── */}
+        <div style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 18, padding: "18px 18px", marginBottom: 12, boxShadow: "0 4px 24px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+          <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 5px" }}>Reading depth</p>
+          <p style={{ fontSize: 12, color: "var(--lp-text3)", margin: "0 0 14px", lineHeight: 1.5 }}>Controls how many cards are shown per story.</p>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[
+              { key: "light",    emoji: "🌱", label: "Light",    desc: "3 cards" },
+              { key: "balanced", emoji: "📚", label: "Balanced", desc: "5 cards" },
+              { key: "deep",     emoji: "🔥", label: "Deep",     desc: "All cards" },
+            ].map(({ key, emoji, label, desc }) => {
+              const active = readingDepth === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setReadingDepth(key)}
+                  style={{ flex: 1, padding: "10px 6px", borderRadius: 12, border: `1.5px solid ${active ? "var(--lp-accent)" : "var(--lp-border)"}`, background: active ? "color-mix(in srgb, var(--lp-accent) 10%, transparent)" : "transparent", color: active ? "var(--lp-accent)" : "var(--lp-text2)", cursor: "pointer", textAlign: "center", transition: "all .15s" }}
+                >
+                  <div style={{ fontSize: 20, marginBottom: 4 }}>{emoji}</div>
+                  <p style={{ ...SG, fontSize: 12, fontWeight: 700, margin: "0 0 2px", color: active ? "var(--lp-accent)" : "var(--lp-text)" }}>{label}</p>
+                  <p style={{ fontSize: 10, margin: 0, color: "var(--lp-text3)" }}>{desc}</p>
+                </button>
               );
             })}
           </div>

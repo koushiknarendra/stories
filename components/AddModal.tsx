@@ -1,12 +1,94 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 type Tab = "link" | "text" | "file";
 
 interface Props { open: boolean; onClose: () => void; }
+
+const QUOTES = [
+  "Reading is to the mind what exercise is to the body.",
+  "The more that you read, the more things you will know.",
+  "A reader lives a thousand lives before he dies.",
+  "Today a reader, tomorrow a leader.",
+  "Books are a uniquely portable magic.",
+  "The reading of all good books is like conversation with the finest minds.",
+  "Not all readers are leaders, but all leaders are readers.",
+  "A book is a dream that you hold in your hands.",
+];
+
+const SNAKE_LEN = 6;
+
+function LoadingOverlay() {
+  const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  const [snakePos, setSnakePos] = useState(0);
+  const [fadeKey, setFadeKey] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setQuoteIdx((i) => (i + 1) % QUOTES.length);
+      setFadeKey((k) => k + 1);
+    }, 3200);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setSnakePos((i) => (i + 1) % (SNAKE_LEN * 2)), 160);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, background: "var(--lp-bg)", zIndex: 10,
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      gap: 28, padding: "0 36px", borderRadius: "inherit",
+    }}>
+      {/* Nokia-snake-style dot runner */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {Array.from({ length: SNAKE_LEN }).map((_, i) => {
+          const active = i === snakePos % SNAKE_LEN;
+          const trail = ((snakePos % SNAKE_LEN) - i + SNAKE_LEN) % SNAKE_LEN;
+          const opacity = active ? 1 : trail === 1 ? 0.55 : trail === 2 ? 0.28 : 0.1;
+          return (
+            <div
+              key={i}
+              style={{
+                width: active ? 13 : 9,
+                height: active ? 13 : 9,
+                borderRadius: "50%",
+                background: "var(--lp-accent)",
+                opacity,
+                transition: "all 0.15s ease",
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Cycling quote */}
+      <div style={{ textAlign: "center", minHeight: 80, display: "flex", alignItems: "center" }}>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={fadeKey}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.4 }}
+            style={{ ...SG, fontSize: 15, fontWeight: 600, color: "var(--lp-text)", lineHeight: 1.55, margin: 0, fontStyle: "italic" }}
+          >
+            &ldquo;{QUOTES[quoteIdx]}&rdquo;
+          </motion.p>
+        </AnimatePresence>
+      </div>
+
+      <p style={{ fontSize: 13, color: "var(--lp-text3)", margin: 0, letterSpacing: ".02em" }}>
+        Turning article into story cards…
+      </p>
+    </div>
+  );
+}
 
 export default function AddModal({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("link");
@@ -81,9 +163,21 @@ export default function AddModal({ open, onClose }: Props) {
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 201, background: "var(--lp-bg)", borderRadius: "24px 24px 0 0", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 36px)", boxShadow: "0 -12px 48px rgba(0,0,0,0.24)", border: "1px solid var(--lp-glass-border)", borderBottom: "none" }}
+            style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 201, background: "var(--lp-bg)", borderRadius: "24px 24px 0 0", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 36px)", boxShadow: "0 -12px 48px rgba(0,0,0,0.24)", border: "1px solid var(--lp-glass-border)", borderBottom: "none", overflow: "hidden" }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Loading overlay shown while converting */}
+            <AnimatePresence>
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ position: "absolute", inset: 0, zIndex: 5, borderRadius: "inherit" }}
+                >
+                  <LoadingOverlay />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 6px" }}>
               <div style={{ width: 36, height: 4, borderRadius: 999, background: "var(--lp-border)" }} />
             </div>
@@ -132,7 +226,7 @@ export default function AddModal({ open, onClose }: Props) {
                     disabled={loading || !urlInput.trim()}
                     style={{ ...SG, padding: "14px 0", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: 15, cursor: loading || !urlInput.trim() ? "not-allowed" : "pointer", opacity: loading || !urlInput.trim() ? 0.65 : 1, boxShadow: "0 4px 16px -4px rgba(124,92,255,0.5)", transition: "opacity .15s" }}
                   >
-                    {loading ? "Converting…" : "Convert to cards"}
+                    Convert to cards
                   </button>
                 </div>
               )}
@@ -159,7 +253,7 @@ export default function AddModal({ open, onClose }: Props) {
                     disabled={loading || !textInput.trim()}
                     style={{ ...SG, padding: "14px 0", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: 15, cursor: loading || !textInput.trim() ? "not-allowed" : "pointer", opacity: loading || !textInput.trim() ? 0.65 : 1, boxShadow: "0 4px 16px -4px rgba(124,92,255,0.5)", transition: "opacity .15s" }}
                   >
-                    {loading ? "Converting…" : "Convert to cards"}
+                    Convert to cards
                   </button>
                 </div>
               )}

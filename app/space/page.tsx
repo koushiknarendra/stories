@@ -10,12 +10,22 @@ const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk'
 const IconSun  = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2}/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>;
 const IconMoon = () => <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>;
 
+type LibTab = "saved" | "history";
+
 interface SpaceItem {
   id: string;
   title: string;
   source: string;
   source_url: string | null;
   saved_at: string;
+}
+
+interface HistoryItem {
+  id: string;
+  title: string;
+  source: string;
+  source_url: string | null;
+  read_at: string;
 }
 
 interface StarredBullet {
@@ -49,13 +59,17 @@ export default function SpacePage() {
   const [items, setItems] = useState<SpaceItem[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<LibTab>("saved");
+
+  // History tab
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   // Starred bullets
   const [starredBullets, setStarredBullets] = useState<StarredBullet[]>([]);
   const [showAllStars, setShowAllStars] = useState(false);
 
-  // Ask my library
-  const [askQuestion, setAskQuestion] = useState("");
+  // Unified search + ask
   const [askLoading, setAskLoading] = useState(false);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -77,10 +91,22 @@ export default function SpacePage() {
     setStarredBullets(Array.isArray(data) ? data : []);
   }
 
+  async function loadHistory() {
+    if (historyLoaded) return;
+    const data = await fetch("/api/history").then((r) => r.json()).catch(() => []);
+    setHistory(Array.isArray(data) ? data : []);
+    setHistoryLoaded(true);
+  }
+
   useEffect(() => {
     loadItems();
     loadStarredBullets();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "history") loadHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -115,11 +141,11 @@ export default function SpacePage() {
     }).catch(() => {});
   }
 
-  async function handleAsk(e: React.FormEvent) {
-    e.preventDefault();
-    const q = askQuestion.trim();
+  async function handleAsk(e?: React.FormEvent) {
+    e?.preventDefault();
+    const q = query.trim();
     if (!q || askLoading) return;
-    setAskQuestion("");
+    setQuery("");
     setChat((prev) => [...prev, { role: "user", content: q }]);
     setAskLoading(true);
     try {
@@ -167,114 +193,27 @@ export default function SpacePage() {
         </div>
       </nav>
 
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 20px 80px" }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "20px 20px 80px" }}>
 
-        {/* Search */}
-        {items.length > 0 && (
-          <div style={{ position: "relative", marginBottom: 16 }}>
-            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: text3, pointerEvents: "none" }}>
-              <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search your library…"
-              style={{ width: "100%", padding: "11px 16px 11px 36px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box", transition: "border-color .15s" }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = border)}
-            />
-            {query && (
-              <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 16, padding: 4 }}>✕</button>
-            )}
-          </div>
-        )}
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 18, background: "var(--lp-glass-surface)", borderRadius: 14, padding: "4px", border: `1px solid ${border}` }}>
+          {(["saved", "history"] as LibTab[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{ ...SG, flex: 1, padding: "9px 8px", borderRadius: 11, border: "none", background: activeTab === tab ? accent : "transparent", color: activeTab === tab ? "#fff" : text2, fontWeight: activeTab === tab ? 700 : 500, fontSize: 13, cursor: "pointer", transition: "all .15s" }}
+            >
+              {tab === "saved" ? "📚 Saved" : "🕐 History"}
+            </button>
+          ))}
+        </div>
 
-        {/* Story list */}
-        {items.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
-            <div style={{ fontSize: 40, marginBottom: 14 }}>📚</div>
-            <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>Library is empty</p>
-            <p style={{ fontSize: 14, color: text2, margin: "0 0 24px", lineHeight: 1.6 }}>Tap the + button below to add articles, or save stories from your feed.</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 20px", color: text3 }}>
-            <p style={{ fontSize: 15, margin: 0 }}>No stories match &ldquo;{query}&rdquo;.</p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {filtered.map((item) => (
-              <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {item.title}
-                  </p>
-                  <p style={{ fontSize: 12, color: text3, margin: 0 }}>
-                    {item.source_url ? (() => { try { return new URL(item.source_url).hostname; } catch { return item.source; } })() : item.source}
-                    {" · "}{timeAgo(item.saved_at)}
-                  </p>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => handleShare(item.id, item.title)}
-                    aria-label="Share"
-                    style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: copiedId === item.id ? "#34D399" : text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "color .2s" }}
-                  >
-                    {copiedId === item.id
-                      ? <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
-                      : <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    }
-                  </button>
-                  <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16 }}>
-                    →
-                  </a>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, transition: "color .15s" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B81")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = text3)}
-                    aria-label="Delete"
-                  >✕</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Starred bullets ── */}
-        {starredBullets.length > 0 && (
-          <div style={{ marginTop: 40 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: 0 }}>★ Starred insights</p>
-              <span style={{ fontSize: 12, color: text3 }}>{starredBullets.length}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {visibleStars.map((bullet) => (
-                <div key={bullet.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
-                  <span style={{ color: "#FBBF24", fontSize: 13, flexShrink: 0, marginTop: 1 }}>★</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, color: text, margin: "0 0 4px", lineHeight: 1.5 }}>{bullet.bullet_text}</p>
-                    <a href={`/stories/${bullet.story_set_id}`} style={{ fontSize: 11, color: text3, textDecoration: "none", fontWeight: 500 }}>{bullet.story_title}</a>
-                  </div>
-                  <button onClick={() => handleUnstar(bullet)} aria-label="Unstar" style={{ background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 14, padding: 2, flexShrink: 0 }}>✕</button>
-                </div>
-              ))}
-            </div>
-            {starredBullets.length > 5 && (
-              <button onClick={() => setShowAllStars((v) => !v)} style={{ ...SG, marginTop: 10, fontSize: 12, fontWeight: 600, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                {showAllStars ? "Show less" : `Show all ${starredBullets.length}`}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* ── Ask my library ── */}
-        {items.length > 0 && (
-          <div style={{ marginTop: 40 }}>
-            <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: "0 0 14px" }}>Ask my library</p>
-
+        {/* Unified Search + Ask field (shown when there are saved stories) */}
+        {items.length > 0 && activeTab === "saved" && (
+          <div style={{ marginBottom: 16 }}>
+            {/* Chat messages */}
             {chat.length > 0 && (
-              <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
+              <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 10, maxHeight: 280, overflowY: "auto", paddingRight: 4 }}>
                 {chat.map((msg, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
                     <div style={{ maxWidth: "85%", background: msg.role === "user" ? `color-mix(in srgb, ${accent} 18%, transparent)` : "var(--lp-glass-surface)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: `1px solid ${msg.role === "user" ? `color-mix(in srgb, ${accent} 30%, transparent)` : "var(--lp-glass-border)"}`, borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px", padding: "10px 14px", fontSize: 13, color: text, lineHeight: 1.55, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)" }}>
@@ -291,25 +230,154 @@ export default function SpacePage() {
               </div>
             )}
 
+            {/* Single unified input */}
             <form onSubmit={handleAsk} style={{ display: "flex", gap: 8 }}>
-              <input
-                type="text"
-                value={askQuestion}
-                onChange={(e) => setAskQuestion(e.target.value)}
-                placeholder="What did I read about AI agents?"
-                disabled={askLoading}
-                style={{ flex: 1, padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", fontSize: 14, transition: "border-color .15s" }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
-                onBlur={(e) => (e.currentTarget.style.borderColor = border)}
-              />
-              <button
-                type="submit"
-                disabled={askLoading || !askQuestion.trim()}
-                style={{ padding: "11px 18px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: 13, cursor: askLoading ? "not-allowed" : "pointer", opacity: askLoading ? 0.6 : 1, fontFamily: "'Space Grotesk', sans-serif", transition: "opacity .15s" }}
-              >
-                Ask
-              </button>
+              <div style={{ flex: 1, position: "relative" }}>
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: text3, pointerEvents: "none" }}>
+                  <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search or ask your library…"
+                  style={{ width: "100%", padding: "11px 36px 11px 36px", borderRadius: 12, border: `1.5px solid ${border}`, background: surface, backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", color: text, outline: "none", fontFamily: "inherit", fontSize: 14, boxSizing: "border-box", transition: "border-color .15s" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = accent)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = border)}
+                />
+                {query && (
+                  <button type="button" onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 16, padding: 4 }}>✕</button>
+                )}
+              </div>
+              {query.trim() && (
+                <button
+                  type="submit"
+                  disabled={askLoading}
+                  style={{ padding: "11px 16px", borderRadius: 12, border: "none", background: accent, color: "#fff", fontWeight: 700, fontSize: 13, cursor: askLoading ? "not-allowed" : "pointer", opacity: askLoading ? 0.6 : 1, fontFamily: "'Space Grotesk', sans-serif", transition: "opacity .15s", flexShrink: 0, whiteSpace: "nowrap" }}
+                >
+                  ✨ Ask
+                </button>
+              )}
             </form>
+          </div>
+        )}
+
+        {/* ── SAVED tab ── */}
+        {activeTab === "saved" && (
+          <>
+            {items.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
+                <div style={{ fontSize: 40, marginBottom: 14 }}>📚</div>
+                <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>Library is empty</p>
+                <p style={{ fontSize: 14, color: text2, margin: "0 0 24px", lineHeight: 1.6 }}>Tap the + button below to add articles, or save stories from your feed.</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", color: text3 }}>
+                <p style={{ fontSize: 15, margin: 0 }}>No stories match &ldquo;{query}&rdquo;.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {filtered.map((item) => (
+                  <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 16px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {item.title}
+                      </p>
+                      <p style={{ fontSize: 12, color: text3, margin: 0 }}>
+                        {item.source_url ? (() => { try { return new URL(item.source_url).hostname; } catch { return item.source; } })() : item.source}
+                        {" · "}{timeAgo(item.saved_at)}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <button
+                        onClick={() => handleShare(item.id, item.title)}
+                        aria-label="Share"
+                        style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: copiedId === item.id ? "#34D399" : text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "color .2s" }}
+                      >
+                        {copiedId === item.id
+                          ? <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5" /></svg>
+                          : <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                        }
+                      </button>
+                      <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16 }}>
+                        →
+                      </a>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: text3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, transition: "color .15s" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#FF6B81")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = text3)}
+                        aria-label="Delete"
+                      >✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Starred bullets */}
+            {starredBullets.length > 0 && (
+              <div style={{ marginTop: 40 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <p style={{ ...SG, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: text3, margin: 0 }}>★ Starred insights</p>
+                  <span style={{ fontSize: 12, color: text3 }}>{starredBullets.length}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {visibleStars.map((bullet) => (
+                    <div key={bullet.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "flex-start", gap: 10, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+                      <span style={{ color: "#FBBF24", fontSize: 13, flexShrink: 0, marginTop: 1 }}>★</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, color: text, margin: "0 0 4px", lineHeight: 1.5 }}>{bullet.bullet_text}</p>
+                        <a href={`/stories/${bullet.story_set_id}`} style={{ fontSize: 11, color: text3, textDecoration: "none", fontWeight: 500 }}>{bullet.story_title}</a>
+                      </div>
+                      <button onClick={() => handleUnstar(bullet)} aria-label="Unstar" style={{ background: "none", border: "none", color: text3, cursor: "pointer", fontSize: 14, padding: 2, flexShrink: 0 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+                {starredBullets.length > 5 && (
+                  <button onClick={() => setShowAllStars((v) => !v)} style={{ ...SG, marginTop: 10, fontSize: 12, fontWeight: 600, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    {showAllStars ? "Show less" : `Show all ${starredBullets.length}`}
+                  </button>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── HISTORY tab ── */}
+        {activeTab === "history" && (
+          <div>
+            {!historyLoaded ? (
+              <div style={{ textAlign: "center", padding: "48px 0" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2.5px solid var(--lp-border)", borderTopColor: accent, animation: "spin 0.7s linear infinite", margin: "0 auto" }} />
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+              </div>
+            ) : history.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
+                <div style={{ fontSize: 40, marginBottom: 14 }}>🕐</div>
+                <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>No history yet</p>
+                <p style={{ fontSize: 14, color: text2, margin: 0, lineHeight: 1.6 }}>Stories you read will appear here.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {history.map((item) => (
+                  <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {item.title}
+                      </p>
+                      <p style={{ fontSize: 12, color: text3, margin: 0 }}>
+                        {item.source_url ? (() => { try { return new URL(item.source_url).hostname; } catch { return item.source; } })() : item.source}
+                        {" · "}Read {timeAgo(item.read_at)}
+                      </p>
+                    </div>
+                    <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16, flexShrink: 0 }}>
+                      →
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
