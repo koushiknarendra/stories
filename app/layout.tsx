@@ -19,6 +19,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://storis.in"),
   title: "Storis — The whole story, in seven swipes",
   description: "Paste a link and get swipeable story cards in seconds. Like Tinder for reading.",
 };
