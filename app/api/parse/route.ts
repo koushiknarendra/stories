@@ -154,23 +154,38 @@ function cleanYouTubeJinaText(raw: string): string {
   return parts.join("\n\n");
 }
 
+async function fetchYouTubeContent(videoId: string): Promise<{ title: string; text: string } | null> {
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  try {
+    const res = await fetch(`https://r.jina.ai/${watchUrl}`, {
+      headers: { "X-Return-Format": "markdown" },
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) return null;
+    // Get raw markdown BEFORE any whitespace collapsing so cleanYouTubeJinaText can parse sections
+    const raw = await res.text();
+    const titleMatch = raw.match(/^Title:\s*(.+)/m);
+    const title = titleMatch?.[1]?.trim().replace(/\s*-\s*YouTube$/i, "").trim() ?? "YouTube Video";
+    const cleaned = cleanYouTubeJinaText(raw);
+    return cleaned.length >= 80 ? { title, text: cleaned } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function handleYouTube(videoId: string, originalUrl: string) {
   const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
   const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-  const [jinaResult, ogImage] = await Promise.all([
-    fetchViaJina(watchUrl),
+  const [ytContent, ogImage] = await Promise.all([
+    fetchYouTubeContent(videoId),
     fetchOgImage(watchUrl),
   ]);
 
-  const rawText = jinaResult?.text ?? "";
-  const cleaned = cleanYouTubeJinaText(rawText);
-  const title = jinaResult?.title?.replace(/\s*-\s*YouTube$/i, "").trim() ?? "YouTube Video";
-
-  if (cleaned.length >= 80) {
+  if (ytContent) {
     return Response.json({
-      text: cleaned,
-      title,
+      text: ytContent.text,
+      title: ytContent.title,
       source: "YouTube",
       sourceUrl: originalUrl,
       imageUrl: ogImage ?? thumbUrl,
