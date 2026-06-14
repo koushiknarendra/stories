@@ -411,7 +411,7 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
 
             {/* Bottom hint */}
             <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
-              <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.45)", background: "rgba(0,0,0,0.4)", borderRadius: 99, padding: "5px 14px", backdropFilter: "blur(6px)" }}>Tap anywhere to start reading</span>
+              <span style={{ ...SG, fontSize: 13, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,0.75)", borderRadius: 99, padding: "8px 20px", letterSpacing: ".01em" }}>Tap anywhere to start reading</span>
             </div>
           </motion.div>
         )}
