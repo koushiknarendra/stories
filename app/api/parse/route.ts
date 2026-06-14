@@ -99,7 +99,51 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string; 
   }
 }
 
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtube.com")) {
+      const shortsMatch = u.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
+      if (shortsMatch) return shortsMatch[1];
+      return u.searchParams.get("v");
+    }
+    if (u.hostname === "youtu.be") {
+      return u.pathname.slice(1).split(/[?#]/)[0] || null;
+    }
+  } catch {}
+  return null;
+}
+
+async function handleYouTube(videoId: string, originalUrl: string) {
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  const [jinaResult, ogImage] = await Promise.all([
+    fetchViaJina(watchUrl),
+    fetchOgImage(`https://www.youtube.com/watch?v=${videoId}`),
+  ]);
+
+  if (jinaResult && jinaResult.text.length >= 60) {
+    return Response.json({
+      text: jinaResult.text,
+      title: jinaResult.title,
+      source: "YouTube",
+      sourceUrl: originalUrl,
+      imageUrl: ogImage ?? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+    });
+  }
+
+  // Jina couldn't get transcript (private video, no captions, etc.)
+  return Response.json(
+    { error: "Couldn't extract transcript from this video. Make sure it has captions enabled, or paste the transcript text directly." },
+    { status: 422 }
+  );
+}
+
 async function handleUrl(url: string) {
+  // YouTube — needs transcript extraction, not HTML scraping
+  const ytId = extractYouTubeId(url);
+  if (ytId) return handleYouTube(ytId, url);
+
   // Run Jina text fetch and OG image fetch in parallel
   const [jinaResult, ogImage] = await Promise.all([
     fetchViaJina(url),
