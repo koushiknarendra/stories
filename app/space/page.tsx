@@ -74,12 +74,30 @@ export default function SpacePage() {
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const filtered = query.trim()
+  const searchMode = query.trim().length > 0;
+
+  const filtered = searchMode
     ? items.filter((item) => {
         const q = query.toLowerCase();
         return item.title.toLowerCase().includes(q) || (item.source_url ?? "").toLowerCase().includes(q);
       })
     : items;
+
+  const filteredHistory = searchMode
+    ? history.filter((item) => {
+        const q = query.toLowerCase();
+        return item.title.toLowerCase().includes(q) || (item.source_url ?? "").toLowerCase().includes(q);
+      })
+    : history;
+
+  // Unified cross-tab results: saved first, then history items not already in saved
+  const savedIds = new Set(items.map(i => i.id));
+  const searchResults = searchMode
+    ? [
+        ...filtered.map(i => ({ ...i, _type: "saved" as const, _ts: i.saved_at })),
+        ...filteredHistory.filter(i => !savedIds.has(i.id)).map(i => ({ ...i, _type: "history" as const, _ts: i.read_at })),
+      ]
+    : [];
 
   async function loadItems() {
     const data = await fetch("/api/space").then((r) => r.json()).catch(() => []);
@@ -104,9 +122,9 @@ export default function SpacePage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "history") loadHistory();
+    if (activeTab === "history" || searchMode) loadHistory();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, searchMode]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -208,8 +226,8 @@ export default function SpacePage() {
           ))}
         </div>
 
-        {/* Unified Search + Ask field (shown when there are saved stories) */}
-        {items.length > 0 && activeTab === "saved" && (
+        {/* Unified Search + Ask field */}
+        {(items.length > 0 || activeTab === "history") && (
           <div style={{ marginBottom: 16 }}>
             {/* Chat messages */}
             {chat.length > 0 && (
@@ -262,10 +280,47 @@ export default function SpacePage() {
           </div>
         )}
 
+        {/* ── SEARCH RESULTS (cross-tab) ── */}
+        {searchMode && (
+          <div style={{ marginBottom: 8 }}>
+            {!historyLoaded && (
+              <p style={{ fontSize: 12, color: text3, marginBottom: 10 }}>Searching history…</p>
+            )}
+            {searchResults.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 20px", color: text3 }}>
+                <p style={{ fontSize: 15, margin: 0 }}>No stories match &ldquo;{query}&rdquo;.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {searchResults.map((item) => (
+                  <div key={item.id + item._type} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {item.title}
+                      </p>
+                      <p style={{ fontSize: 12, color: text3, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ display: "inline-flex", padding: "1px 7px", borderRadius: 999, fontSize: 10, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", background: item._type === "saved" ? `color-mix(in srgb, ${accent} 14%, transparent)` : "color-mix(in srgb, var(--lp-text3) 12%, transparent)", color: item._type === "saved" ? accent : text3 }}>
+                          {item._type === "saved" ? "Saved" : "History"}
+                        </span>
+                        <span>{item.source_url ? (() => { try { return new URL(item.source_url).hostname; } catch { return item.source; } })() : item.source}</span>
+                        <span>·</span>
+                        <span>{timeAgo(item._ts)}</span>
+                      </p>
+                    </div>
+                    <a href={`/stories/${item.id}`} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 9, background: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent, textDecoration: "none", fontSize: 16, flexShrink: 0 }}>
+                      →
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── SAVED tab ── */}
-        {activeTab === "saved" && (
+        {!searchMode && activeTab === "saved" && (
           <>
-            {items.length === 0 ? (
+            {items.length === 0 && !searchMode ? (
               <div style={{ textAlign: "center", padding: "60px 20px", color: text3 }}>
                 <div style={{ fontSize: 40, marginBottom: 14 }}>📚</div>
                 <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>Library is empty</p>
@@ -345,7 +400,7 @@ export default function SpacePage() {
         )}
 
         {/* ── HISTORY tab ── */}
-        {activeTab === "history" && (
+        {!searchMode && activeTab === "history" && (
           <div>
             {!historyLoaded ? (
               <div style={{ textAlign: "center", padding: "48px 0" }}>
@@ -358,9 +413,13 @@ export default function SpacePage() {
                 <p style={{ ...SG, fontSize: 16, fontWeight: 600, color: text, margin: "0 0 8px" }}>No history yet</p>
                 <p style={{ fontSize: 14, color: text2, margin: 0, lineHeight: 1.6 }}>Stories you read will appear here.</p>
               </div>
+            ) : filteredHistory.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", color: text3 }}>
+                <p style={{ fontSize: 15, margin: 0 }}>No history matches &ldquo;{query}&rdquo;.</p>
+              </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {history.map((item) => (
+                {filteredHistory.map((item) => (
                   <div key={item.id} style={{ background: "var(--lp-glass-surface)", backdropFilter: "var(--lp-glass-blur-card)", WebkitBackdropFilter: "var(--lp-glass-blur-card)", border: "1px solid var(--lp-glass-border)", borderRadius: 16, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 12px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.45)" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ ...SG, fontSize: 14, fontWeight: 600, color: text, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
