@@ -114,27 +114,71 @@ function extractYouTubeId(url: string): string | null {
   return null;
 }
 
+function cleanYouTubeJinaText(raw: string): string {
+  // Strip markdown links that are just YouTube/Google navigation
+  let text = raw
+    .replace(/\[([^\]]*)\]\(https?:\/\/(?:www\.)?(?:youtube|accounts\.google|support\.google)\.com[^)]*\)/g, "$1")
+    .replace(/!\[.*?\]\([^)]*\)/g, "")
+    .replace(/\[Sign in\].*?\n/gi, "")
+    .replace(/Transcript Follow along.*?\n/gi, "")
+    .replace(/Show transcript.*?\n/gi, "");
+
+  // Extract transcript section (timestamped lines)
+  const transcriptMatch = text.match(/##\s*Transcript[\s\S]*?\n((?:(?:\d+:\d+|\d+\.\d+)\s+[^\n]+\n?)+)/i);
+  const transcript = transcriptMatch?.[1]?.replace(/\d+:\d+\s*/g, "").replace(/\n+/g, " ").trim() ?? "";
+
+  // Extract description (everything between channel info and Comments section)
+  const descMatch = text.match(/(?:##\s*Description\s*\n)([\s\S]+?)(?=\n##|$)/i);
+  const rawDesc = descMatch?.[1]?.trim() ?? "";
+  const description = rawDesc.includes("No description") ? "" : rawDesc.slice(0, 1000);
+
+  // Extract video title (clean h1/h2 near top)
+  const titleMatch = text.match(/^#\s+(.+?)(?:\s*-\s*YouTube)?\s*$/m);
+  const videoTitle = titleMatch?.[1]?.trim() ?? "";
+
+  // Extract comments section (limited — gives Claude human reactions to work with)
+  const commentsMatch = text.match(/##\s+\d+\s+[Cc]omments?\s*\n([\s\S]+?)(?=\n##|$)/);
+  const comments = commentsMatch?.[1]
+    ?.split(/###\s+@/)
+    .slice(1, 8)
+    .map(c => c.replace(/\[.*?\]\(.*?\)/g, "").replace(/Like \d+.*$/m, "").split("\n")[0].trim())
+    .filter(c => c.length > 20)
+    .join("\n") ?? "";
+
+  const parts: string[] = [];
+  if (videoTitle) parts.push(`Video: ${videoTitle}`);
+  if (transcript.length > 60) parts.push(`Transcript:\n${transcript.slice(0, 3000)}`);
+  if (description.length > 30) parts.push(`Description:\n${description}`);
+  if (comments.length > 80 && transcript.length < 100) parts.push(`Viewer reactions:\n${comments}`);
+
+  return parts.join("\n\n");
+}
+
 async function handleYouTube(videoId: string, originalUrl: string) {
   const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
   const [jinaResult, ogImage] = await Promise.all([
     fetchViaJina(watchUrl),
-    fetchOgImage(`https://www.youtube.com/watch?v=${videoId}`),
+    fetchOgImage(watchUrl),
   ]);
 
-  if (jinaResult && jinaResult.text.length >= 60) {
+  const rawText = jinaResult?.text ?? "";
+  const cleaned = cleanYouTubeJinaText(rawText);
+  const title = jinaResult?.title?.replace(/\s*-\s*YouTube$/i, "").trim() ?? "YouTube Video";
+
+  if (cleaned.length >= 80) {
     return Response.json({
-      text: jinaResult.text,
-      title: jinaResult.title,
+      text: cleaned,
+      title,
       source: "YouTube",
       sourceUrl: originalUrl,
-      imageUrl: ogImage ?? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      imageUrl: ogImage ?? thumbUrl,
     });
   }
 
-  // Jina couldn't get transcript (private video, no captions, etc.)
   return Response.json(
-    { error: "Couldn't extract transcript from this video. Make sure it has captions enabled, or paste the transcript text directly." },
+    { error: "Couldn't extract enough content from this video. Try a video with captions, or paste the transcript directly." },
     { status: 422 }
   );
 }

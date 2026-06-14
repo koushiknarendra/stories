@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
   let cards;
   let category: string | null = null;
+  let lastRaw = "";
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       const message = await client.messages.create({
@@ -24,15 +25,20 @@ export async function POST(request: Request) {
         messages: [{ role: "user", content: prompt }],
       });
 
-      const raw = message.content[0].type === "text" ? message.content[0].text : "";
-      const match = raw.match(/\{[\s\S]*\}/);
+      lastRaw = message.content[0].type === "text" ? message.content[0].text : "";
+      // Try to find JSON object first, then JSON array (discover route uses array)
+      const match = lastRaw.match(/\{[\s\S]*\}/) ?? lastRaw.match(/\[[\s\S]*\]/);
       if (!match) continue;
 
       try {
         const parsed = JSON.parse(match[0]);
-        cards = parsed.cards;
-        category = parsed.category ?? null;
-        break;
+        if (Array.isArray(parsed)) {
+          cards = parsed;
+        } else {
+          cards = parsed.cards;
+          category = parsed.category ?? null;
+        }
+        if (cards?.length) break;
       } catch {
         continue;
       }
@@ -42,8 +48,12 @@ export async function POST(request: Request) {
     return Response.json({ error: msg }, { status: 500 });
   }
 
-  if (!cards) {
-    return Response.json({ error: "Failed to generate story cards" }, { status: 500 });
+  if (!cards?.length) {
+    // Surface what Claude actually said to help diagnose content issues
+    const hint = lastRaw.length > 0
+      ? "Content may be too short, non-textual, or in an unsupported language."
+      : "No response from Claude.";
+    return Response.json({ error: `Failed to generate story cards. ${hint}` }, { status: 500 });
   }
 
   return Response.json({ cards, title, source, sourceUrl, imageUrl: imageUrl ?? null, category });
