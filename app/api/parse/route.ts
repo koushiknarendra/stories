@@ -115,8 +115,7 @@ function extractYouTubeId(url: string): string | null {
 }
 
 function cleanYouTubeJinaText(raw: string): string {
-  // Strip all images FIRST (including emoji images like ![Image N: 💀](youtube.com/...))
-  // then replace remaining YouTube/Google nav links with their text
+  // Strip all images FIRST, then replace YouTube/Google nav links with their text
   const text = raw
     .replace(/!\[.*?\]\([^)]*\)/g, "")
     .replace(/\[([^\]]*)\]\(https?:\/\/(?:www\.)?(?:youtube|accounts\.google|support\.google)\.com[^)]*\)/g, "$1");
@@ -125,51 +124,40 @@ function cleanYouTubeJinaText(raw: string): string {
   const titleMatch = raw.match(/^Title:\s*(.+)/m);
   const videoTitle = titleMatch?.[1]?.trim().replace(/\s*-\s*YouTube$/i, "").trim() ?? "";
 
-  // Extract transcript section (timestamped lines like "0:05 text here")
+  // Extract transcript (timestamped lines like "0:05 text here")
   const transcriptMatch = text.match(/##\s*Transcript[\s\S]*?\n((?:(?:\d+:\d+|\d+\.\d+)\s+[^\n]+\n?)+)/i);
   const transcript = transcriptMatch?.[1]?.replace(/\d+:\d+\s*/g, "").replace(/\n+/g, " ").trim() ?? "";
 
-  // Extract description — stop at the first metadata line (view counts, likes, "Auto-dubbed" etc.)
-  const descMatch = text.match(/##\s*Description\s*\n([\s\S]+?)(?=\n##|$)/i);
-  const rawDescLines = (descMatch?.[1] ?? "").split(/\n/).map(l => l.trim());
+  // Extract description — two strategies:
+  // 1. Explicit ## Description section (stop at first metadata line)
+  // 2. Fallback: inline text immediately after "N views • date" metadata line
   const metaStop = /^(\d[\d,.]+K?M?B?\s*(likes?|views?|subscribers?)?$|…+$|\d+[hd]\s*ago$|auto-dubbed$|audio tracks|how this was made|transcript$|follow along|show transcript|learn more$)/i;
-  const descLines: string[] = [];
-  for (const line of rawDescLines) {
-    if (metaStop.test(line)) break;
-    if (line.length > 0 && line !== videoTitle) descLines.push(line);
-  }
-  const description = descLines.join("\n").trim().slice(0, 800);
+  let description = "";
 
-  // Extract comments — after link replacement format is "### @username" per block.
-  // Split on that, skip the username (lines[0]) and timestamp (lines[1]), take comment text.
-  const commentsMatch = text.match(/##\s+\d+\s+[Cc]omments?\s*\n([\s\S]+?)(?=\n##\s+[A-Za-z]|$)/i);
-  const junkLine = /^(show less|hide|read more|like$|dislike|repl(y|ies)|❤ by|sort|add a comment|·$|\d+$)/i;
-  const commentTexts = (commentsMatch?.[1] ?? "")
-    .split(/###\s+@/)
-    .slice(1, 30)
-    .map(block => {
-      // block: "USERNAME\n\nN hours ago\n\nComment text\n\nShow less...\n..."
-      const lines = block.split(/\n+/).map(l => l.trim()).filter(l => l.length > 0);
-      // Skip username (lines[0]) and timestamp (lines[1]), grab substantive content
-      return lines
-        .slice(2)
-        .filter(l => !junkLine.test(l) && l.length > 10)
-        .slice(0, 2)
-        .join(" ")
-        .trim();
-    })
-    .filter(c => c.length > 25);
-  // Sort longer comments first (more substantive), take top 7
-  const comments = commentTexts
-    .sort((a, b) => b.length - a.length)
-    .slice(0, 7)
-    .join("\n");
+  const descSectionMatch = text.match(/##\s*Description\s*\n([\s\S]+?)(?=\n##|$)/i);
+  if (descSectionMatch) {
+    const lines: string[] = [];
+    for (const line of descSectionMatch[1].split(/\n/).map(l => l.trim())) {
+      if (metaStop.test(line)) break;
+      if (line.length > 0 && line !== videoTitle) lines.push(line);
+    }
+    description = lines.join("\n").trim().slice(0, 800);
+  }
+
+  if (!description) {
+    // Fallback: grab text after "N views • date" line (inline description pattern)
+    const viewsMeta = text.match(/[\d,.][\d,.]*\s+views[^•\n]*•[^\n]*\n+([^\n]{40,})/i);
+    if (viewsMeta) {
+      description = viewsMeta[1]
+        .replace(/…+.*$/, "").replace(/\.\.\.more\s*$/i, "")
+        .trim().slice(0, 800);
+    }
+  }
 
   const parts: string[] = [];
   if (videoTitle) parts.push(`Video: ${videoTitle}`);
   if (transcript.length > 60) parts.push(`Transcript:\n${transcript.slice(0, 3000)}`);
-  if (description.length > 50) parts.push(`Description:\n${description}`);
-  if (comments.length > 60 && transcript.length < 100) parts.push(`Viewer discussion:\n${comments}`);
+  if (description.length > 40 && description !== videoTitle) parts.push(`Description:\n${description}`);
 
   return parts.join("\n\n");
 }
@@ -189,7 +177,7 @@ async function fetchYouTubeContent(videoId: string): Promise<{ title: string; te
     const cleaned = cleanYouTubeJinaText(raw);
     // Require meaningful content beyond just the title line
     const contentBeyondTitle = cleaned.replace(`Video: ${title}`, "").trim();
-    return contentBeyondTitle.length >= 120 ? { title, text: cleaned } : null;
+    return contentBeyondTitle.length >= 80 ? { title, text: cleaned } : null;
   } catch {
     return null;
   }

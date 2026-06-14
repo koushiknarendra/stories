@@ -14,49 +14,75 @@ const QUOTES = [
   "A book is a dream that you hold in your hands.",
 ];
 
-const TRACK = 10;
-const TAIL = 4;
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
-const TAIL_OPACITY = [1, 0.55, 0.28, 0.12];
 
-function Snake() {
-  // body[0] = head position, body[1..3] = tail positions
-  const [body, setBody] = useState<number[]>([0, -1, -2, -3]);
-  const dirRef = useRef(1);
+const DOT_COUNT = 8;
+const DOT_SPACING = 16; // px between dots
+const ANIM_DURATION = 1.6; // seconds for one dot to travel full width
+
+function PacmanLoader() {
+  const [angle, setAngle] = useState(25);
+  const opening = useRef(false);
 
   useEffect(() => {
     const t = setInterval(() => {
-      setBody(prev => {
-        const head = prev[0];
-        let next = head + dirRef.current;
-        if (next >= TRACK) { dirRef.current = -1; next = head - 1; }
-        else if (next < 0) { dirRef.current = 1; next = head + 1; }
-        return [next, ...prev.slice(0, TAIL - 1)];
+      setAngle(a => {
+        const next = opening.current ? a + 5 : a - 5;
+        if (next >= 28) { opening.current = false; return 28; }
+        if (next <= 4)  { opening.current = true;  return 4; }
+        return next;
       });
-    }, 110);
+    }, 45);
     return () => clearInterval(t);
   }, []);
 
+  const r = 11, cx = 13, cy = 13;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const x1 = cx + r * Math.cos(toRad(-angle));
+  const y1 = cy + r * Math.sin(toRad(-angle));
+  const x2 = cx + r * Math.cos(toRad(angle));
+  const y2 = cy + r * Math.sin(toRad(angle));
+  const largeArc = (360 - angle * 2) > 180 ? 1 : 0;
+
+  const trackWidth = DOT_COUNT * DOT_SPACING;
+
   return (
-    <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-      {Array.from({ length: TRACK }).map((_, i) => {
-        const bi = body.indexOf(i);
-        const inSnake = bi >= 0;
-        const isHead = bi === 0;
-        return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {/* Pacman */}
+      <svg width={26} height={26} viewBox="0 0 26 26" style={{ flexShrink: 0, overflow: "visible" }}>
+        <path
+          d={`M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`}
+          fill="var(--lp-accent)"
+        />
+      </svg>
+
+      {/* Dot track — dots flow right → left, eaten by Pacman */}
+      <div style={{ position: "relative", width: trackWidth, height: 26, overflow: "hidden" }}>
+        <style>{`
+          @keyframes dotRTL {
+            0%   { transform: translateX(${trackWidth}px); opacity: 0; }
+            8%   { opacity: 1; }
+            88%  { opacity: 1; }
+            100% { transform: translateX(-${DOT_SPACING}px); opacity: 0; }
+          }
+        `}</style>
+        {Array.from({ length: DOT_COUNT }).map((_, i) => (
           <div
             key={i}
             style={{
-              width: isHead ? 14 : inSnake ? 10 : 8,
-              height: isHead ? 14 : inSnake ? 10 : 8,
+              position: "absolute",
+              left: 0,
+              top: "50%",
+              marginTop: -4,
+              width: 8,
+              height: 8,
               borderRadius: "50%",
-              background: inSnake ? "var(--lp-accent)" : "rgba(128,128,128,0.2)",
-              opacity: inSnake ? (TAIL_OPACITY[bi] ?? 0.1) : 1,
-              transition: "width 0.08s ease, height 0.08s ease, opacity 0.08s ease",
+              background: "color-mix(in srgb, var(--lp-accent) 45%, var(--lp-text3))",
+              animation: `dotRTL ${ANIM_DURATION}s ${(-i * (ANIM_DURATION / DOT_COUNT)).toFixed(2)}s linear infinite`,
             }}
           />
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
@@ -75,8 +101,10 @@ export default function LoadingAnimation({ label = "Turning article into story c
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 28, padding: "24px 36px" }}>
-      <Snake />
-      <div style={{ textAlign: "center", width: "100%", maxWidth: 320 }}>
+      <PacmanLoader />
+
+      {/* Fixed-height quote container prevents layout shift when text changes */}
+      <div style={{ textAlign: "center", width: "100%", maxWidth: 320, minHeight: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <AnimatePresence mode="wait">
           <motion.p
             key={fadeKey}
@@ -90,6 +118,7 @@ export default function LoadingAnimation({ label = "Turning article into story c
           </motion.p>
         </AnimatePresence>
       </div>
+
       <p style={{ fontSize: 13, color: "var(--lp-text3)", margin: 0, letterSpacing: ".02em" }}>
         {label}
       </p>
