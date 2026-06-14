@@ -67,23 +67,17 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
     } catch { /* keep 5 */ }
   }, []);
 
-  // Show first-time navigation guide
+  // Show navigation guide every new browser session (sessionStorage resets on tab/window close)
   useEffect(() => {
     try {
-      if (!localStorage.getItem("storis_guide_shown")) setShowGuide(true);
+      if (!sessionStorage.getItem("storis_guide_shown")) setShowGuide(true);
     } catch {}
   }, []);
 
   function dismissGuide() {
     setShowGuide(false);
-    try { localStorage.setItem("storis_guide_shown", "1"); } catch {}
+    try { sessionStorage.setItem("storis_guide_shown", "1"); } catch {}
   }
-
-  useEffect(() => {
-    if (!showGuide) return;
-    const t = setTimeout(dismissGuide, 5000);
-    return () => clearTimeout(t);
-  }, [showGuide]);
 
   // Record streak once when reading a story by ID
   useEffect(() => {
@@ -289,8 +283,8 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
                 </span>
               </div>
 
-              {/* Article title */}
-              <p style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.82)", margin: "0 0 7px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 2px 12px rgba(0,0,0,0.8)" }}>
+              {/* Article title — single line, truncated */}
+              <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.7)", margin: "0 0 7px", lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 2px 12px rgba(0,0,0,0.8)" }}>
                 {set.title}
               </p>
 
@@ -378,7 +372,7 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
           </div>
         </motion.div>
 
-        {/* Guide overlay — shows once on very first story read */}
+        {/* Guide overlay — shows every session, tap anywhere to dismiss */}
         {showGuide && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -388,52 +382,40 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
               position: "absolute",
               inset: 0,
               zIndex: 50,
-              background: "rgba(0,0,0,0.74)",
-              backdropFilter: "blur(3px)",
-              WebkitBackdropFilter: "blur(3px)",
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 28,
-              padding: "0 28px",
               cursor: "pointer",
             }}
           >
-            {/* Left / Right tap zones */}
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 32, marginBottom: 6 }}>←</div>
-                <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>Previous card</span>
+            {/* Left tap zone */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "2px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
               </div>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width={22} height={22} viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)"><rect x={5} y={2} width={14} height={20} rx={2.5}/></svg>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 32, marginBottom: 6 }}>→</div>
-                <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>Next card</span>
+              <span style={{ ...SG, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: ".02em" }}>Previous</span>
+            </div>
+
+            {/* Center divider with phone icon */}
+            <div style={{ width: 1, background: "rgba(255,255,255,0.15)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ position: "absolute", background: "rgba(0,0,0,0.6)", borderRadius: 14, padding: "8px 10px", border: "1px solid rgba(255,255,255,0.15)" }}>
+                <svg width={18} height={22} viewBox="0 0 18 22" fill="none">
+                  <rect x={1} y={1} width={16} height={20} rx={3} stroke="rgba(255,255,255,0.6)" strokeWidth={1.5}/>
+                  <circle cx={9} cy={18} r={1} fill="rgba(255,255,255,0.4)"/>
+                </svg>
               </div>
             </div>
 
-            {/* Swipe hints */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)", borderRadius: 14, padding: "12px 16px" }}>
-                <svg width={18} height={18} viewBox="0 0 24 24" fill="#34D399"><path d="M6 3h12a2 2 0 0 1 2 2v16l-8-4.5L4 21V5a2 2 0 0 1 2-2z"/></svg>
-                <div>
-                  <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "#34D399" }}>Swipe right or tap 🔖</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Save story to your library</p>
-                </div>
+            {/* Right tap zone */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "2px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,107,129,0.08)", border: "1px solid rgba(255,107,129,0.2)", borderRadius: 14, padding: "12px 16px" }}>
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#FF6B81" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                <div>
-                  <p style={{ ...SG, margin: 0, fontSize: 13, fontWeight: 700, color: "#FF6B81" }}>Swipe left or tap ✕</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Skip to the next story</p>
-                </div>
-              </div>
+              <span style={{ ...SG, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: ".02em" }}>Next</span>
             </div>
 
-            <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>Tap anywhere to dismiss</span>
+            {/* Bottom hint */}
+            <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+              <span style={{ ...SG, fontSize: 12, color: "rgba(255,255,255,0.45)", background: "rgba(0,0,0,0.4)", borderRadius: 99, padding: "5px 14px", backdropFilter: "blur(6px)" }}>Tap anywhere to start reading</span>
+            </div>
           </motion.div>
         )}
 
@@ -446,17 +428,19 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
             <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Share button — always shown, uses per-card URL */}
-            <button
-              onClick={shareStory}
-              aria-label="Share"
-              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}
-            >
-              {copied
-                ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
-                : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              }
-            </button>
+            {/* Share — only when story exists in DB (has a storySetId) */}
+            {storySetId && (
+              <button
+                onClick={shareStory}
+                aria-label="Share"
+                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", color: copied ? "#34D399" : "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)", transition: "color .2s" }}
+              >
+                {copied
+                  ? <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  : <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                }
+              </button>
+            )}
             {set.sourceUrl && (
               <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer"
                 style={{ ...SG, color: "rgba(255,255,255,0.92)", fontSize: 11, textDecoration: "none", fontWeight: 700, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.12)", padding: "6px 11px", borderRadius: 20, backdropFilter: "var(--lp-glass-blur)", WebkitBackdropFilter: "var(--lp-glass-blur)" }}>
