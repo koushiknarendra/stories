@@ -6,7 +6,9 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const interests = await getUserInterests(userId);
-  return NextResponse.json(interests);
+  return NextResponse.json(interests, {
+    headers: { "Cache-Control": "private, max-age=3600, stale-while-revalidate=86400" },
+  });
 }
 
 export async function POST(req: NextRequest) {

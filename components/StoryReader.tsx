@@ -29,7 +29,7 @@ const GRADIENTS = [
   "linear-gradient(160deg, #F472B6 0%, #5C0A34 100%)",
 ];
 
-const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
+const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
 interface Props {
   set: StorySet;

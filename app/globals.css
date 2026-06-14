@@ -62,10 +62,13 @@ html.dark {
 }
 
 body {
-  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-hanken, 'Hanken Grotesk', system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* Suppress scrollbar in scroll-snap feed containers */
+.feed-snap::-webkit-scrollbar { display: none; }
 
 /* Prevent iOS Safari auto-zoom on focus — inline styles must not override this */
 input, textarea, select {

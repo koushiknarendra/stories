@@ -8,7 +8,9 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const sets = await listStorySets(userId);
-  return Response.json(sets);
+  return Response.json(sets, {
+    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=120" },
+  });
 }
 
 // Called when user taps Save in the story reader (guest flow → logged-in save)

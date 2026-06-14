@@ -6,7 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import InterestsOnboarding from "@/components/InterestsOnboarding";
 import { CATEGORIES } from "@/lib/categories";
 
-const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
+const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
 interface StoryItem {
   id: string;
@@ -201,16 +201,16 @@ export default function ForYouPage() {
     <div style={{ position: "relative", height: "100dvh", background: "var(--lp-bg)" }}>
       <div
         ref={containerRef}
+        className="feed-snap"
         style={{
           height: "100dvh",
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
           scrollbarWidth: "none",
+          // webkit scrollbar handled via .feed-snap in globals.css
           WebkitOverflowScrolling: "touch",
         }}
       >
-        <style>{`::-webkit-scrollbar{display:none}`}</style>
-
         {loading ? (
           <>
             <SkeletonSlide />

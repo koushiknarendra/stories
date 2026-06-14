@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORIES } from "@/lib/categories";
 
-const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
+const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
 interface StoryItem {
   id: string;

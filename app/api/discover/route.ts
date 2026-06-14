@@ -19,5 +19,7 @@ export async function GET(request: Request) {
   if (!categories.length) return Response.json({ stories: [] });
 
   const stories = await getOrGenerateDiscoverStories(categories);
-  return Response.json({ stories });
+  return Response.json({ stories }, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=3600" },
+  });
 }

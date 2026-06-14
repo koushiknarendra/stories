@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const SG: React.CSSProperties = { fontFamily: "'Space Grotesk', sans-serif" };
+const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 type Tab = "link" | "text" | "file";
 
 interface Props { open: boolean; onClose: () => void; }
