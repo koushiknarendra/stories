@@ -400,8 +400,6 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
               <span style={{ ...SG, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: ".02em" }}>Previous</span>
             </div>
 
-            {/* Center divider */}
-            <div style={{ width: 1, background: "rgba(255,255,255,0.15)" }} />
 
             {/* Right tap zone */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)" }}>
@@ -439,7 +437,7 @@ export default function StoryReader({ set, storySetId, initialCardIndex = 0 }: P
             </button>
             {shareHint && (
               <div style={{ position: "absolute", top: 42, right: 0, background: "rgba(0,0,0,0.82)", color: "rgba(255,255,255,0.9)", fontSize: 11.5, fontWeight: 600, borderRadius: 10, padding: "7px 11px", whiteSpace: "nowrap", pointerEvents: "none", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                Add to library to share
+                {isLoggedIn ? "Getting share link…" : "Sign in to share"}
               </div>
             )}
             {set.sourceUrl && (

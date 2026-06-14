@@ -6,34 +6,15 @@ import { useUser, SignInButton } from "@clerk/nextjs";
 import { saveCurrent } from "@/lib/storage";
 import { useTheme } from "@/components/ThemeProvider";
 import LandingCardStack from "@/components/LandingCardStack";
+import LoadingAnimation from "@/components/LoadingAnimation";
 import type { StorySet } from "@/lib/types";
 
 // ─── Loading screen ───────────────────────────────────────────────────────────
 
-const STATUS = ["Reading the article…", "Finding the key ideas…", "Crafting your story cards…", "Almost there…"];
-
 function LoadingScreen() {
-  const [mi, setMi] = useState(0);
-  useEffect(() => {
-    const ivs = [3000, 4000, 5000];
-    let s = 0;
-    function tick() { s++; setMi(Math.min(s, STATUS.length - 1)); if (s < STATUS.length - 1) setTimeout(tick, ivs[s] ?? 4000); }
-    const t = setTimeout(tick, ivs[0]);
-    return () => clearTimeout(t);
-  }, []);
   return (
     <div style={{ minHeight: "100vh", background: "var(--lp-bg)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
-      <div style={{ width: "100%", maxWidth: 440 }}>
-        <p style={{ textAlign: "center", color: "var(--lp-text)", fontSize: 14, fontWeight: 600, marginBottom: 28 }}>{STATUS[mi]}</p>
-        {[1, 0.6, 0.3].map((op, i) => (
-          <div key={i} style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)", borderRadius: "var(--lp-radius-lg)", padding: 20, marginBottom: 12, opacity: op }}>
-            <div style={{ height: 9, background: "var(--lp-surface2)", borderRadius: 999, width: "30%", marginBottom: 14 }} />
-            <div style={{ height: 16, background: "var(--lp-border)", borderRadius: 8, width: "70%", marginBottom: 8 }} />
-            <div style={{ height: 16, background: "var(--lp-border)", borderRadius: 8, width: "50%", marginBottom: 18 }} />
-            {[1, 0.8, 0.6].map((w, j) => <div key={j} style={{ height: 10, background: "var(--lp-surface2)", borderRadius: 6, width: `${w * 100}%`, marginBottom: 7 }} />)}
-          </div>
-        ))}
-      </div>
+      <LoadingAnimation />
     </div>
   );
 }
