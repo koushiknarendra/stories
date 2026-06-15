@@ -134,13 +134,9 @@ function AdSlot() {
       onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 28px -6px rgba(0,0,0,0.18)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px -6px rgba(0,0,0,0.12)"; }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: ad.accent }}>{ad.eyebrow}</span>
-        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lp-text3)" }}>{ad.label}</span>
-      </div>
+      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lp-text3)", display: "block", marginBottom: 8 }}>{ad.label}</span>
       <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 6px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>{ad.headline}</p>
-      <p style={{ fontSize: 12.5, color: "var(--lp-text2)", margin: "0 0 12px", lineHeight: 1.55 }}>{ad.body}</p>
-      <span style={{ ...SG, fontSize: 12, fontWeight: 700, color: ad.accent }}>{ad.cta}</span>
+      <p style={{ fontSize: 12.5, color: "var(--lp-text2)", margin: 0, lineHeight: 1.55 }}>{ad.body}</p>
     </a>
   );
 }
