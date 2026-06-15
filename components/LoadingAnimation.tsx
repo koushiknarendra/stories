@@ -9,7 +9,6 @@ const AD_SLOTS = [
     label: "Sponsored",
     headline: "TranZact: Become the AI-Run Factory",
     body: "AI runs your Sales, Purchase, Inventory and Production, and your team manage the AI. Run by AI, managed by people, regardless of size.",
-    href: "https://tranzact.in",
     accent: "#7C5CFF",
   },
 ];
@@ -92,10 +91,7 @@ function AdSlot() {
   const ad = AD_SLOTS[idx];
 
   return (
-    <a
-      href={ad.href}
-      target="_blank"
-      rel="noopener noreferrer sponsored"
+    <div
       style={{
         display: "block",
         width: "100%",
@@ -106,18 +102,14 @@ function AdSlot() {
         backdropFilter: "var(--lp-glass-blur-card)",
         WebkitBackdropFilter: "var(--lp-glass-blur-card)",
         border: "1px solid var(--lp-glass-border)",
-        textDecoration: "none",
         boxShadow: "var(--lp-shadow), inset 0 1px 0 rgba(255,255,255,0.1)",
-        transition: "transform .15s, box-shadow .15s",
         boxSizing: "border-box",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 28px -6px rgba(0,0,0,0.18)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px -6px rgba(0,0,0,0.12)"; }}
     >
       <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lp-text3)", display: "block", marginBottom: 8 }}>{ad.label}</span>
       <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 6px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>{ad.headline}</p>
       <p style={{ fontSize: 12.5, color: "var(--lp-text2)", margin: 0, lineHeight: 1.55 }}>{ad.body}</p>
-    </a>
+    </div>
   );
 }
 
