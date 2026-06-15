@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import CollectionPicker from "@/components/CollectionPicker";
 import type { StorySet } from "@/lib/types";
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
@@ -16,9 +17,20 @@ function extractVideoId(url: string | undefined): string | null {
   } catch { return null; }
 }
 
-export default function ShortPlayer({ set, storySetId }: { set: StorySet; storySetId?: string }) {
+interface Props {
+  set: StorySet;
+  storySetId?: string;
+  // Only provided on the /stories (new short) page — undefined on /stories/[id] (shared link)
+  onSave?: (collectionId?: string) => Promise<void>;
+  saved?: boolean;
+}
+
+export default function ShortPlayer({ set, storySetId, onSave, saved = false }: Props) {
   const { isSignedIn } = useUser();
+  const [showPicker, setShowPicker] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+
   const videoId = extractVideoId(set.sourceUrl);
   const shareUrl = storySetId
     ? `${typeof window !== "undefined" ? window.location.origin : "https://storis.in"}/stories/${storySetId}`
@@ -33,6 +45,16 @@ export default function ShortPlayer({ set, storySetId }: { set: StorySet; storyS
       setTimeout(() => setCopied(false), 2000);
     }
   }
+
+  async function handleSave(collectionId?: string) {
+    if (onSave) {
+      await onSave(collectionId);
+      setJustSaved(true);
+    }
+    setShowPicker(false);
+  }
+
+  const isSaved = saved || justSaved;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: "var(--lp-text)", display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>
@@ -57,9 +79,9 @@ export default function ShortPlayer({ set, storySetId }: { set: StorySet; storyS
       </nav>
 
       {/* Content */}
-      <div style={{ width: "100%", maxWidth: 480, padding: "20px 16px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+      <div style={{ width: "100%", maxWidth: 480, padding: "20px 16px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
 
-        {/* Embedded Short */}
+        {/* Embedded Short — 9:16 */}
         {videoId ? (
           <div style={{ width: "100%", maxWidth: 340, borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 40px -8px rgba(0,0,0,0.28)", aspectRatio: "9/16", background: "#000", position: "relative" }}>
             <iframe
@@ -78,22 +100,47 @@ export default function ShortPlayer({ set, storySetId }: { set: StorySet; storyS
 
         {/* Title */}
         <div style={{ width: "100%", textAlign: "center" }}>
-          <h1 style={{ ...SG, fontSize: 18, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 6px", lineHeight: 1.3, letterSpacing: "-0.02em" }}>{set.title}</h1>
+          <h1 style={{ ...SG, fontSize: 17, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 5px", lineHeight: 1.3, letterSpacing: "-0.02em" }}>{set.title}</h1>
           {set.sourceUrl && (
-            <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "var(--lp-accent)", textDecoration: "none" }}>
+            <a href={set.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "var(--lp-text3)", textDecoration: "none" }}>
               Watch on YouTube ↗
             </a>
           )}
         </div>
 
-        {/* Sign-in nudge for guests */}
-        {!isSignedIn && (
-          <div style={{ width: "100%", background: "var(--lp-glass-surface)", border: "1px solid var(--lp-glass-border)", borderRadius: 14, padding: "14px 16px", textAlign: "center" }}>
-            <p style={{ ...SG, fontSize: 13, color: "var(--lp-text2)", margin: "0 0 10px" }}>Sign in to save this Short to your library</p>
-            <a href="/sign-in" style={{ display: "inline-block", padding: "8px 20px", borderRadius: 9, background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>Sign in</a>
-          </div>
+        {/* Save action — only shown when onSave is provided (new short, not shared view) */}
+        {onSave && (
+          isSaved ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#34D399", ...SG, fontSize: 14, fontWeight: 600 }}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Saved to your library
+            </div>
+          ) : isSignedIn ? (
+            <button
+              onClick={() => setShowPicker(true)}
+              style={{ display: "flex", alignItems: "center", gap: 9, padding: "13px 28px", borderRadius: 14, border: "none", background: "var(--lp-accent)", color: "#fff", ...SG, fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 20px -6px var(--lp-glow)", letterSpacing: "-0.01em" }}
+            >
+              <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              Save to Library
+            </button>
+          ) : (
+            <a
+              href="/sign-in"
+              style={{ display: "flex", alignItems: "center", gap: 9, padding: "13px 28px", borderRadius: 14, background: "var(--lp-accent)", color: "#fff", ...SG, fontSize: 15, fontWeight: 700, textDecoration: "none", boxShadow: "0 6px 20px -6px var(--lp-glow)" }}
+            >
+              Sign in to Save
+            </a>
+          )
         )}
       </div>
+
+      {/* Collection picker */}
+      <CollectionPicker
+        isOpen={showPicker}
+        onClose={() => setShowPicker(false)}
+        onSave={handleSave}
+        storyTitle={set.title}
+      />
     </div>
   );
 }

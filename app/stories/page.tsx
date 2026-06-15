@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { getCurrent } from "@/lib/storage";
@@ -13,7 +13,8 @@ export default function StoriesPage() {
   const { isLoaded, isSignedIn } = useUser();
   const [set, setSet] = useState<StorySet | null>(null);
   const [storySetId, setStorySetId] = useState<string | undefined>(undefined);
-  const saved = { current: false };
+  const [shortSaved, setShortSaved] = useState(false);
+  const savedRef = useRef(false);
 
   useEffect(() => {
     const data = getCurrent();
@@ -21,9 +22,11 @@ export default function StoriesPage() {
     setSet(data);
   }, [router]);
 
+  // Auto-save regular story sets (not Shorts — those are saved on user action)
   useEffect(() => {
-    if (!set || !isLoaded || !isSignedIn || saved.current) return;
-    saved.current = true;
+    if (!set || !isLoaded || !isSignedIn || savedRef.current) return;
+    if (set.source === "youtube-short") return;
+    savedRef.current = true;
     fetch("/api/space", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -34,7 +37,28 @@ export default function StoriesPage() {
       .catch(() => {});
   }, [set, isLoaded, isSignedIn]);
 
+  async function handleSaveShort(collectionId?: string) {
+    if (!set) return;
+    const res = await fetch("/api/space", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(set),
+    });
+    const data = await res.json();
+    if (collectionId) {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storySetId: set.id }),
+      }).catch(() => {});
+    }
+    if (data.ok || data.id) setStorySetId(set.id);
+    setShortSaved(true);
+  }
+
   if (!set) return null;
-  if (set.source === "youtube-short") return <ShortPlayer set={set} storySetId={storySetId} />;
+  if (set.source === "youtube-short") {
+    return <ShortPlayer set={set} storySetId={storySetId} onSave={handleSaveShort} saved={shortSaved} />;
+  }
   return <StoryReader set={set} storySetId={storySetId} />;
 }
