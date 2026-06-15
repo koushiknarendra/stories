@@ -149,7 +149,7 @@ function AdSlot() {
 
 export default function LoadingAnimation({ label = "Turning article into story cards…" }: { label?: string }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: "24px 36px" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: "24px 36px", width: "100%" }}>
       <PacmanLoader />
       <AdSlot />
       <p style={{ fontSize: 13, color: "var(--lp-text3)", margin: 0, letterSpacing: ".02em" }}>
