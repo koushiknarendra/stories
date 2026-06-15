@@ -7,30 +7,10 @@ import { useState, useEffect, useRef } from "react";
 const AD_SLOTS = [
   {
     label: "Sponsored",
-    eyebrow: "Recommended read",
-    headline: "Blinkist — Big ideas in 15 minutes",
-    body: "Over 7,000 nonfiction titles summarised. Try free for 7 days.",
-    cta: "Start free trial →",
-    href: "#",
+    headline: "TranZact: Become the AI-Run Factory",
+    body: "AI runs your Sales, Purchase, Inventory and Production, and your team manage the AI. Run by AI, managed by people, regardless of size.",
+    href: "https://tranzact.in",
     accent: "#7C5CFF",
-  },
-  {
-    label: "Sponsored",
-    eyebrow: "Tools for readers",
-    headline: "Readwise — Remember what you read",
-    body: "Automatically resurface your Kindle highlights, notes, and Storis cards.",
-    cta: "Try Readwise →",
-    href: "#",
-    accent: "#34D399",
-  },
-  {
-    label: "Sponsored",
-    eyebrow: "Level up your reading",
-    headline: "Audible — Listen while you commute",
-    body: "Turn your saved articles into listening time. 30-day free trial.",
-    cta: "Claim free trial →",
-    href: "#",
-    accent: "#FB923C",
   },
 ];
 
