@@ -1,17 +1,40 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
-const QUOTES = [
-  "Reading is to the mind what exercise is to the body.",
-  "The more that you read, the more things you will know.",
-  "A reader lives a thousand lives before he dies.",
-  "Today a reader, tomorrow a leader.",
-  "Books are a uniquely portable magic.",
-  "The reading of all good books is like conversation with the finest minds.",
-  "Not all readers are leaders, but all leaders are readers.",
-  "A book is a dream that you hold in your hands.",
+// ─── Ad slot ─────────────────────────────────────────────────────────────────
+// Replace AD_SLOTS content with real network tags (AdSense, Carbon, etc.) when ready.
+const AD_SLOTS = [
+  {
+    label: "Sponsored",
+    eyebrow: "Recommended read",
+    headline: "Blinkist — Big ideas in 15 minutes",
+    body: "Over 7,000 nonfiction titles summarised. Try free for 7 days.",
+    cta: "Start free trial →",
+    href: "#",
+    bg: "linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(96,165,250,0.08) 100%)",
+    border: "rgba(124,92,255,0.22)",
+  },
+  {
+    label: "Sponsored",
+    eyebrow: "Tools for readers",
+    headline: "Readwise — Remember what you read",
+    body: "Automatically resurface your Kindle highlights, notes, and Storis cards.",
+    cta: "Try Readwise →",
+    href: "#",
+    bg: "linear-gradient(135deg, rgba(52,211,153,0.10) 0%, rgba(96,165,250,0.07) 100%)",
+    border: "rgba(52,211,153,0.22)",
+  },
+  {
+    label: "Sponsored",
+    eyebrow: "Level up your reading",
+    headline: "Audible — Listen while you commute",
+    body: "Turn your saved articles into listening time. 30-day free trial.",
+    cta: "Claim free trial →",
+    href: "#",
+    bg: "linear-gradient(135deg, rgba(251,146,60,0.10) 0%, rgba(244,114,182,0.07) 100%)",
+    border: "rgba(251,146,60,0.22)",
+  },
 ];
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
@@ -87,38 +110,48 @@ function PacmanLoader() {
   );
 }
 
-export default function LoadingAnimation({ label = "Turning article into story cards…" }: { label?: string }) {
-  const [quoteIdx, setQuoteIdx] = useState(0);
-  const [fadeKey, setFadeKey] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setQuoteIdx(i => (i + 1) % QUOTES.length);
-      setFadeKey(k => k + 1);
-    }, 3200);
-    return () => clearInterval(t);
-  }, []);
+function AdSlot() {
+  const [idx] = useState(() => Math.floor(Math.random() * AD_SLOTS.length));
+  const ad = AD_SLOTS[idx];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 28, padding: "24px 36px" }}>
-      <PacmanLoader />
-
-      {/* Fixed-height quote container prevents layout shift when text changes */}
-      <div style={{ textAlign: "center", width: "100%", maxWidth: 320, minHeight: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={fadeKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.45 }}
-            style={{ ...SG, fontSize: 15, fontWeight: 600, color: "var(--lp-text)", lineHeight: 1.6, margin: 0, fontStyle: "italic" }}
-          >
-            &ldquo;{QUOTES[quoteIdx]}&rdquo;
-          </motion.p>
-        </AnimatePresence>
+    <a
+      href={ad.href}
+      target="_blank"
+      rel="noopener noreferrer sponsored"
+      style={{
+        display: "block",
+        width: "100%",
+        maxWidth: 320,
+        borderRadius: 16,
+        padding: "14px 16px",
+        background: ad.bg,
+        border: `1px solid ${ad.border}`,
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        textDecoration: "none",
+        boxShadow: "0 4px 24px -8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)",
+        transition: "transform .15s, box-shadow .15s",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px -8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 24px -8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)"; }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <span style={{ ...SG, fontSize: 9, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--lp-text3)", opacity: 0.7 }}>{ad.eyebrow}</span>
+        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lp-text3)", opacity: 0.5 }}>{ad.label}</span>
       </div>
+      <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 5px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>{ad.headline}</p>
+      <p style={{ fontSize: 12, color: "var(--lp-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>{ad.body}</p>
+      <span style={{ ...SG, fontSize: 12, fontWeight: 700, color: "var(--lp-accent)" }}>{ad.cta}</span>
+    </a>
+  );
+}
 
+export default function LoadingAnimation({ label = "Turning article into story cards…" }: { label?: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: "24px 36px" }}>
+      <PacmanLoader />
+      <AdSlot />
       <p style={{ fontSize: 13, color: "var(--lp-text3)", margin: 0, letterSpacing: ".02em" }}>
         {label}
       </p>
