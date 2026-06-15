@@ -198,6 +198,10 @@ input, textarea, select {
   .lp-nav {
     display: none !important;
   }
+
+  /* Landing page grids: collapse to single column inside the narrow content column */
+  .lp-vaul  { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .lp-steps { grid-template-columns: 1fr !important; gap: 24px !important; }
 }
 
 @keyframes floatY {
