@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import AddModal from "@/components/AddModal";
+import { useTheme } from "@/components/ThemeProvider";
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
@@ -18,9 +19,13 @@ const NAV_ITEMS = [
   { href: "/profile", label: "Profile", Icon: IconProfile },
 ];
 
+const IconSun  = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx={12} cy={12} r={4.2}/><path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>;
+const IconMoon = () => <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>;
+
 export default function DesktopNav() {
   const pathname = usePathname();
   const [addOpen, setAddOpen] = useState(false);
+  const { theme, toggle } = useTheme();
 
   return (
     <>
@@ -62,8 +67,28 @@ export default function DesktopNav() {
           })}
         </div>
 
+        {/* Theme toggle */}
+        <div style={{ padding: "0 8px 8px" }}>
+          <button
+            onClick={toggle}
+            aria-label="Toggle theme"
+            style={{
+              width: "100%", padding: "11px 14px", borderRadius: 10, border: "none",
+              background: "transparent", color: "var(--lp-text2)",
+              display: "flex", alignItems: "center", gap: 14,
+              cursor: "pointer", ...SG, fontSize: 15, fontWeight: 500,
+              transition: "background .12s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "color-mix(in srgb, var(--lp-text) 5%, transparent)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            {theme === "dark" ? <IconSun /> : <IconMoon />}
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+        </div>
+
         {/* Add story button */}
-        <div style={{ padding: "20px 8px 28px" }}>
+        <div style={{ padding: "0 8px 28px" }}>
           <button
             onClick={() => setAddOpen(true)}
             style={{
