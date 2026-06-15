@@ -199,9 +199,12 @@ input, textarea, select {
     display: none !important;
   }
 
-  /* Landing page grids: collapse to single column inside the narrow content column */
-  .lp-vaul  { grid-template-columns: 1fr !important; gap: 40px !important; }
-  .lp-steps { grid-template-columns: 1fr !important; gap: 24px !important; }
+  /* Landing page: match mobile layout inside the narrow content column */
+  .lp-hero  { padding: 72px 20px 60px !important; }
+  .lp-steps { grid-template-columns: 1fr !important; gap: 24px !important; padding: 56px 20px 64px !important; }
+  .lp-vaul  { grid-template-columns: 1fr !important; gap: 40px !important; padding: 64px 20px 80px !important; text-align: center !important; }
+  .lp-vaul-visual { display: flex !important; justify-content: center !important; }
+  .lp-footer { padding: 24px 20px !important; flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
 }
 
 @keyframes floatY {
