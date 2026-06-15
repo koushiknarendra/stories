@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Hanken_Grotesk, Space_Grotesk } from "next/font/google";
+import DesktopNav from "@/components/DesktopNav";
+import DesktopRightPanel from "@/components/DesktopRightPanel";
 import "./globals.css";
 
 const hanken = Hanken_Grotesk({
@@ -90,7 +92,11 @@ export default function RootLayout({
           </noscript>
           <ThemeProvider>
             <div className="lp-app-root">
-              {children}
+              <DesktopNav />
+              <div className="lp-content-col">
+                {children}
+              </div>
+              <DesktopRightPanel />
             </div>
           </ThemeProvider>
         </body>
