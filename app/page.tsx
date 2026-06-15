@@ -13,7 +13,7 @@ import type { StorySet } from "@/lib/types";
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--lp-bg)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
+    <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
       <LoadingAnimation />
     </div>
   );
