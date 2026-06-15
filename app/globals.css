@@ -129,9 +129,12 @@ input, textarea, select {
 }
 
 /* ─── Desktop shell: Instagram-style three-column ──────────────── */
+/* display:contents makes lp-content-col invisible to layout on mobile —
+   its children behave as direct children of lp-app-root, preserving
+   all existing mobile/tablet behaviour exactly. */
 .lp-desktop-nav   { display: none; }
 .lp-desktop-right { display: none; }
-.lp-content-col   { display: block; width: 100%; }
+.lp-content-col   { display: contents; }
 
 @media (min-width: 1024px) {
   body {
@@ -146,7 +149,7 @@ input, textarea, select {
     width: 100% !important;
     max-width: 1130px !important;
     box-shadow: none !important;
-    overflow-x: visible !important;
+    overflow-x: clip !important;
     position: static !important;
     display: flex !important;
     flex-direction: row;
@@ -169,11 +172,12 @@ input, textarea, select {
   }
 
   .lp-content-col {
+    display: block;   /* override contents */
     flex: 1;
     min-width: 0;
     min-height: 100dvh;
     border-right: 1px solid var(--lp-border);
-    background: var(--lp-page-bg);
+    overflow-x: hidden;
   }
 
   .lp-desktop-right {
