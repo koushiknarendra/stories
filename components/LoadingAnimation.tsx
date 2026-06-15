@@ -12,8 +12,7 @@ const AD_SLOTS = [
     body: "Over 7,000 nonfiction titles summarised. Try free for 7 days.",
     cta: "Start free trial →",
     href: "#",
-    bg: "linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(96,165,250,0.08) 100%)",
-    border: "rgba(124,92,255,0.22)",
+    accent: "#7C5CFF",
   },
   {
     label: "Sponsored",
@@ -22,8 +21,7 @@ const AD_SLOTS = [
     body: "Automatically resurface your Kindle highlights, notes, and Storis cards.",
     cta: "Try Readwise →",
     href: "#",
-    bg: "linear-gradient(135deg, rgba(52,211,153,0.10) 0%, rgba(96,165,250,0.07) 100%)",
-    border: "rgba(52,211,153,0.22)",
+    accent: "#34D399",
   },
   {
     label: "Sponsored",
@@ -32,8 +30,7 @@ const AD_SLOTS = [
     body: "Turn your saved articles into listening time. 30-day free trial.",
     cta: "Claim free trial →",
     href: "#",
-    bg: "linear-gradient(135deg, rgba(251,146,60,0.10) 0%, rgba(244,114,182,0.07) 100%)",
-    border: "rgba(251,146,60,0.22)",
+    accent: "#FB923C",
   },
 ];
 
@@ -124,25 +121,24 @@ function AdSlot() {
         width: "100%",
         maxWidth: 320,
         borderRadius: 16,
-        padding: "14px 16px",
-        background: ad.bg,
-        border: `1px solid ${ad.border}`,
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
+        padding: "16px 18px",
+        background: "var(--lp-surface)",
+        border: "1px solid var(--lp-border)",
         textDecoration: "none",
-        boxShadow: "0 4px 24px -8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)",
+        boxShadow: "0 4px 20px -6px rgba(0,0,0,0.12)",
         transition: "transform .15s, box-shadow .15s",
+        boxSizing: "border-box",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px -8px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 24px -8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 28px -6px rgba(0,0,0,0.18)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px -6px rgba(0,0,0,0.12)"; }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ ...SG, fontSize: 9, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--lp-text3)", opacity: 0.7 }}>{ad.eyebrow}</span>
-        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lp-text3)", opacity: 0.5 }}>{ad.label}</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <span style={{ ...SG, fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: ad.accent }}>{ad.eyebrow}</span>
+        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lp-text3)" }}>{ad.label}</span>
       </div>
-      <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 5px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>{ad.headline}</p>
-      <p style={{ fontSize: 12, color: "var(--lp-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>{ad.body}</p>
-      <span style={{ ...SG, fontSize: 12, fontWeight: 700, color: "var(--lp-accent)" }}>{ad.cta}</span>
+      <p style={{ ...SG, fontSize: 14, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 6px", lineHeight: 1.3, letterSpacing: "-0.01em" }}>{ad.headline}</p>
+      <p style={{ fontSize: 12.5, color: "var(--lp-text2)", margin: "0 0 12px", lineHeight: 1.55 }}>{ad.body}</p>
+      <span style={{ ...SG, fontSize: 12, fontWeight: 700, color: ad.accent }}>{ad.cta}</span>
     </a>
   );
 }
