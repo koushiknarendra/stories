@@ -108,25 +108,26 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string;
     }
     $("script, style").remove();
 
-    // For LinkedIn profiles/companies, strip the activity feed before extracting text
+    const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
+    let text = container.text().replace(/\s+/g, " ").trim();
+
+    // For LinkedIn profiles/companies, cut off before the activity/posts feed.
+    // Profile data (About, Experience, Education, Skills) always appears first on the page.
     const isLinkedInProfile = /linkedin\.com\/(in|company)\//.test(url);
     if (isLinkedInProfile) {
-      // Remove sections that are activity/posts — they appear after the profile bio
-      $("section").each((_, el) => {
-        const heading = $(el).find("h2, h3").first().text().toLowerCase();
-        if (heading.includes("activity") || heading.includes("posts") || heading.includes("articles")) {
-          $(el).remove();
-        }
-      });
-      // Remove elements with aria-labels pointing to activity
-      $("[aria-label]").each((_, el) => {
-        const label = ($(el).attr("aria-label") || "").toLowerCase();
-        if (label.includes("activity") || label.includes("posts")) $(el).remove();
-      });
+      const activityMarkers = [
+        /\bActivity\b\s+\d[\d,]*\s+(?:follower|connection)/i, // "Activity 2,304 followers"
+        /\d[\d,]+\s+reactions?\s*[·•·]\s*\d+\s+comment/i,    // "1,234 reactions · 56 comments"
+        /\bShow\s+all\s+posts\b/i,
+        /\bAll\s+activity\b/i,
+      ];
+      for (const marker of activityMarkers) {
+        const idx = text.search(marker);
+        if (idx > 200) { text = text.slice(0, idx).trim(); break; }
+      }
     }
 
-    const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
-    const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
+    text = text.slice(0, 12_000);
     return text.length >= 100 ? { title, text, publishedAt } : null;
   } catch {
     return null;

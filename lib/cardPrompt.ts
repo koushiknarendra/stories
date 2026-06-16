@@ -102,7 +102,7 @@ Bullet rules:
 - readTime: 10s–25s range`;
 
 export function buildProfileUser(text: string, name: string): string {
-  return `Subject: ${name}\n\nIMPORTANT: The content below may include posts, shared articles, or activity feed items mixed in with the actual profile. Ignore ALL of that — focus ONLY on biographical data: About section, work experience, education, skills, certifications, and contact info.\n\nProfile content:\n${cleanText(text).slice(0, 6_000)}`;
+  return `Subject: ${name}\n\nFocus ONLY on biographical data — About section, work experience, education, skills, certifications. Ignore any posts or shared articles.\n\nProfile content:\n${cleanText(text).slice(0, 8_000)}`;
 }
 
 export const COMPANY_SYSTEM = `You are a business intelligence analyst preparing someone for a meeting, partnership, or sales call with a company.
