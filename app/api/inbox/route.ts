@@ -10,7 +10,7 @@ import {
   deleteInboxItem,
   saveStorySet,
 } from "@/lib/db";
-import { CLASSIFY_SYSTEM, buildClassifyUser } from "@/lib/cardPrompt";
+import { CLASSIFY_SYSTEM, buildClassifyUser, PROFILE_SYSTEM, buildProfileUser } from "@/lib/cardPrompt";
 import type { StoryCard, StorySet } from "@/lib/types";
 
 const client = new Anthropic();
@@ -166,14 +166,17 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string; 
 async function generateCards(
   text: string,
   title: string,
-  source: string
+  source: string,
+  mode: "article" | "profile" = "article"
 ): Promise<{ cards: StoryCard[]; category: string | null } | null> {
+  const systemPrompt = mode === "profile" ? PROFILE_SYSTEM : CLASSIFY_SYSTEM;
+  const userMessage = mode === "profile" ? buildProfileUser(text, title) : buildClassifyUser(text, title, source);
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 3072,
-      system: [{ type: "text", text: CLASSIFY_SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: buildClassifyUser(text, title, source) }],
+      system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: userMessage }],
     });
     const raw = message.content[0].type === "text" ? message.content[0].text : "";
     const match = raw.match(/\{[\s\S]*\}/);
@@ -246,7 +249,8 @@ export async function POST(request: Request) {
       parseResult = { text: text!, title: "Pasted text" };
     }
 
-    const generated = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text");
+    const isProfile = !!url && (() => { try { const u = new URL(url); return u.hostname.includes("linkedin.com") && u.pathname.includes("/in/"); } catch { return false; } })();
+    const generated = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text", isProfile ? "profile" : "article");
     if (!generated) {
       await markInboxItemError(item.id, "Failed to generate story cards");
       return Response.json({ error: "Failed to generate story cards" }, { status: 500 });
