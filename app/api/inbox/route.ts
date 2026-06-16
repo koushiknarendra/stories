@@ -192,7 +192,7 @@ async function generateCards(
   const userMessage = mode === "profile" ? buildProfileUser(text, title) : mode === "company" ? buildCompanyUser(text, title) : buildClassifyUser(text, title, source);
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: mode === "article" ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
       max_tokens: 3072,
       system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userMessage }],
