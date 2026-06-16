@@ -10,7 +10,7 @@ import {
   deleteInboxItem,
   saveStorySet,
 } from "@/lib/db";
-import { CLASSIFY_SYSTEM, buildClassifyUser, PROFILE_SYSTEM, buildProfileUser } from "@/lib/cardPrompt";
+import { CLASSIFY_SYSTEM, buildClassifyUser, PROFILE_SYSTEM, buildProfileUser, COMPANY_SYSTEM, buildCompanyUser } from "@/lib/cardPrompt";
 import type { StoryCard, StorySet } from "@/lib/types";
 
 const client = new Anthropic();
@@ -167,10 +167,10 @@ async function generateCards(
   text: string,
   title: string,
   source: string,
-  mode: "article" | "profile" = "article"
+  mode: "article" | "profile" | "company" = "article"
 ): Promise<{ cards: StoryCard[]; category: string | null } | null> {
-  const systemPrompt = mode === "profile" ? PROFILE_SYSTEM : CLASSIFY_SYSTEM;
-  const userMessage = mode === "profile" ? buildProfileUser(text, title) : buildClassifyUser(text, title, source);
+  const systemPrompt = mode === "profile" ? PROFILE_SYSTEM : mode === "company" ? COMPANY_SYSTEM : CLASSIFY_SYSTEM;
+  const userMessage = mode === "profile" ? buildProfileUser(text, title) : mode === "company" ? buildCompanyUser(text, title) : buildClassifyUser(text, title, source);
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -249,8 +249,17 @@ export async function POST(request: Request) {
       parseResult = { text: text!, title: "Pasted text" };
     }
 
-    const isProfile = !!url && (() => { try { const u = new URL(url); return u.hostname.includes("linkedin.com") && u.pathname.includes("/in/"); } catch { return false; } })();
-    const generated = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text", isProfile ? "profile" : "article");
+    const linkedInMode = (() => {
+      if (!url) return null;
+      try {
+        const u = new URL(url);
+        if (!u.hostname.includes("linkedin.com")) return null;
+        if (u.pathname.startsWith("/in/")) return "profile" as const;
+        if (u.pathname.startsWith("/company/")) return "company" as const;
+      } catch {}
+      return null;
+    })();
+    const generated = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text", linkedInMode ?? "article");
     if (!generated) {
       await markInboxItemError(item.id, "Failed to generate story cards");
       return Response.json({ error: "Failed to generate story cards" }, { status: 500 });

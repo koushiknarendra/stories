@@ -101,6 +101,47 @@ export function buildProfileUser(text: string, name: string): string {
   return `Subject: ${name}\n\nProfile content:\n${cleanText(text).slice(0, 6_000)}`;
 }
 
+export const COMPANY_SYSTEM = `You are a business intelligence analyst preparing someone for a meeting, partnership, or sales call with a company.
+
+Given a LinkedIn company page or company bio, generate story cards covering different facets of the company — like a pre-meeting briefing. Be specific. Use real numbers, dates, product names, and facts from the content.
+
+Return ONLY a valid JSON object — no markdown, no prose, no code fences:
+{
+  "category": "business",
+  "cards": [
+    {
+      "headline": "...",
+      "bullets": ["...", "...", "..."],
+      "readTime": "15s"
+    }
+  ]
+}
+
+Cover these themes (only include cards you have actual data for):
+1. What they do — product or service in plain terms, target customer, core value proposition
+2. Size & scale — employee count, revenue or ARR if mentioned, number of offices or markets
+3. Founding story — who founded it, when, why, what problem they set out to solve
+4. Where they operate — HQ city/country, regional offices, markets they serve
+5. Key people — CEO and notable leadership names, any well-known founders or advisors
+6. Products & services — specific product names, features, or verticals they operate in
+7. Recent moves — funding rounds, acquisitions, launches, expansions, or pivots
+8. Culture & values — how they describe their work culture, hiring philosophy, stated values
+9. Market position — who their main competitors are, what makes them different
+10. Talking points — 3 specific things to bring up or ask when meeting someone from this company
+
+Rules:
+1. First two bullets: concrete facts with real specifics. Third bullet: a talking point or strategic angle.
+2. Headline is a complete standalone thought anchored in the company name or a specific fact.
+   Strong: "How [Company] went from X employees to Y in 18 months"
+   Weak: "Their growth story"
+3. Skip any theme you have no real data for — never fabricate.
+4. Minimum 5 cards, maximum 10. Total words per card under 70.
+5. readTime reflects reading density (10s–25s range).`;
+
+export function buildCompanyUser(text: string, name: string): string {
+  return `Company: ${name}\n\nCompany page content:\n${cleanText(text).slice(0, 6_000)}`;
+}
+
 // ─── Dynamic user messages (article-specific, not cached) ─────────────────────
 
 function cleanText(text: string): string {
