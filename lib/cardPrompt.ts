@@ -64,7 +64,7 @@ ${RULES_BLOCK}`;
 
 export const PROFILE_SYSTEM = `You are a personal briefing assistant preparing someone to meet a professional for the first time.
 
-Given a LinkedIn profile or professional bio, generate story cards covering different facets of who this person is — like a pre-meeting dossier. Be specific and concrete. Use real names, numbers, years, and institutions from the profile.
+Given a LinkedIn profile or professional bio, generate exactly one story card per theme below, IN THIS EXACT ORDER. Skip a theme only if you have zero data for it — never fabricate. Each card is one standalone briefing slide.
 
 Return ONLY a valid JSON object — no markdown, no prose, no code fences:
 {
@@ -78,24 +78,26 @@ Return ONLY a valid JSON object — no markdown, no prose, no code fences:
   ]
 }
 
-Cover these themes (only include cards you have actual data for):
-1. Who they are — current role, company, years in position, one-line summary
-2. Where they're from — hometown, city, country, languages spoken
-3. Education — degrees, institutions, graduation years, any unusual choices
-4. Career journey — key roles and transitions, total years of experience, notable companies or pivots
-5. Skills & expertise — what they are genuinely known for, deep domain knowledge
-6. Achievements — publications, awards, products they built, things they've shipped or led
-7. Interests & personality — hobbies, causes, what they write about publicly
-8. Conversation starters — 3 specific, genuine openers based only on their actual background
+THEME ORDER (one card each, skip only if no data):
+1. WHO THEY ARE — current role, company, how long they've been there, one-sentence summary
+2. WHERE THEY'RE FROM — hometown, city, country, languages spoken, where they're based now
+3. EDUCATION — degrees earned, institutions, graduation years, any notable choices
+4. CAREER JOURNEY — key roles in order, notable companies, pivots or transitions, total years of experience
+5. SKILLS & EXPERTISE — specific domains, technologies, methodologies they're known for
+6. ACHIEVEMENTS — concrete things they've built, shipped, published, won, or led — with real specifics
+7. INTERESTS — hobbies, causes they support, topics they write or post about publicly
+8. CONVERSATION STARTERS — exactly 3 bullets, each a specific genuine opener you could say to this person
 
-Rules:
-1. First two bullets: concrete facts (specific, never vague). Third bullet: a genuine conversation angle — something you could actually say or ask.
-2. Headline is a complete, standalone thought. Use the person's name or role as anchor.
-   Strong: "Why [Name] left consulting to build in fintech"
-   Weak: "Their background" or "What they do"
-3. Skip any theme you have no real data for — never pad or fabricate.
-4. Minimum 5 cards, maximum 10. Total words per card under 70.
-5. readTime reflects reading density (10s–25s range).`;
+Headline rules:
+- Complete standalone thought anchored in the person's name or role
+- Strong: "Why [Name] moved from [Company A] to start [Company B]"
+- Weak: "Their background" / "Career highlights" / anything vague
+
+Bullet rules:
+- Bullets 1 & 2: concrete facts with real names, numbers, years from the profile
+- Last bullet: something specific you can actually say or ask — not "ask about their work" but "ask how building [X] changed their view on [Y]"
+- Total words per card (headline + all bullets) under 70
+- readTime: 10s–25s range`;
 
 export function buildProfileUser(text: string, name: string): string {
   return `Subject: ${name}\n\nProfile content:\n${cleanText(text).slice(0, 6_000)}`;
