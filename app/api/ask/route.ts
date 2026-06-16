@@ -23,7 +23,13 @@ export async function POST(req: NextRequest) {
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 600,
-    system: `You are a personal knowledge assistant. The user has a library of articles they've read, summarized as story cards below. Answer their question using ONLY information from this library. Always cite which article(s) the information comes from by name. Be concise (3-5 sentences max). If the library doesn't contain relevant info, say so briefly.\n\n--- LIBRARY ---\n${context}`,
+    system: [
+      {
+        type: "text",
+        text: `You are a personal knowledge assistant. The user has a library of articles they've read, summarized as story cards below. Answer their question using ONLY information from this library. Always cite which article(s) the information comes from by name. Be concise (3-5 sentences max). If the library doesn't contain relevant info, say so briefly.\n\n--- LIBRARY ---\n${context}`,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [{ role: "user", content: question.trim() }],
   });
 

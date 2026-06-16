@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { buildClassifyPrompt } from "@/lib/cardPrompt";
+import { CLASSIFY_SYSTEM, buildClassifyUser } from "@/lib/cardPrompt";
 
 export const runtime = "nodejs";
 
@@ -12,8 +12,6 @@ export async function POST(request: Request) {
     return Response.json({ error: "text is required" }, { status: 400 });
   }
 
-  const prompt = buildClassifyPrompt(text, title, source);
-
   let cards;
   let category: string | null = null;
   let lastRaw = "";
@@ -22,7 +20,8 @@ export async function POST(request: Request) {
       const message = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 3072,
-        messages: [{ role: "user", content: prompt }],
+        system: [{ type: "text", text: CLASSIFY_SYSTEM, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: buildClassifyUser(text, title, source) }],
       });
 
       lastRaw = message.content[0].type === "text" ? message.content[0].text : "";

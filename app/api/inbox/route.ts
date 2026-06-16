@@ -10,7 +10,7 @@ import {
   deleteInboxItem,
   saveStorySet,
 } from "@/lib/db";
-import { buildClassifyPrompt } from "@/lib/cardPrompt";
+import { CLASSIFY_SYSTEM, buildClassifyUser } from "@/lib/cardPrompt";
 import type { StoryCard, StorySet } from "@/lib/types";
 
 const client = new Anthropic();
@@ -103,13 +103,12 @@ async function generateCards(
   title: string,
   source: string
 ): Promise<{ cards: StoryCard[]; category: string | null } | null> {
-  const prompt = buildClassifyPrompt(text, title, source);
-
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 3072,
-      messages: [{ role: "user", content: prompt }],
+      system: [{ type: "text", text: CLASSIFY_SYSTEM, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: buildClassifyUser(text, title, source) }],
     });
     const raw = message.content[0].type === "text" ? message.content[0].text : "";
     const match = raw.match(/\{[\s\S]*\}/);

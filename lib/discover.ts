@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchRssArticles } from "./rss";
 import { getGeneratedStories, saveGeneratedStorySet } from "./db";
-import { buildDiscoverPrompt } from "./cardPrompt";
+import { DISCOVER_SYSTEM, buildDiscoverUser } from "./cardPrompt";
 import type { StorySet, StoryCard } from "./types";
 
 const client = new Anthropic();
@@ -50,13 +50,12 @@ async function fetchOgImage(url: string): Promise<string | null> {
 }
 
 async function generateCards(text: string, title: string, category: string): Promise<StoryCard[] | null> {
-  const prompt = buildDiscoverPrompt(text, title, category);
-
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 3072,
-      messages: [{ role: "user", content: prompt }],
+      system: [{ type: "text", text: DISCOVER_SYSTEM, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: buildDiscoverUser(text, title, category) }],
     });
     const raw = message.content[0].type === "text" ? message.content[0].text : "";
     const match = raw.match(/\[[\s\S]*\]/);
