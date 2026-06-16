@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@view-transition {
+  navigation: auto;
+}
+
 /* Landing page design tokens — light mode */
 :root {
   --lp-bg: #F5F4FB;

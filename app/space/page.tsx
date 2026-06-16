@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
+import useSWR from "swr";
 import { useTheme } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
@@ -72,26 +75,27 @@ function timeAgo(iso: string) {
 export default function SpacePage() {
   const { user } = useUser();
   const { theme, toggle } = useTheme();
-  const [items, setItems] = useState<SpaceItem[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newColName, setNewColName] = useState("");
   const [creatingCol, setCreatingCol] = useState(false);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<LibTab>("saved");
-
-  // History tab
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
-
-  // Starred bullets
-  const [starredBullets, setStarredBullets] = useState<StarredBullet[]>([]);
+  const [historyEnabled, setHistoryEnabled] = useState(false);
   const [showAllStars, setShowAllStars] = useState(false);
-
-  // Unified search + ask
   const [askLoading, setAskLoading] = useState(false);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const { data: spaceRaw, mutate: mutateSpace } = useSWR("/api/space", fetcher);
+  const { data: collectionsRaw, mutate: mutateCollections } = useSWR("/api/collections", fetcher);
+  const { data: starsRaw, mutate: mutateStars } = useSWR("/api/stars?all=1", fetcher);
+  const { data: historyRaw } = useSWR(historyEnabled ? "/api/history" : null, fetcher);
+
+  const items: SpaceItem[] = Array.isArray(spaceRaw) ? spaceRaw : [];
+  const collections: Collection[] = Array.isArray(collectionsRaw) ? collectionsRaw : [];
+  const starredBullets: StarredBullet[] = Array.isArray(starsRaw) ? starsRaw : [];
+  const history: HistoryItem[] = Array.isArray(historyRaw) ? historyRaw : [];
+  const historyLoaded = historyRaw !== undefined;
 
   const searchMode = query.trim().length > 0;
 
@@ -109,7 +113,6 @@ export default function SpacePage() {
       })
     : history;
 
-  // Unified cross-tab results: saved first, then history items not already in saved
   const savedIds = new Set(items.map(i => i.id));
   const searchResults = searchMode
     ? [
@@ -118,15 +121,13 @@ export default function SpacePage() {
       ]
     : [];
 
-  async function loadItems() {
-    const data = await fetch("/api/space").then((r) => r.json()).catch(() => []);
-    setItems(Array.isArray(data) ? data : []);
-  }
+  useEffect(() => {
+    if (activeTab === "history" || searchMode) setHistoryEnabled(true);
+  }, [activeTab, searchMode]);
 
-  async function loadCollections() {
-    const data = await fetch("/api/collections").then((r) => r.json()).catch(() => []);
-    setCollections(Array.isArray(data) ? data : []);
-  }
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat]);
 
   async function handleCreateCollection() {
     if (!newColName.trim()) return;
@@ -136,42 +137,17 @@ export default function SpacePage() {
       body: JSON.stringify({ name: newColName.trim() }),
     });
     const col = await res.json();
-    if (col.id) setCollections((prev) => [{ ...col, item_count: 0, cover_images: [] }, ...prev]);
+    if (col.id) {
+      mutateCollections([{ ...col, item_count: 0, cover_images: [] }, ...collections], { revalidate: false });
+    }
     setNewColName("");
     setCreatingCol(false);
   }
 
   async function handleDeleteCollection(id: string) {
-    setCollections((prev) => prev.filter((c) => c.id !== id));
+    mutateCollections(collections.filter((c) => c.id !== id), { revalidate: false });
     await fetch(`/api/collections/${id}`, { method: "DELETE" }).catch(() => {});
   }
-
-  async function loadStarredBullets() {
-    const data = await fetch("/api/stars?all=1").then((r) => r.json()).catch(() => []);
-    setStarredBullets(Array.isArray(data) ? data : []);
-  }
-
-  async function loadHistory() {
-    if (historyLoaded) return;
-    const data = await fetch("/api/history").then((r) => r.json()).catch(() => []);
-    setHistory(Array.isArray(data) ? data : []);
-    setHistoryLoaded(true);
-  }
-
-  useEffect(() => {
-    loadItems();
-    loadCollections();
-    loadStarredBullets();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "history" || searchMode) loadHistory();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, searchMode]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat]);
 
   async function handleShare(id: string, title: string) {
     const url = `${window.location.origin}/stories/${id}`;
@@ -185,7 +161,7 @@ export default function SpacePage() {
   }
 
   async function handleDelete(id: string) {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    mutateSpace(items.filter((i) => i.id !== id), { revalidate: false });
     await fetch("/api/space", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -194,7 +170,7 @@ export default function SpacePage() {
   }
 
   async function handleUnstar(bullet: StarredBullet) {
-    setStarredBullets((prev) => prev.filter((b) => b.id !== bullet.id));
+    mutateStars(starredBullets.filter((b) => b.id !== bullet.id), { revalidate: false });
     await fetch("/api/stars", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -232,6 +208,9 @@ export default function SpacePage() {
   const accent  = "var(--lp-accent)";
 
   const visibleStars = showAllStars ? starredBullets : starredBullets.slice(0, 5);
+
+  // suppress unused warning
+  void copiedId; void handleShare;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--lp-page-bg)", color: text, paddingBottom: "calc(78px + env(safe-area-inset-bottom, 0px))" }}>

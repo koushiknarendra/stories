@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import useSWR from "swr";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORIES } from "@/lib/categories";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
@@ -37,32 +40,12 @@ function SkeletonCard() {
 export default function ExplorePage() {
   const { user, isLoaded } = useUser();
   const [active, setActive] = useState<string>(CATEGORIES[0].key);
-  const [stories, setStories] = useState<StoryItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [cache, setCache] = useState<Record<string, StoryItem[]>>({});
 
-  useEffect(() => {
-    if (isLoaded && !user) window.location.href = "/";
-  }, [isLoaded, user]);
-
-  useEffect(() => {
-    if (!user) return;
-    if (cache[active]) {
-      setStories(cache[active]);
-      return;
-    }
-    setLoading(true);
-    setStories([]);
-    fetch(`/api/discover?category=${active}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const list = Array.isArray(data.stories) ? data.stories : [];
-        setCache((prev) => ({ ...prev, [active]: list }));
-        setStories(list);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [user, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { data, isLoading } = useSWR(
+    user ? `/api/discover?category=${active}` : null,
+    fetcher
+  );
+  const stories: StoryItem[] = Array.isArray(data?.stories) ? data.stories : [];
 
   if (!isLoaded) {
     return (
@@ -71,6 +54,11 @@ export default function ExplorePage() {
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
+  }
+
+  if (!user) {
+    if (typeof window !== "undefined") window.location.href = "/";
+    return null;
   }
 
   const activeCat = CATEGORIES.find((c) => c.key === active);
@@ -117,7 +105,7 @@ export default function ExplorePage() {
 
       {/* Stories */}
       <div style={{ padding: "16px 16px 0" }}>
-        {loading ? (
+        {isLoading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <SkeletonCard />
             <SkeletonCard />

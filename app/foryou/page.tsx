@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useMemo } from "react";
+import { useRef } from "react";
 import { useUser } from "@clerk/nextjs";
+import useSWR, { useSWRConfig } from "swr";
 import BottomNav from "@/components/BottomNav";
 import InterestsOnboarding from "@/components/InterestsOnboarding";
 import { CATEGORIES } from "@/lib/categories";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
@@ -134,47 +138,27 @@ function SkeletonSlide() {
 
 export default function ForYouPage() {
   const { user, isLoaded } = useUser();
-  const [interests, setInterests] = useState<string[] | null>(null);
-  const [stories, setStories] = useState<StoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { mutate } = useSWRConfig();
 
-  useEffect(() => {
-    if (isLoaded && !user) window.location.href = "/";
-  }, [isLoaded, user]);
+  const { data: interestsData } = useSWR(user ? "/api/interests" : null, fetcher);
+  const interests: string[] | null = interestsData === undefined ? null : (Array.isArray(interestsData) ? interestsData : []);
 
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/interests")
-      .then((r) => r.json())
-      .then((data) => setInterests(Array.isArray(data) ? data : []))
-      .catch(() => setInterests([]));
-  }, [user]);
+  const { data: discoverData } = useSWR(interests !== null ? "/api/discover" : null, fetcher);
+  const { data: spaceData } = useSWR(interests !== null ? "/api/space" : null, fetcher);
 
-  useEffect(() => {
-    if (!user || interests === null) return;
-    setLoading(true);
-
-    // Load discover + saved stories in parallel
-    Promise.allSettled([
-      fetch("/api/discover").then((r) => r.json()).then((d) => (Array.isArray(d.stories) ? d.stories : [])),
-      fetch("/api/space").then((r) => r.json()).then((d) => (Array.isArray(d) ? d : [])),
-    ]).then(([discoverResult, savedResult]) => {
-      const discover: StoryItem[] = discoverResult.status === "fulfilled" ? discoverResult.value : [];
-      const saved: StoryItem[]    = savedResult.status === "fulfilled"    ? savedResult.value    : [];
-
-      // Discover first, then saved (matching interests), deduplicated
-      const seen = new Set<string>();
-      const merged: StoryItem[] = [];
-      for (const s of discover) { if (!seen.has(s.id)) { seen.add(s.id); merged.push({ ...s, is_generated: true }); } }
-      const relevantSaved = saved.filter((s) => interests.length === 0 || (s.category && interests.includes(s.category)));
-      const otherSaved    = saved.filter((s) => !relevantSaved.includes(s));
-      for (const s of [...relevantSaved, ...otherSaved]) { if (!seen.has(s.id)) { seen.add(s.id); merged.push(s); } }
-
-      setStories(merged);
-      setLoading(false);
-    });
-  }, [user, interests]);
+  const stories = useMemo<StoryItem[] | null>(() => {
+    if (!discoverData || !spaceData) return null;
+    const discover: StoryItem[] = Array.isArray(discoverData.stories) ? discoverData.stories : [];
+    const saved: StoryItem[]    = Array.isArray(spaceData) ? spaceData : [];
+    const seen = new Set<string>();
+    const merged: StoryItem[] = [];
+    for (const s of discover) { if (!seen.has(s.id)) { seen.add(s.id); merged.push({ ...s, is_generated: true }); } }
+    const relevantSaved = saved.filter((s) => interests!.length === 0 || (s.category && interests!.includes(s.category)));
+    const otherSaved    = saved.filter((s) => !relevantSaved.includes(s));
+    for (const s of [...relevantSaved, ...otherSaved]) { if (!seen.has(s.id)) { seen.add(s.id); merged.push(s); } }
+    return merged;
+  }, [discoverData, spaceData, interests]);
 
   const handleRead = (storySetId: string) => {
     fetch("/api/streak", {
@@ -184,7 +168,7 @@ export default function ForYouPage() {
     }).catch(() => {});
   };
 
-  if (!isLoaded || interests === null) {
+  if (!isLoaded || (user && interests === null)) {
     return (
       <div style={{ height: "100dvh", background: "var(--lp-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid var(--lp-border)", borderTopColor: "var(--lp-accent)", animation: "spin 0.7s linear infinite" }} />
@@ -193,8 +177,17 @@ export default function ForYouPage() {
     );
   }
 
-  if (interests.length === 0) {
-    return <InterestsOnboarding onComplete={(cats) => setInterests(cats)} />;
+  if (!user) {
+    if (typeof window !== "undefined") window.location.href = "/";
+    return null;
+  }
+
+  if (interests !== null && interests.length === 0) {
+    return (
+      <InterestsOnboarding
+        onComplete={(cats) => mutate("/api/interests", cats, { revalidate: false })}
+      />
+    );
   }
 
   return (
@@ -207,11 +200,10 @@ export default function ForYouPage() {
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
           scrollbarWidth: "none",
-          // webkit scrollbar handled via .feed-snap in globals.css
           WebkitOverflowScrolling: "touch",
         }}
       >
-        {loading ? (
+        {stories === null ? (
           <>
             <SkeletonSlide />
             <SkeletonSlide />

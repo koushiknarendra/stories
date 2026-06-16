@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
+import useSWR from "swr";
 import { useTheme } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import { CATEGORIES } from "@/lib/categories";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const SG: React.CSSProperties = { fontFamily: "var(--font-space, 'Space Grotesk', sans-serif)" };
 
@@ -34,39 +37,37 @@ const ALL_BADGES = [
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const { theme, toggle } = useTheme();
-  const [interests, setInterests] = useState<string[]>([]);
-  const [storyCount, setStoryCount] = useState<number | null>(null);
-  const [streak, setStreak] = useState<StreakData | null>(null);
   const [editingInterests, setEditingInterests] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [readingDepth, setReadingDepthState] = useState<string>("balanced");
 
+  const { data: interestsData, mutate: mutateInterests } = useSWR(user ? "/api/interests" : null, fetcher);
+  const { data: spaceData } = useSWR(user ? "/api/space" : null, fetcher);
+  const { data: streakData } = useSWR(user ? "/api/streak" : null, fetcher);
+
+  const interests: string[] = Array.isArray(interestsData) ? interestsData : [];
+  const storyCount: number | null = Array.isArray(spaceData) ? spaceData.length : null;
+  const streak: StreakData | null = streakData && typeof streakData.currentStreak === "number" ? streakData : null;
+
   useEffect(() => {
     try { setReadingDepthState(localStorage.getItem("storis_reading_depth") ?? "balanced"); } catch {}
   }, []);
-
-  function setReadingDepth(val: string) {
-    setReadingDepthState(val);
-    try { localStorage.setItem("storis_reading_depth", val); } catch {}
-  }
 
   useEffect(() => {
     if (isLoaded && !user) window.location.href = "/";
   }, [isLoaded, user]);
 
+  // Sync interests into the edit selection when data loads
   useEffect(() => {
-    if (!user) return;
-    fetch("/api/interests").then((r) => r.json()).then((data) => {
-      if (Array.isArray(data)) { setInterests(data); setSelected(new Set(data)); }
-    }).catch(() => {});
-    fetch("/api/space").then((r) => r.json()).then((data) => {
-      if (Array.isArray(data)) setStoryCount(data.length);
-    }).catch(() => {});
-    fetch("/api/streak").then((r) => r.json()).then((data) => {
-      if (data && typeof data.currentStreak === "number") setStreak(data);
-    }).catch(() => {});
-  }, [user]);
+    if (interestsData) setSelected(new Set(interests));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interestsData]);
+
+  function setReadingDepth(val: string) {
+    setReadingDepthState(val);
+    try { localStorage.setItem("storis_reading_depth", val); } catch {}
+  }
 
   async function saveInterests() {
     setSaving(true);
@@ -75,7 +76,7 @@ export default function ProfilePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ categories: [...selected] }),
     }).catch(() => {});
-    setInterests([...selected]);
+    mutateInterests([...selected], { revalidate: false });
     setEditingInterests(false);
     setSaving(false);
   }
@@ -84,11 +85,11 @@ export default function ProfilePage() {
     setSelected((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   }
 
-  const savedCount   = storyCount ?? 0;
-  const totalReads   = streak?.totalReads ?? 0;
+  const savedCount    = storyCount ?? 0;
+  const totalReads    = streak?.totalReads ?? 0;
   const currentStreak = streak?.currentStreak ?? 0;
   const longestStreak = streak?.longestStreak ?? 0;
-  const todayCount   = streak?.todayCount ?? 0;
+  const todayCount    = streak?.todayCount ?? 0;
 
   const earnedBadges = ALL_BADGES.filter(b => b.check(savedCount, totalReads, currentStreak, longestStreak));
   const lockedBadges = ALL_BADGES.filter(b => !b.check(savedCount, totalReads, currentStreak, longestStreak));
