@@ -235,18 +235,18 @@ export async function POST(request: Request) {
       if (jinaResult) {
         parseResult = jinaResult;
         coverImageUrl = ogImage;
-      } else if (linkedInMode) {
-        // LinkedIn blocks 12ft and direct too — fail fast with a clear message
-        await markInboxItemError(item.id, "LinkedIn requires login");
-        const errMsg = linkedInMode === "company"
-          ? "LinkedIn requires login to view this page. Copy the company description and paste it in the Text tab instead."
-          : "LinkedIn requires login to view this profile. Copy the About section and paste it in the Text tab instead.";
-        return Response.json({ error: errMsg }, { status: 422 });
       } else {
         const via12ft = await fetchVia12ft(url);
         if (via12ft) {
           parseResult = via12ft;
           coverImageUrl = ogImage;
+        } else if (linkedInMode) {
+          // Jina + 12ft both failed for LinkedIn — direct fetch won't work either, fail fast
+          await markInboxItemError(item.id, "LinkedIn requires login");
+          const errMsg = linkedInMode === "company"
+            ? "LinkedIn requires login to view this page. Copy the company description and paste it in the Text tab instead."
+            : "LinkedIn requires login to view this profile. Copy the About section and paste it in the Text tab instead.";
+          return Response.json({ error: errMsg }, { status: 422 });
         } else {
           const direct = await fetchDirect(url);
           if (!direct) {
