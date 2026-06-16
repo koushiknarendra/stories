@@ -64,6 +64,29 @@ async function fetchOgImage(url: string): Promise<string | null> {
   }
 }
 
+async function fetchVia12ft(url: string): Promise<{ title: string; text: string } | null> {
+  try {
+    const { load } = await import("cheerio");
+    const res = await fetch(`https://12ft.io/proxy?q=${encodeURIComponent(url)}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = load(html);
+    $("script, style, nav, header, footer, aside, .ad, iframe, noscript").remove();
+    const title =
+      $("meta[property='og:title']").attr("content") ||
+      $("title").text().trim() ||
+      new URL(url).hostname;
+    const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
+    const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
+    return text.length >= 100 ? { title, text } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchDirect(url: string): Promise<{ title: string; text: string; imageUrl: string | null } | null> {
   try {
     const { load } = await import("cheerio");
@@ -157,13 +180,19 @@ export async function POST(request: Request) {
         parseResult = jinaResult;
         coverImageUrl = ogImage;
       } else {
-        const direct = await fetchDirect(url);
-        if (!direct) {
-          await markInboxItemError(item.id, "Could not fetch this URL");
-          return Response.json({ error: "Could not fetch this URL. Try pasting the text directly." }, { status: 422 });
+        const via12ft = await fetchVia12ft(url);
+        if (via12ft) {
+          parseResult = via12ft;
+          coverImageUrl = ogImage;
+        } else {
+          const direct = await fetchDirect(url);
+          if (!direct) {
+            await markInboxItemError(item.id, "Could not fetch this URL");
+            return Response.json({ error: "Could not fetch this URL. Try pasting the text directly." }, { status: 422 });
+          }
+          parseResult = direct;
+          coverImageUrl = direct.imageUrl;
         }
-        parseResult = direct;
-        coverImageUrl = direct.imageUrl;
       }
     } else {
       parseResult = { text: text!, title: "Pasted text" };

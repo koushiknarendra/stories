@@ -29,6 +29,29 @@ async function fetchViaJina(url: string): Promise<{ title: string; text: string 
   }
 }
 
+async function fetchVia12ft(url: string): Promise<{ title: string; text: string } | null> {
+  try {
+    const res = await fetch(`https://12ft.io/proxy?q=${encodeURIComponent(url)}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return null;
+    const { load } = await import("cheerio");
+    const html = await res.text();
+    const $ = load(html);
+    $("script, style, nav, header, footer, aside, .ad, iframe, noscript").remove();
+    const title =
+      $("meta[property='og:title']").attr("content") ||
+      $("title").text().trim() ||
+      new URL(url).hostname;
+    const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
+    const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
+    return text.length >= 100 ? { title, text } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchOgImage(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, {
@@ -71,10 +94,11 @@ async function generateForCategory(category: string): Promise<StorySet[]> {
 
   for (const article of articles) {
     try {
-      const [parsed, ogImage] = await Promise.all([
+      const [jinaResult, ogImage] = await Promise.all([
         fetchViaJina(article.url),
         fetchOgImage(article.url),
       ]);
+      const parsed = jinaResult ?? await fetchVia12ft(article.url);
       if (!parsed) continue;
 
       const cards = await generateCards(parsed.text, parsed.title || article.title, category);
