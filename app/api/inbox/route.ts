@@ -29,8 +29,19 @@ function parseDate(raw: string | null | undefined): string | null {
 
 async function fetchViaJina(url: string): Promise<{ title: string; text: string; publishedAt: string | null } | null> {
   try {
+    const headers: Record<string, string> = { "X-Return-Format": "markdown" };
+    if (/linkedin\.com\/(in|company)\//.test(url)) {
+      // Ask Jina to strip the activity/posts feed before rendering
+      headers["X-Remove-Selector"] = [
+        ".feed-shared-update-v2",
+        ".scaffold-finite-scroll",
+        ".profile-creator-shared-feed-update__container",
+        "[data-finite-scroll-hotspot]",
+        ".pv-recent-activity-section",
+      ].join(", ");
+    }
     const res = await fetch(`https://r.jina.ai/${url}`, {
-      headers: { "X-Return-Format": "markdown" },
+      headers,
       signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) return null;
@@ -77,6 +88,30 @@ async function fetchOgImage(url: string): Promise<string | null> {
   }
 }
 
+function extractLinkedInBio(text: string): string {
+  // LinkedIn biographical section headers (in order they typically appear)
+  const bioHeaders = [
+    "About", "Experience", "Education", "Skills", "Certifications",
+    "Licenses & certifications", "Accomplishments", "Honors & awards",
+    "Languages", "Volunteer experience", "Projects", "Publications", "Causes",
+  ];
+  // Headers that signal the start of non-biographical content
+  const stopHeaders = ["Activity", "Posts", "Articles", "All activity", "Show all"];
+
+  // Find where non-bio content starts
+  let stopIdx = text.length;
+  for (const h of stopHeaders) {
+    const idx = text.indexOf(h);
+    if (idx > 300 && idx < stopIdx) stopIdx = idx;
+  }
+
+  // Extract content up to the stop point
+  const bioText = text.slice(0, stopIdx).trim();
+
+  // If we found something meaningful, return it; otherwise fall back to first 4k chars
+  return bioText.length > 200 ? bioText : text.slice(0, 4_000);
+}
+
 async function fetchVia12ft(url: string): Promise<{ title: string; text: string; publishedAt: string | null } | null> {
   try {
     const { load } = await import("cheerio");
@@ -111,20 +146,10 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string;
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     let text = container.text().replace(/\s+/g, " ").trim();
 
-    // For LinkedIn profiles/companies, cut off before the activity/posts feed.
-    // Profile data (About, Experience, Education, Skills) always appears first on the page.
+    // For LinkedIn: extract only biographical sections, skip the activity/posts feed
     const isLinkedInProfile = /linkedin\.com\/(in|company)\//.test(url);
     if (isLinkedInProfile) {
-      const activityMarkers = [
-        /\bActivity\b\s+\d[\d,]*\s+(?:follower|connection)/i, // "Activity 2,304 followers"
-        /\d[\d,]+\s+reactions?\s*[·•·]\s*\d+\s+comment/i,    // "1,234 reactions · 56 comments"
-        /\bShow\s+all\s+posts\b/i,
-        /\bAll\s+activity\b/i,
-      ];
-      for (const marker of activityMarkers) {
-        const idx = text.search(marker);
-        if (idx > 200) { text = text.slice(0, idx).trim(); break; }
-      }
+      text = extractLinkedInBio(text);
     }
 
     text = text.slice(0, 12_000);
@@ -192,7 +217,7 @@ async function generateCards(
   const userMessage = mode === "profile" ? buildProfileUser(text, title) : mode === "company" ? buildCompanyUser(text, title) : buildClassifyUser(text, title, source);
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
-      model: mode === "article" ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 3072,
       system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userMessage }],

@@ -62,44 +62,53 @@ ${CATEGORY_FOCUS_BLOCK}
 
 ${RULES_BLOCK}`;
 
-export const PROFILE_SYSTEM = `You are a personal briefing assistant preparing someone to meet a professional for the first time.
+export const PROFILE_SYSTEM = `You are a personal briefing assistant. Your job: read a LinkedIn profile and produce a pre-meeting dossier as story cards — one card per theme, in order. Be specific. Use real names, companies, years, degrees from the profile.
 
-Given a LinkedIn profile or professional bio, generate exactly one story card per theme below, IN THIS EXACT ORDER. Skip a theme only if you have zero data for it — never fabricate. Each card is one standalone briefing slide.
-
-Return ONLY a valid JSON object — no markdown, no prose, no code fences:
+Return ONLY a valid JSON object:
 {
   "category": "people",
-  "cards": [
-    {
-      "headline": "...",
-      "bullets": ["...", "...", "..."],
-      "readTime": "15s"
-    }
-  ]
+  "cards": [{ "headline": "...", "bullets": ["...", "...", "..."], "readTime": "15s" }]
 }
 
-THEME ORDER (one card each, skip only if no data):
-1. WHO THEY ARE — current role, company, how long they've been there, one-sentence summary
-2. WHERE THEY'RE FROM — hometown, city, country, languages spoken, where they're based now
-3. EDUCATION — degrees earned, institutions, graduation years, any notable choices
-4. CAREER JOURNEY — key roles in order, notable companies, pivots or transitions, total years of experience
-5. SKILLS & EXPERTISE — specific domains, technologies, methodologies they're known for
-6. ACHIEVEMENTS — concrete things they've built, shipped, published, won, or led — with real specifics
-7. INTERESTS — hobbies, causes they support, topics they write or post about publicly
-8. CONVERSATION STARTERS — exactly 3 bullets, each a specific genuine opener you could say to this person
+Generate one card per theme, IN THIS ORDER. Skip only if you have zero data:
 
-CRITICAL: The input may contain social media posts, shared articles, or activity feed content mixed with the real profile data. IGNORE all of that. Generate cards ONLY from biographical information — About section, work history, education, skills, certifications.
+1. WHO THEY ARE
+   Headline: their name + current role + company
+   Bullets: (a) exact title and company, how long they've held it  (b) one crisp sentence of what they actually do day-to-day  (c) notable thing about their current position
 
-Headline rules:
-- Complete standalone thought anchored in the person's name or role
-- Strong: "Why [Name] moved from [Company A] to start [Company B]"
-- Weak: "Their background" / "Career highlights" / anything vague
+2. WHERE THEY'RE FROM
+   Headline: mention their origin city/country and current base
+   Bullets: (a) hometown or country of origin  (b) where they're based now and since when  (c) any languages spoken or international background
 
-Bullet rules:
-- Bullets 1 & 2: concrete facts with real names, numbers, years from the profile
-- Last bullet: something specific you can actually say or ask — not "ask about their work" but "ask how building [X] changed their view on [Y]"
-- Total words per card (headline + all bullets) under 70
-- readTime: 10s–25s range`;
+3. EDUCATION
+   Headline: their highest or most notable degree + institution
+   Bullets: (a) degree name, institution, graduation year  (b) any other degrees or certifications  (c) anything unusual — prestigious school, unexpected major, self-taught angle
+
+4. CAREER JOURNEY
+   Headline: capture the arc — number of years, key transitions
+   Bullets: (a) earliest notable role and company  (b) the biggest pivot or career-defining move  (c) total years of experience across the journey
+
+5. SKILLS & EXPERTISE
+   Headline: their primary domain of expertise
+   Bullets: (a) top 2–3 specific skills or technologies they list  (b) what they are genuinely known for in their field  (c) any niche or rare expertise
+
+6. ACHIEVEMENTS
+   Headline: one concrete thing they've shipped, built, or won
+   Bullets: (a) most impressive quantified achievement  (b) something they published, launched, or led  (c) any awards, recognitions, or press mentions
+
+7. INTERESTS & PERSONALITY
+   Headline: a revealing interest or cause they care about
+   Bullets: (a) hobbies or activities outside work  (b) causes or volunteer work they list  (c) what their public content or writing reveals about their personality
+
+8. CONVERSATION STARTERS
+   Headline: "3 things to bring up when you meet [Name]"
+   Bullets: (a) specific opener tied to their education or hometown  (b) specific opener tied to a career decision or pivot  (c) specific opener tied to an interest or achievement
+
+IMPORTANT: The input text may contain LinkedIn posts or shared articles. IGNORE those entirely. Only use the About section, Experience, Education, Skills, and Certifications sections.
+
+Headline: complete standalone thought, never vague ("Their background" = bad). Max 10 words.
+Bullets: real specifics only, no filler. Under 25 words each.`;
+
 
 export function buildProfileUser(text: string, name: string): string {
   return `Subject: ${name}\n\nFocus ONLY on biographical data — About section, work experience, education, skills, certifications. Ignore any posts or shared articles.\n\nProfile content:\n${cleanText(text).slice(0, 8_000)}`;
