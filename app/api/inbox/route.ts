@@ -219,36 +219,6 @@ export async function POST(request: Request) {
 
     let coverImageUrl: string | null = null;
 
-    if (url) {
-      const [jinaResult, ogImage] = await Promise.all([fetchViaJina(url), fetchOgImage(url)]);
-      if (jinaResult) {
-        parseResult = jinaResult;
-        coverImageUrl = ogImage;
-      } else {
-        const via12ft = await fetchVia12ft(url);
-        if (via12ft) {
-          parseResult = via12ft;
-          coverImageUrl = ogImage;
-        } else {
-          const direct = await fetchDirect(url);
-          if (!direct) {
-            await markInboxItemError(item.id, "Could not fetch this URL");
-            let hostname = "";
-            try { hostname = new URL(url).hostname.replace("www.", ""); } catch {}
-            const isLinkedIn = hostname.includes("linkedin.com");
-            const errMsg = isLinkedIn
-              ? "LinkedIn requires login to view this profile. Copy the About section text and paste it in the Text tab instead."
-              : "Could not fetch this URL. Try pasting the text directly.";
-            return Response.json({ error: errMsg }, { status: 422 });
-          }
-          parseResult = direct;
-          coverImageUrl = direct.imageUrl;
-        }
-      }
-    } else {
-      parseResult = { text: text!, title: "Pasted text" };
-    }
-
     const linkedInMode = (() => {
       if (!url) return null;
       try {
@@ -259,6 +229,38 @@ export async function POST(request: Request) {
       } catch {}
       return null;
     })();
+
+    if (url) {
+      const [jinaResult, ogImage] = await Promise.all([fetchViaJina(url), fetchOgImage(url)]);
+      if (jinaResult) {
+        parseResult = jinaResult;
+        coverImageUrl = ogImage;
+      } else if (linkedInMode) {
+        // LinkedIn blocks 12ft and direct too — fail fast with a clear message
+        await markInboxItemError(item.id, "LinkedIn requires login");
+        const errMsg = linkedInMode === "company"
+          ? "LinkedIn requires login to view this page. Copy the company description and paste it in the Text tab instead."
+          : "LinkedIn requires login to view this profile. Copy the About section and paste it in the Text tab instead.";
+        return Response.json({ error: errMsg }, { status: 422 });
+      } else {
+        const via12ft = await fetchVia12ft(url);
+        if (via12ft) {
+          parseResult = via12ft;
+          coverImageUrl = ogImage;
+        } else {
+          const direct = await fetchDirect(url);
+          if (!direct) {
+            await markInboxItemError(item.id, "Could not fetch this URL");
+            return Response.json({ error: "Could not fetch this URL. Try pasting the text directly." }, { status: 422 });
+          }
+          parseResult = direct;
+          coverImageUrl = direct.imageUrl;
+        }
+      }
+    } else {
+      parseResult = { text: text!, title: "Pasted text" };
+    }
+
     const generated = await generateCards(parseResult.text, parseResult.title, url ? "url" : "text", linkedInMode ?? "article");
     if (!generated) {
       await markInboxItemError(item.id, "Failed to generate story cards");
