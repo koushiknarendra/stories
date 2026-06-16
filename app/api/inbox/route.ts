@@ -17,6 +17,11 @@ const client = new Anthropic();
 
 // ─── Parsing helpers (mirrored from /api/parse) ───────────────────────────────
 
+function isLoginWall(title: string): boolean {
+  const t = title.toLowerCase();
+  return t.includes("log in") || t.includes("sign in") || t.includes("login") || t.includes("sign up");
+}
+
 function parseDate(raw: string | null | undefined): string | null {
   if (!raw) return null;
   try { const d = new Date(raw.trim()); return isNaN(d.getTime()) ? null : d.toISOString(); } catch { return null; }
@@ -32,6 +37,7 @@ async function fetchViaJina(url: string): Promise<{ title: string; text: string;
     const raw = await res.text();
     const titleMatch = raw.match(/^Title:\s*(.+)/m);
     const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
+    if (isLoginWall(title)) return null;
     const pubMatch = raw.match(/^Published Time:\s*(.+)/m);
     const publishedAt = parseDate(pubMatch?.[1]);
     const text = raw
@@ -86,6 +92,7 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string;
       $("meta[property='og:title']").attr("content") ||
       $("title").text().trim() ||
       new URL(url).hostname;
+    if (isLoginWall(title)) return null;
     const rawDate =
       $("meta[property='article:published_time']").attr("content") ||
       $("meta[name='article:published_time']").attr("content") ||
@@ -140,6 +147,7 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string; 
       $("meta[property='og:title']").attr("content") ||
       $("title").text().trim() ||
       new URL(url).hostname;
+    if (isLoginWall(title)) return null;
     const rawImg =
       $("meta[property='og:image']").attr("content") ||
       $("meta[name='twitter:image:src']").attr("content") ||
@@ -201,21 +209,6 @@ export async function POST(request: Request) {
     return Response.json({ error: "Provide a URL or text" }, { status: 400 });
   }
 
-  if (url) {
-    const BLOCKED_DOMAINS = [
-      "linkedin.com", "facebook.com", "fb.com", "instagram.com",
-      "twitter.com", "x.com", "threads.net", "tiktok.com",
-    ];
-    let hostname = "";
-    try { hostname = new URL(url).hostname.replace("www.", ""); } catch {}
-    if (BLOCKED_DOMAINS.some((d) => hostname === d || hostname.endsWith("." + d))) {
-      return Response.json(
-        { error: `${hostname} blocks automated reading. Copy and paste the article text using the Text tab instead.` },
-        { status: 422 }
-      );
-    }
-  }
-
   const item = await createInboxItem(userId, url, url ? "url" : "text");
 
   try {
@@ -237,7 +230,13 @@ export async function POST(request: Request) {
           const direct = await fetchDirect(url);
           if (!direct) {
             await markInboxItemError(item.id, "Could not fetch this URL");
-            return Response.json({ error: "Could not fetch this URL. Try pasting the text directly." }, { status: 422 });
+            let hostname = "";
+            try { hostname = new URL(url).hostname.replace("www.", ""); } catch {}
+            const isLinkedIn = hostname.includes("linkedin.com");
+            const errMsg = isLinkedIn
+              ? "LinkedIn requires login to view this profile. Copy the About section text and paste it in the Text tab instead."
+              : "Could not fetch this URL. Try pasting the text directly.";
+            return Response.json({ error: errMsg }, { status: 422 });
           }
           parseResult = direct;
           coverImageUrl = direct.imageUrl;
