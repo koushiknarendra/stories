@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr"; // useSWRConfig used for interests onboarding
 import BottomNav from "@/components/BottomNav";
 import InterestsOnboarding from "@/components/InterestsOnboarding";
 import { CATEGORIES } from "@/lib/categories";
@@ -146,29 +146,22 @@ export default function ForYouPage() {
   const { data: interestsData } = useSWR(user ? "/api/interests" : null, fetcher);
   const interests: string[] | null = interestsData === undefined ? null : (Array.isArray(interestsData) ? interestsData : []);
 
-  const { data: discoverData } = useSWR(interests !== null ? "/api/discover" : null, fetcher);
   const { data: spaceData } = useSWR(interests !== null ? "/api/space" : null, fetcher);
 
   const stories = useMemo<StoryItem[] | null>(() => {
-    if (!discoverData || !spaceData) return null;
-    const discover: StoryItem[] = Array.isArray(discoverData.stories) ? discoverData.stories : [];
-    const saved: StoryItem[]    = Array.isArray(spaceData) ? spaceData : [];
-    const seenIds  = new Set<string>();
+    if (!spaceData) return null;
+    const saved: StoryItem[] = Array.isArray(spaceData) ? spaceData : [];
     const seenUrls = new Set<string>();
-    const add = (s: StoryItem) => {
-      if (seenIds.has(s.id)) return false;
-      if (s.source_url && seenUrls.has(s.source_url)) return false;
-      seenIds.add(s.id);
-      if (s.source_url) seenUrls.add(s.source_url);
-      return true;
-    };
-    const merged: StoryItem[] = [];
-    for (const s of discover) { if (add(s)) merged.push({ ...s, is_generated: true }); }
+    const result: StoryItem[] = [];
     const relevantSaved = saved.filter((s) => interests!.length === 0 || (s.category && interests!.includes(s.category)));
     const otherSaved    = saved.filter((s) => !relevantSaved.includes(s));
-    for (const s of [...relevantSaved, ...otherSaved]) { if (add(s)) merged.push(s); }
-    return merged;
-  }, [discoverData, spaceData, interests]);
+    for (const s of [...relevantSaved, ...otherSaved]) {
+      if (s.source_url && seenUrls.has(s.source_url)) continue;
+      if (s.source_url) seenUrls.add(s.source_url);
+      result.push(s);
+    }
+    return result;
+  }, [spaceData, interests]);
 
   const handleRead = (storySetId: string) => {
     fetch("/api/streak", {
@@ -220,11 +213,11 @@ export default function ForYouPage() {
           </>
         ) : stories.length === 0 ? (
           <div style={{ height: "100dvh", scrollSnapAlign: "start", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center", background: "var(--lp-page-bg)" }}>
-            <div style={{ fontSize: 48, marginBottom: 18 }}>✨</div>
-            <p style={{ ...SG, fontSize: 18, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 8px" }}>Your feed is warming up</p>
-            <p style={{ fontSize: 14, color: "var(--lp-text2)", margin: "0 0 28px", lineHeight: 1.6 }}>Fresh stories are being generated for you. Check back in a moment.</p>
+            <div style={{ fontSize: 48, marginBottom: 18 }}>📚</div>
+            <p style={{ ...SG, fontSize: 18, fontWeight: 700, color: "var(--lp-text)", margin: "0 0 8px" }}>Nothing saved yet</p>
+            <p style={{ fontSize: 14, color: "var(--lp-text2)", margin: "0 0 28px", lineHeight: 1.6 }}>Save articles from Explore or add your own via the + button.</p>
             <a href="/explore" style={{ ...SG, padding: "12px 28px", borderRadius: 12, background: "var(--lp-accent)", color: "#fff", fontWeight: 700, fontSize: 14, textDecoration: "none", boxShadow: "0 4px 14px -4px var(--lp-glow)" }}>
-              Explore now →
+              Explore →
             </a>
           </div>
         ) : (
