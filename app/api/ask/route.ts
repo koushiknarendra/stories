@@ -12,13 +12,13 @@ export async function POST(req: NextRequest) {
   const { question } = await req.json();
   if (!question?.trim()) return NextResponse.json({ error: "No question provided" }, { status: 400 });
 
-  const cards = await getAllCardsForUser(userId);
-  if (!cards.length) return NextResponse.json({ answer: "Your library is empty — add some articles first." });
+  const allCards = await getAllCardsForUser(userId);
+  if (!allCards.length) return NextResponse.json({ answer: "Your library is empty — add some articles first." });
 
-  // Build a condensed context of all cards
+  const cards = allCards.slice(0, 50);
   const context = cards.map((c) =>
-    `[${c.storyTitle}]\n• ${c.headline}\n${c.bullets.map((b) => `  - ${b}`).join("\n")}`
-  ).join("\n\n");
+    `${c.storyTitle} | ${c.headline}. ${c.bullets.join(". ")}`
+  ).join("\n");
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",

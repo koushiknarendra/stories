@@ -64,10 +64,17 @@ ${RULES_BLOCK}`;
 
 // ─── Dynamic user messages (article-specific, not cached) ─────────────────────
 
+function cleanText(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1") // [label](url) → label
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function buildClassifyUser(text: string, title: string, source: string): string {
-  return `Title: ${title}\nSource: ${source}\n\nContent:\n${text.slice(0, 8_000)}`;
+  return `Title: ${title}\nSource: ${source}\n\nContent:\n${cleanText(text).slice(0, 5_000)}`;
 }
 
 export function buildDiscoverUser(text: string, title: string, category: string): string {
-  return `Category: ${category}\nTitle: ${title}\n\nContent:\n${text.slice(0, 8_000)}`;
+  return `Category: ${category}\nTitle: ${title}\n\nContent:\n${cleanText(text).slice(0, 5_000)}`;
 }

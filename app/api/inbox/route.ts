@@ -105,7 +105,7 @@ async function generateCards(
 ): Promise<{ cards: StoryCard[]; category: string | null } | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 3072,
       system: [{ type: "text", text: CLASSIFY_SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: buildClassifyUser(text, title, source) }],
