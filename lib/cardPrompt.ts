@@ -74,35 +74,35 @@ Generate one card per theme, IN THIS ORDER. Skip only if you have zero data:
 
 1. WHO THEY ARE
    Headline: their name + current role + company
-   Bullets: (a) exact title and company, how long they've held it  (b) one crisp sentence of what they actually do day-to-day  (c) notable thing about their current position
+   Bullets: (a) exact title and company, how long they've held it  (b) one crisp sentence of what they actually do day-to-day  (c) where they're currently based
 
-2. WHERE THEY'RE FROM
-   Headline: mention their origin city/country and current base
-   Bullets: (a) hometown or country of origin  (b) where they're based now and since when  (c) any languages spoken or international background
+2. BACKGROUND — where they grew up, where they studied, how they started
+   Headline: capture their origin + educational foundation in one line
+   Bullets: (a) hometown or country of origin, and where they're based now  (b) university/college name, degree, and graduation year — be specific  (c) their first job or how they entered their field after studying
 
-3. EDUCATION
-   Headline: their highest or most notable degree + institution
-   Bullets: (a) degree name, institution, graduation year  (b) any other degrees or certifications  (c) anything unusual — prestigious school, unexpected major, self-taught angle
+3. EDUCATION IN DETAIL
+   Headline: the degree and institution most relevant to their career
+   Bullets: (a) all degrees listed — institution, subject, years  (b) any certifications, executive programs, or notable courses  (c) anything unusual — career change via education, self-taught path, prestigious program
 
 4. CAREER JOURNEY
-   Headline: capture the arc — number of years, key transitions
-   Bullets: (a) earliest notable role and company  (b) the biggest pivot or career-defining move  (c) total years of experience across the journey
+   Headline: capture the arc — total years, how many companies, key shift
+   Bullets: (a) first notable role and company they worked at  (b) the biggest pivot or career-defining move with context  (c) how their current role connects back to where they started
 
 5. SKILLS & EXPERTISE
-   Headline: their primary domain of expertise
-   Bullets: (a) top 2–3 specific skills or technologies they list  (b) what they are genuinely known for in their field  (c) any niche or rare expertise
+   Headline: their primary domain of expertise in plain language
+   Bullets: (a) top 3 specific skills, tools, or technologies they list  (b) what they are genuinely known for or sought out for  (c) any rare or niche expertise that sets them apart
 
 6. ACHIEVEMENTS
    Headline: one concrete thing they've shipped, built, or won
-   Bullets: (a) most impressive quantified achievement  (b) something they published, launched, or led  (c) any awards, recognitions, or press mentions
+   Bullets: (a) most impressive quantified achievement (numbers if available)  (b) something they published, launched, founded, or led  (c) any awards, press mentions, or notable recognitions
 
 7. INTERESTS & PERSONALITY
    Headline: a revealing interest or cause they care about
-   Bullets: (a) hobbies or activities outside work  (b) causes or volunteer work they list  (c) what their public content or writing reveals about their personality
+   Bullets: (a) hobbies or activities they mention outside work  (b) causes, volunteer work, or communities they're part of  (c) what their public content or writing reveals about how they think
 
 8. CONVERSATION STARTERS
    Headline: "3 things to bring up when you meet [Name]"
-   Bullets: (a) specific opener tied to their education or hometown  (b) specific opener tied to a career decision or pivot  (c) specific opener tied to an interest or achievement
+   Bullets: (a) specific opener tied to their university, hometown, or background  (b) specific opener tied to a career decision or interesting pivot  (c) specific opener tied to a shared interest, achievement, or something they've built
 
 IMPORTANT: The input text may contain LinkedIn posts or shared articles. IGNORE those entirely. Only use the About section, Experience, Education, Skills, and Certifications sections.
 
