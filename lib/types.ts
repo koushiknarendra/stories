@@ -11,6 +11,7 @@ export interface StorySet {
   sourceUrl?: string;
   coverImageUrl?: string;
   category?: string;
+  publishedAt?: string;
   cards: StoryCard[];
   savedAt: string;
 }

@@ -17,7 +17,12 @@ const client = new Anthropic();
 
 // ─── Parsing helpers (mirrored from /api/parse) ───────────────────────────────
 
-async function fetchViaJina(url: string): Promise<{ title: string; text: string } | null> {
+function parseDate(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try { const d = new Date(raw.trim()); return isNaN(d.getTime()) ? null : d.toISOString(); } catch { return null; }
+}
+
+async function fetchViaJina(url: string): Promise<{ title: string; text: string; publishedAt: string | null } | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
       headers: { "X-Return-Format": "markdown" },
@@ -27,13 +32,15 @@ async function fetchViaJina(url: string): Promise<{ title: string; text: string 
     const raw = await res.text();
     const titleMatch = raw.match(/^Title:\s*(.+)/m);
     const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
+    const pubMatch = raw.match(/^Published Time:\s*(.+)/m);
+    const publishedAt = parseDate(pubMatch?.[1]);
     const text = raw
       .replace(/^(Title|URL Source|Published Time|Description|Warning|Markdown Content):.*\n?/gm, "")
       .replace(/!\[Image[^\]]*\]\([^)]*\)/g, "")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 12_000);
-    return text.length >= 100 ? { title, text } : null;
+    return text.length >= 100 ? { title, text, publishedAt } : null;
   } catch {
     return null;
   }
@@ -64,7 +71,7 @@ async function fetchOgImage(url: string): Promise<string | null> {
   }
 }
 
-async function fetchVia12ft(url: string): Promise<{ title: string; text: string } | null> {
+async function fetchVia12ft(url: string): Promise<{ title: string; text: string; publishedAt: string | null } | null> {
   try {
     const { load } = await import("cheerio");
     const res = await fetch(`https://12ft.io/proxy?q=${encodeURIComponent(url)}`, {
@@ -74,20 +81,34 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string 
     if (!res.ok) return null;
     const html = await res.text();
     const $ = load(html);
-    $("script, style, nav, header, footer, aside, .ad, iframe, noscript").remove();
+    $("script[type!='application/ld+json'], style, nav, header, footer, aside, .ad, iframe, noscript").remove();
     const title =
       $("meta[property='og:title']").attr("content") ||
       $("title").text().trim() ||
       new URL(url).hostname;
+    const rawDate =
+      $("meta[property='article:published_time']").attr("content") ||
+      $("meta[name='article:published_time']").attr("content") ||
+      $("meta[name='publishedDate']").attr("content") ||
+      $("meta[name='date']").attr("content") ||
+      $("time[datetime]").first().attr("datetime");
+    let publishedAt = parseDate(rawDate);
+    if (!publishedAt) {
+      $("script[type='application/ld+json']").each((_, el) => {
+        if (publishedAt) return;
+        try { const d = JSON.parse($(el).html() || ""); publishedAt = parseDate(d.datePublished || d.dateCreated); } catch {}
+      });
+    }
+    $("script, style").remove();
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
-    return text.length >= 100 ? { title, text } : null;
+    return text.length >= 100 ? { title, text, publishedAt } : null;
   } catch {
     return null;
   }
 }
 
-async function fetchDirect(url: string): Promise<{ title: string; text: string; imageUrl: string | null } | null> {
+async function fetchDirect(url: string): Promise<{ title: string; text: string; imageUrl: string | null; publishedAt: string | null } | null> {
   try {
     const { load } = await import("cheerio");
     const res = await fetch(url, {
@@ -101,6 +122,19 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string; 
     if (!res.ok) return null;
     const html = await res.text();
     const $ = load(html);
+    const rawDate =
+      $("meta[property='article:published_time']").attr("content") ||
+      $("meta[name='article:published_time']").attr("content") ||
+      $("meta[name='publishedDate']").attr("content") ||
+      $("meta[name='date']").attr("content") ||
+      $("time[datetime]").first().attr("datetime");
+    let publishedAt = parseDate(rawDate);
+    if (!publishedAt) {
+      $("script[type='application/ld+json']").each((_, el) => {
+        if (publishedAt) return;
+        try { const d = JSON.parse($(el).html() || ""); publishedAt = parseDate(d.datePublished || d.dateCreated); } catch {}
+      });
+    }
     $("script, style, nav, header, footer, aside, .ad, iframe, noscript").remove();
     const title =
       $("meta[property='og:title']").attr("content") ||
@@ -113,7 +147,7 @@ async function fetchDirect(url: string): Promise<{ title: string; text: string; 
     const imageUrl = toAbsoluteUrl(url, rawImg);
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
-    return text.length >= 100 ? { title, text, imageUrl } : null;
+    return text.length >= 100 ? { title, text, imageUrl, publishedAt } : null;
   } catch {
     return null;
   }
@@ -170,7 +204,7 @@ export async function POST(request: Request) {
   const item = await createInboxItem(userId, url, url ? "url" : "text");
 
   try {
-    let parseResult: { title: string; text: string } | null = null;
+    let parseResult: { title: string; text: string; publishedAt?: string | null } | null = null;
 
     let coverImageUrl: string | null = null;
 
@@ -211,6 +245,7 @@ export async function POST(request: Request) {
       sourceUrl: url ?? undefined,
       coverImageUrl: coverImageUrl ?? undefined,
       category: generated.category ?? undefined,
+      publishedAt: parseResult.publishedAt ?? undefined,
       cards: generated.cards,
       savedAt: new Date().toISOString(),
     };

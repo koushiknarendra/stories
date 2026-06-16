@@ -128,6 +128,7 @@ export async function runMigration() {
   await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS is_generated BOOLEAN DEFAULT FALSE`;
   await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS generated_category TEXT`;
   await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS generated_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE story_sets ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS user_read_stories (
@@ -237,8 +238,8 @@ export async function saveStorySet(
   if (!sql) throw new Error("DB not configured");
 
   await sql`
-    INSERT INTO story_sets (id, clerk_user_id, inbox_item_id, title, source, source_url, cover_image_url, category)
-    VALUES (${set.id}, ${clerkUserId}, ${inboxItemId}, ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null}, ${set.category ?? null})
+    INSERT INTO story_sets (id, clerk_user_id, inbox_item_id, title, source, source_url, cover_image_url, category, published_at)
+    VALUES (${set.id}, ${clerkUserId}, ${inboxItemId}, ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null}, ${set.category ?? null}, ${set.publishedAt ?? null})
     ON CONFLICT (id) DO NOTHING
   `;
 
@@ -255,8 +256,8 @@ export async function loadStorySet(id: string): Promise<StorySet | null> {
   if (!sql) return null;
 
   // Load by ID only — UUID is 122 bits of entropy, effectively unguessable.
-  const rows = await sql<{ id: string; title: string; source: string; source_url: string | null; cover_image_url: string | null; saved_at: string }[]>`
-    SELECT id, title, source, source_url, cover_image_url, saved_at
+  const rows = await sql<{ id: string; title: string; source: string; source_url: string | null; cover_image_url: string | null; saved_at: string; published_at: string | null }[]>`
+    SELECT id, title, source, source_url, cover_image_url, saved_at, published_at
     FROM story_sets
     WHERE id = ${id}
   `;
@@ -276,6 +277,7 @@ export async function loadStorySet(id: string): Promise<StorySet | null> {
     source: set.source,
     sourceUrl: set.source_url ?? undefined,
     coverImageUrl: set.cover_image_url ?? undefined,
+    publishedAt: set.published_at ?? undefined,
     savedAt: set.saved_at,
     cards: cards.map((c) => {
       // bullets stored as JSONB — might come back as array, string, or null
@@ -299,8 +301,8 @@ export async function deleteStorySet(id: string, clerkUserId: string) {
 export async function listStorySets(clerkUserId: string) {
   const sql = getDb();
   if (!sql) return [];
-  return sql<{ id: string; title: string; source: string; source_url: string | null; cover_image_url: string | null; category: string | null; saved_at: string }[]>`
-    SELECT id, title, source, source_url, cover_image_url, category, saved_at
+  return sql<{ id: string; title: string; source: string; source_url: string | null; cover_image_url: string | null; category: string | null; saved_at: string; published_at: string | null }[]>`
+    SELECT id, title, source, source_url, cover_image_url, category, saved_at, published_at
     FROM story_sets
     WHERE clerk_user_id = ${clerkUserId}
     ORDER BY saved_at DESC
@@ -476,12 +478,12 @@ export async function getDailyCard(clerkUserId: string): Promise<{
 export async function getGeneratedStories(categories: string[]): Promise<{
   id: string; title: string; source: string; source_url: string | null;
   cover_image_url: string | null; category: string | null; saved_at: string;
-  is_generated: boolean;
+  published_at: string | null; is_generated: boolean;
 }[]> {
   const sql = getDb();
   if (!sql || !categories.length) return [];
   return sql`
-    SELECT id, title, source, source_url, cover_image_url, category, saved_at, is_generated
+    SELECT id, title, source, source_url, cover_image_url, category, saved_at, published_at, is_generated
     FROM story_sets
     WHERE is_generated = true
       AND generated_category = ANY(${categories})
@@ -497,8 +499,8 @@ export async function saveGeneratedStorySet(
   const sql = getDb();
   if (!sql) throw new Error("DB not configured");
   await sql`
-    INSERT INTO story_sets (id, clerk_user_id, title, source, source_url, cover_image_url, category, is_generated, generated_category, generated_at)
-    VALUES (${set.id}, '__generated__', ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null}, ${category}, true, ${category}, NOW())
+    INSERT INTO story_sets (id, clerk_user_id, title, source, source_url, cover_image_url, category, is_generated, generated_category, generated_at, published_at)
+    VALUES (${set.id}, '__generated__', ${set.title}, ${set.source}, ${set.sourceUrl ?? null}, ${set.coverImageUrl ?? null}, ${category}, true, ${category}, NOW(), ${set.publishedAt ?? null})
     ON CONFLICT (id) DO NOTHING
   `;
   for (const [i, card] of set.cards.entries()) {

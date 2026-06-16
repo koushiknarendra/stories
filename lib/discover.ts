@@ -7,7 +7,12 @@ import type { StorySet, StoryCard } from "./types";
 
 const client = new Anthropic();
 
-async function fetchViaJina(url: string): Promise<{ title: string; text: string } | null> {
+function parseDate(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try { const d = new Date(raw.trim()); return isNaN(d.getTime()) ? null : d.toISOString(); } catch { return null; }
+}
+
+async function fetchViaJina(url: string): Promise<{ title: string; text: string; publishedAt: string | null } | null> {
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
       headers: { "X-Return-Format": "markdown" },
@@ -17,19 +22,21 @@ async function fetchViaJina(url: string): Promise<{ title: string; text: string 
     const raw = await res.text();
     const titleMatch = raw.match(/^Title:\s*(.+)/m);
     const title = titleMatch?.[1]?.trim() || new URL(url).hostname;
+    const pubMatch = raw.match(/^Published Time:\s*(.+)/m);
+    const publishedAt = parseDate(pubMatch?.[1]);
     const text = raw
       .replace(/^(Title|URL Source|Published Time|Description|Warning|Markdown Content):.*\n?/gm, "")
       .replace(/!\[Image[^\]]*\]\([^)]*\)/g, "")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 12_000);
-    return text.length >= 100 ? { title, text } : null;
+    return text.length >= 100 ? { title, text, publishedAt } : null;
   } catch {
     return null;
   }
 }
 
-async function fetchVia12ft(url: string): Promise<{ title: string; text: string } | null> {
+async function fetchVia12ft(url: string): Promise<{ title: string; text: string; publishedAt: string | null } | null> {
   try {
     const res = await fetch(`https://12ft.io/proxy?q=${encodeURIComponent(url)}`, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1)" },
@@ -39,6 +46,19 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string 
     const { load } = await import("cheerio");
     const html = await res.text();
     const $ = load(html);
+    const rawDate =
+      $("meta[property='article:published_time']").attr("content") ||
+      $("meta[name='article:published_time']").attr("content") ||
+      $("meta[name='publishedDate']").attr("content") ||
+      $("meta[name='date']").attr("content") ||
+      $("time[datetime]").first().attr("datetime");
+    let publishedAt = parseDate(rawDate);
+    if (!publishedAt) {
+      $("script[type='application/ld+json']").each((_, el) => {
+        if (publishedAt) return;
+        try { const d = JSON.parse($(el).html() || ""); publishedAt = parseDate(d.datePublished || d.dateCreated); } catch {}
+      });
+    }
     $("script, style, nav, header, footer, aside, .ad, iframe, noscript").remove();
     const title =
       $("meta[property='og:title']").attr("content") ||
@@ -46,7 +66,7 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string 
       new URL(url).hostname;
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
-    return text.length >= 100 ? { title, text } : null;
+    return text.length >= 100 ? { title, text, publishedAt } : null;
   } catch {
     return null;
   }
@@ -98,7 +118,7 @@ async function generateForCategory(category: string): Promise<StorySet[]> {
         fetchViaJina(article.url),
         fetchOgImage(article.url),
       ]);
-      const parsed = jinaResult ?? await fetchVia12ft(article.url);
+      const parsed = jinaResult ?? (await fetchVia12ft(article.url));
       if (!parsed) continue;
 
       const cards = await generateCards(parsed.text, parsed.title || article.title, category);
@@ -114,6 +134,7 @@ async function generateForCategory(category: string): Promise<StorySet[]> {
         sourceUrl: article.url,
         coverImageUrl: ogImage ?? undefined,
         category,
+        publishedAt: parsed.publishedAt ?? undefined,
         cards,
         savedAt: new Date().toISOString(),
       };
@@ -159,6 +180,7 @@ export async function getOrGenerateDiscoverStories(categories: string[]): Promis
         cover_image_url: s.coverImageUrl ?? null,
         category: s.category ?? null,
         saved_at: s.savedAt,
+        published_at: s.publishedAt ?? null,
         is_generated: true,
       });
     }

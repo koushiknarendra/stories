@@ -18,11 +18,17 @@ interface StoryItem {
   cover_image_url: string | null;
   category: string | null;
   saved_at: string;
+  published_at?: string | null;
   is_generated?: boolean;
 }
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
+function formatStoryDate(published_at: string | null | undefined, saved_at: string): string {
+  if (published_at) {
+    try {
+      return new Date(published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch {}
+  }
+  const diff = Date.now() - new Date(saved_at).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return "just now";
   if (m < 60) return `${m}m ago`;
@@ -137,7 +143,7 @@ export default function ExplorePage() {
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
                         {story.source_url ? (() => { try { return new URL(story.source_url).hostname.replace("www.", ""); } catch { return story.source; } })() : story.source}
-                        {" · "}{timeAgo(story.saved_at)}
+                        {" · "}{formatStoryDate(story.published_at, story.saved_at)}
                       </span>
                       <span style={{ ...SG, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.9)", background: "rgba(255,255,255,0.18)", padding: "3px 9px", borderRadius: 999, backdropFilter: "blur(8px)" }}>
                         Read →

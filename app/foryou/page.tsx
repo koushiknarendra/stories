@@ -20,6 +20,7 @@ interface StoryItem {
   cover_image_url: string | null;
   category: string | null;
   saved_at: string;
+  published_at?: string | null;
   is_generated?: boolean;
 }
 
@@ -98,9 +99,10 @@ function StorySlide({
           {story.title}
         </h2>
 
-        {/* Source */}
+        {/* Source + date */}
         <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: "0 0 18px", fontWeight: 500 }}>
           {story.source_url ? (() => { try { return new URL(story.source_url).hostname.replace("www.", ""); } catch { return story.source; } })() : story.source}
+          {story.published_at && (() => { try { return " · " + new Date(story.published_at!).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); } catch { return ""; } })()}
         </p>
 
         {/* CTA */}
