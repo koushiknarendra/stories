@@ -201,6 +201,21 @@ export async function POST(request: Request) {
     return Response.json({ error: "Provide a URL or text" }, { status: 400 });
   }
 
+  if (url) {
+    const BLOCKED_DOMAINS = [
+      "linkedin.com", "facebook.com", "fb.com", "instagram.com",
+      "twitter.com", "x.com", "threads.net", "tiktok.com",
+    ];
+    let hostname = "";
+    try { hostname = new URL(url).hostname.replace("www.", ""); } catch {}
+    if (BLOCKED_DOMAINS.some((d) => hostname === d || hostname.endsWith("." + d))) {
+      return Response.json(
+        { error: `${hostname} blocks automated reading. Copy and paste the article text using the Text tab instead.` },
+        { status: 422 }
+      );
+    }
+  }
+
   const item = await createInboxItem(userId, url, url ? "url" : "text");
 
   try {
