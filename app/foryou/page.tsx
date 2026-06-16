@@ -153,12 +153,20 @@ export default function ForYouPage() {
     if (!discoverData || !spaceData) return null;
     const discover: StoryItem[] = Array.isArray(discoverData.stories) ? discoverData.stories : [];
     const saved: StoryItem[]    = Array.isArray(spaceData) ? spaceData : [];
-    const seen = new Set<string>();
+    const seenIds  = new Set<string>();
+    const seenUrls = new Set<string>();
+    const add = (s: StoryItem) => {
+      if (seenIds.has(s.id)) return false;
+      if (s.source_url && seenUrls.has(s.source_url)) return false;
+      seenIds.add(s.id);
+      if (s.source_url) seenUrls.add(s.source_url);
+      return true;
+    };
     const merged: StoryItem[] = [];
-    for (const s of discover) { if (!seen.has(s.id)) { seen.add(s.id); merged.push({ ...s, is_generated: true }); } }
+    for (const s of discover) { if (add(s)) merged.push({ ...s, is_generated: true }); }
     const relevantSaved = saved.filter((s) => interests!.length === 0 || (s.category && interests!.includes(s.category)));
     const otherSaved    = saved.filter((s) => !relevantSaved.includes(s));
-    for (const s of [...relevantSaved, ...otherSaved]) { if (!seen.has(s.id)) { seen.add(s.id); merged.push(s); } }
+    for (const s of [...relevantSaved, ...otherSaved]) { if (add(s)) merged.push(s); }
     return merged;
   }, [discoverData, spaceData, interests]);
 

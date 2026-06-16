@@ -483,12 +483,12 @@ export async function getGeneratedStories(categories: string[]): Promise<{
   const sql = getDb();
   if (!sql || !categories.length) return [];
   return sql`
-    SELECT id, title, source, source_url, cover_image_url, category, saved_at, published_at, is_generated
+    SELECT DISTINCT ON (COALESCE(source_url, id)) id, title, source, source_url, cover_image_url, category, saved_at, published_at, is_generated
     FROM story_sets
     WHERE is_generated = true
       AND generated_category = ANY(${categories})
       AND generated_at > NOW() - INTERVAL '24 hours'
-    ORDER BY generated_at DESC
+    ORDER BY COALESCE(source_url, id), generated_at DESC
   `;
 }
 
