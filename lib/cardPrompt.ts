@@ -88,6 +88,8 @@ THEME ORDER (one card each, skip only if no data):
 7. INTERESTS — hobbies, causes they support, topics they write or post about publicly
 8. CONVERSATION STARTERS — exactly 3 bullets, each a specific genuine opener you could say to this person
 
+CRITICAL: The input may contain social media posts, shared articles, or activity feed content mixed with the real profile data. IGNORE all of that. Generate cards ONLY from biographical information — About section, work history, education, skills, certifications.
+
 Headline rules:
 - Complete standalone thought anchored in the person's name or role
 - Strong: "Why [Name] moved from [Company A] to start [Company B]"
@@ -100,7 +102,7 @@ Bullet rules:
 - readTime: 10s–25s range`;
 
 export function buildProfileUser(text: string, name: string): string {
-  return `Subject: ${name}\n\nProfile content:\n${cleanText(text).slice(0, 6_000)}`;
+  return `Subject: ${name}\n\nIMPORTANT: The content below may include posts, shared articles, or activity feed items mixed in with the actual profile. Ignore ALL of that — focus ONLY on biographical data: About section, work experience, education, skills, certifications, and contact info.\n\nProfile content:\n${cleanText(text).slice(0, 6_000)}`;
 }
 
 export const COMPANY_SYSTEM = `You are a business intelligence analyst preparing someone for a meeting, partnership, or sales call with a company.

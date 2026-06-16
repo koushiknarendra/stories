@@ -107,6 +107,24 @@ async function fetchVia12ft(url: string): Promise<{ title: string; text: string;
       });
     }
     $("script, style").remove();
+
+    // For LinkedIn profiles/companies, strip the activity feed before extracting text
+    const isLinkedInProfile = /linkedin\.com\/(in|company)\//.test(url);
+    if (isLinkedInProfile) {
+      // Remove sections that are activity/posts — they appear after the profile bio
+      $("section").each((_, el) => {
+        const heading = $(el).find("h2, h3").first().text().toLowerCase();
+        if (heading.includes("activity") || heading.includes("posts") || heading.includes("articles")) {
+          $(el).remove();
+        }
+      });
+      // Remove elements with aria-labels pointing to activity
+      $("[aria-label]").each((_, el) => {
+        const label = ($(el).attr("aria-label") || "").toLowerCase();
+        if (label.includes("activity") || label.includes("posts")) $(el).remove();
+      });
+    }
+
     const container = $("article").length ? $("article") : $("main").length ? $("main") : $("body");
     const text = container.text().replace(/\s+/g, " ").trim().slice(0, 12_000);
     return text.length >= 100 ? { title, text, publishedAt } : null;
